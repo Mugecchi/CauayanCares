@@ -1,0 +1,10 @@
+:root {
+	--primary-color: #7b2cbf; /* Purple theme */
+	--secondary-color: #ff7706;
+	--text-color: #333;
+	--background-color: #f2e6fe;
+	font-family: "Avenir", "Helvetica", "Arial", sans-serif;
+	color-scheme: light dark;
+	color: var(--text-color);
+	background-color: var(--background-color);
+}

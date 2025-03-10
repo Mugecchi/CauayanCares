@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Sidebar from "./Includes/Sidebar";
 import ManageForms from "./Pages/ManageForms";
 import Dashboard from "./Pages/Dashboard";
+import Login from "./Pages/Login";
 
 const App = () => {
 	return (
@@ -18,8 +19,9 @@ const App = () => {
 					}}
 				>
 					<Routes>
+						<Route path="/" element={<Login />} />
 						<Route path="/ManageForms" element={<ManageForms />} />
-						<Route path="/" element={<Dashboard />} />
+						<Route path="/Dashboard" element={<Dashboard />} />
 					</Routes>
 				</div>
 			</div>

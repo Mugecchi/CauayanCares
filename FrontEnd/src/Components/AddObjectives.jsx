@@ -27,7 +27,9 @@ const AddObjectives = () => {
 
 	const fetchOrdinances = async () => {
 		try {
-			const response = await axios.get("http://localhost:5000/api/ordinances");
+			const response = await axios.get("http://localhost:5000/api/ordinances", {
+				withCredentials: true,
+			});
 			setOrdinances(response.data);
 		} catch (error) {
 			console.error("Error fetching ordinances:", error);

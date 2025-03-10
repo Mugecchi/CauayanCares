@@ -1,13 +1,17 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 import os
 import mysql.connector
+from functools import wraps
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)  # Ensure CORS allows cookies for sessions
+app.secret_key = "supersecretkey"  # Change this to a secure key
+
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 
 # Database Connection Function
 def get_db_connection():
@@ -17,6 +21,7 @@ def get_db_connection():
         password="1234",
         database="ordinances"
     )
+
 
 # Utility function to execute queries
 def execute_query(query, params=(), fetch_one=False, commit=False):
@@ -30,6 +35,45 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     db.close()
     return result
 
+
+# Middleware for protecting routes
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return jsonify({"error": "Unauthorized access"}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+# Login Route
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
+
+    user = execute_query("SELECT id, username FROM users WHERE username = %s AND password = %s",
+                         (username, password), fetch_one=True)
+
+    if user:
+        session['user_id'] = user[0]
+        session['username'] = user[1]
+
+        return jsonify({"message": "Login successful", "user": {"id": user[0], "username": user[1]}}), 200
+    else:
+        return jsonify({"error": "Invalid credentials"}), 401
+
+
+# Logout Route
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def logout():
+    session.clear()
+    return jsonify({"message": "Logged out successfully!"}), 200
 # Upload Ordinance
 @app.route("/api/ordinances", methods=["POST"])
 def add_ordinance():
@@ -62,6 +106,8 @@ def add_ordinance():
 
 # Fetch Ordinances
 @app.route("/api/ordinances", methods=["GET"])
+@login_required
+
 def get_ordinances():
     query = "SELECT id, title, number, policies, document_type, status, file_path FROM ordinances"
     ordinances = execute_query(query)
@@ -69,11 +115,13 @@ def get_ordinances():
 
 # Serve Uploaded Files
 @app.route("/uploads/<filename>")
+
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 # Delete Ordinance
 @app.route("/api/ordinances/<int:id>", methods=["DELETE"])
+@login_required
 def delete_ordinance(id):
     file_record = execute_query("SELECT file_path FROM ordinances WHERE id = %s", (id,), fetch_one=True)
     if file_record and file_record[0]:
@@ -86,6 +134,7 @@ def delete_ordinance(id):
 
 # Update Ordinance Status
 @app.route("/api/ordinances/<int:id>", methods=["PUT"])
+@login_required
 def update_status(id):
     data = request.json
     if not data.get("status"):
@@ -95,6 +144,7 @@ def update_status(id):
 
 # Dashboard Counts
 @app.route("/api/dashboard", methods=["GET"])
+@login_required
 def get_dashboard_counts():
     statuses = ["Pending", "Approved", "Amended", "Under Review", "Implemented"]
     counts = {
@@ -151,6 +201,7 @@ def get_all_ordinances_with_scope():
 
 # Add or Update Coverage Scope
 @app.route("/api/coverage_scope", methods=["POST"])
+@login_required
 def add_or_update_coverage_scope():
     try:
         data = request.json
@@ -170,6 +221,7 @@ def add_or_update_coverage_scope():
 
 # Add or Update Objective or Implementation
 @app.route("/api/objectives_implementation", methods=["POST"])
+@login_required
 def add_or_update_objective():
     try:
         data = request.json
@@ -189,6 +241,7 @@ def add_or_update_objective():
         return jsonify({"error": "Failed to add/update Objective", "details": str(e)}), 500
 
 @app.route("/api/objectives_implementation", methods=["GET"])
+@login_required
 def get_all_Objective():
     query = """
         SELECT o.id, o.title, o.number, o.status, o.document_type,

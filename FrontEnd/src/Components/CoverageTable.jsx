@@ -24,7 +24,10 @@ export default function OrdinanceTable() {
 		const fetchOrdinances = async () => {
 			try {
 				const response = await axios.get(
-					"http://localhost:5000/api/ordinancesCoverage"
+					"http://localhost:5000/api/ordinancesCoverage",
+					{
+						withCredentials: true,
+					}
 				);
 				setOrdinances(response.data);
 			} catch (err) {

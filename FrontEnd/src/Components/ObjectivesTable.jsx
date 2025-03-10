@@ -11,6 +11,7 @@ import {
 	Paper,
 	Typography,
 	CircularProgress,
+	TablePagination,
 } from "@mui/material";
 
 export default function ObjectivesTable() {
@@ -18,13 +19,16 @@ export default function ObjectivesTable() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [page, setPage] = useState(0);
+	const [rowsPerPage, setRowsPerPage] = useState(5);
 
-	// Fetch all ordinances and their coverage when the component mounts
+	// Fetch ordinances
 	useEffect(() => {
 		const fetchOrdinances = async () => {
 			try {
 				const response = await axios.get(
-					"http://localhost:5000/api/objectives_implementation"
+					"http://localhost:5000/api/objectives_implementation",
+					{ withCredentials: true }
 				);
 				setOrdinances(response.data);
 			} catch (err) {
@@ -61,6 +65,31 @@ export default function ObjectivesTable() {
 		)
 	);
 
+	// Pagination logic
+	const paginatedData = filteredOrdinances
+		.flatMap(
+			(ordinance) =>
+				ordinance.objectives_implementation?.map((scope) => ({
+					id: scope.id,
+					title: ordinance.title,
+					key_provisions: scope.key_provisions,
+					lead_agency: scope.lead_agency,
+					policy_objectives: scope.policy_objectives,
+					programs_activities: scope.programs_activities,
+					supporting_agencies: scope.supporting_agencies,
+				})) || []
+		)
+		.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+	// Handle page change
+	const handleChangePage = (_, newPage) => setPage(newPage);
+
+	// Handle rows per page change
+	const handleChangeRowsPerPage = (event) => {
+		setRowsPerPage(parseInt(event.target.value, 10));
+		setPage(0);
+	};
+
 	return (
 		<div>
 			<TextField
@@ -69,54 +98,60 @@ export default function ObjectivesTable() {
 				fullWidth
 				margin="normal"
 				value={searchTerm}
-				onChange={(e) => setSearchTerm(e.target.value)}
+				onChange={(e) => {
+					setSearchTerm(e.target.value);
+					setPage(0); // Reset page to 1 (index 0) when search changes
+				}}
 				style={{ backgroundColor: "white" }}
 			/>
-			{filteredOrdinances.some(
-				(ordinance) => ordinance.objectives_implementation?.length > 0
-			) ? (
-				<>
-					<Typography variant="h4" gutterBottom>
-						Objectives or Implementation
-					</Typography>
-				</>
-			) : null}
 
-			{/* Coverage Scope Table */}
-			{filteredOrdinances.map((ordinance) =>
-				ordinance.objectives_implementation?.length > 0 ? (
-					<TableContainer
-						key={ordinance.id}
-						component={Paper}
-						style={{ marginTop: "20px" }}
-					>
-						<Table>
-							<TableHead>
-								<TableRow>
-									<TableCell>Title</TableCell>
-									<TableCell>Key Provisions</TableCell>
-									<TableCell>Lead Agency</TableCell>
-									<TableCell>Policy Objectives</TableCell>
-									<TableCell>Programs/Activities</TableCell>
-									<TableCell>Supporting Agencies</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{ordinance.objectives_implementation.map((scope) => (
-									<TableRow key={scope.id}>
-										<TableCell key={ordinance.id}>{ordinance.title}</TableCell>
-										<TableCell>{scope.key_provisions}</TableCell>
-										<TableCell>{scope.lead_agency}</TableCell>
-										<TableCell>{scope.policy_objectives}</TableCell>
-										<TableCell>{scope.programs_activities} </TableCell>
-										<TableCell>{scope.supporting_agencies}</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</TableContainer>
-				) : null
+			{filteredOrdinances.length > 0 && (
+				<Typography variant="h4" gutterBottom>
+					Objectives or Implementation
+				</Typography>
 			)}
+
+			<TableContainer component={Paper}>
+				<Table>
+					<TableHead>
+						<TableRow>
+							<TableCell>Title</TableCell>
+							<TableCell>Key Provisions</TableCell>
+							<TableCell>Lead Agency</TableCell>
+							<TableCell>Policy Objectives</TableCell>
+							<TableCell>Programs/Activities</TableCell>
+							<TableCell>Supporting Agencies</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{paginatedData.map((row) => (
+							<TableRow key={row.id}>
+								<TableCell>{row.title}</TableCell>
+								<TableCell>{row.key_provisions}</TableCell>
+								<TableCell>{row.lead_agency}</TableCell>
+								<TableCell>{row.policy_objectives}</TableCell>
+								<TableCell>{row.programs_activities}</TableCell>
+								<TableCell>{row.supporting_agencies}</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</TableContainer>
+
+			{/* Pagination Component */}
+			<TablePagination
+				rowsPerPageOptions={[5, 10, 20]}
+				component="div"
+				count={
+					filteredOrdinances.flatMap(
+						(ord) => ord.objectives_implementation || []
+					).length
+				}
+				rowsPerPage={rowsPerPage}
+				page={page}
+				onPageChange={handleChangePage}
+				onRowsPerPageChange={handleChangeRowsPerPage}
+			/>
 		</div>
 	);
 }

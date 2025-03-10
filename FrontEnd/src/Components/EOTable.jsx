@@ -36,7 +36,9 @@ const EOTable = () => {
 
 	const fetchOrdinances = async () => {
 		try {
-			const response = await axios.get(`${BASE_URL}/api/ordinances`);
+			const response = await axios.get(`${BASE_URL}/api/ordinances`, {
+				withCredentials: true,
+			});
 			setOrdinances(response.data);
 		} catch (error) {
 			console.error("Error fetching ordinances:", error);
@@ -116,7 +118,10 @@ const EOTable = () => {
 				fullWidth
 				margin="normal"
 				value={searchQuery}
-				onChange={handleSearchChange}
+				onChange={(event) => {
+					handleSearchChange(event);
+					setPage(0);
+				}}
 				sx={{ backgroundColor: "white" }}
 			/>
 

@@ -10,13 +10,15 @@ import {
 	Typography,
 } from "@mui/material";
 
-const AddCoverageScope = () => {
+const AddObjectives = () => {
 	const [ordinances, setOrdinances] = useState([]);
 	const [formData, setFormData] = useState({
 		ordinance_id: "",
-		inclusive_period: "",
-		target_beneficiaries: "General Public",
-		geographical_coverage: "",
+		policy_objectives: "",
+		lead_agency: "",
+		supporting_agencies: "",
+		key_provisions: "",
+		programs_activities: "",
 	});
 
 	useEffect(() => {
@@ -39,17 +41,20 @@ const AddCoverageScope = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			await axios.post("http://localhost:5000/api/coverage_scope", formData);
-			alert("Coverage scope added successfully!");
+			await axios.post(
+				"http://localhost:5000/api/objectives_implementation",
+				formData
+			);
+			alert("Objective/Implementation added successfully!");
 		} catch (error) {
-			console.error("Error adding coverage scope:", error);
+			console.error("Error adding Objective or Implementation:", error);
 		}
 	};
 
 	return (
 		<Card>
 			<CardContent>
-				<Typography variant="h5">Coverage Scope</Typography>
+				<Typography variant="h5">Add Objectives/Implementation</Typography>
 				<form onSubmit={handleSubmit}>
 					<Typography>Ordinance:</Typography>
 					<Autocomplete
@@ -74,55 +79,58 @@ const AddCoverageScope = () => {
 						)}
 					/>
 
-					<Typography>Inclusive Period:</Typography>
+					<Typography>Policy/Objectives:</Typography>
 					<TextField
 						type="text"
-						name="inclusive_period"
-						value={formData.inclusive_period}
+						name="policy_objectives"
+						value={formData.policy_objectives}
 						onChange={handleChange}
 						fullWidth
 						required
 					/>
 
-					<Typography>Target Beneficiaries/Categories:</Typography>
-					<TextField
-						name="target_beneficiaries"
-						value={formData.target_beneficiaries}
-						onChange={handleChange}
-						select
-						fullWidth
-						required
-					>
-						{[
-							"General Public",
-							"Women",
-							"Children",
-							"Solo Parents",
-							"PWDs",
-							"MSMEs",
-							"Others",
-						].map((option) => (
-							<MenuItem key={option} value={option}>
-								{option}
-							</MenuItem>
-						))}
-					</TextField>
-
-					<Typography>Geographical Coverage:</Typography>
+					<Typography>Lead Agency:</Typography>
 					<TextField
 						type="text"
-						name="geographical_coverage"
-						value={formData.geographical_coverage}
+						name="lead_agency"
+						value={formData.lead_agency}
 						onChange={handleChange}
 						fullWidth
 						required
 					/>
 
-					<Button type="submit">Add Coverage Scope</Button>
+					<Typography>Supporting Agency:</Typography>
+					<TextField
+						type="text"
+						name="supporting_agencies"
+						value={formData.supporting_agencies}
+						onChange={handleChange}
+						fullWidth
+						required
+					/>
+					<Typography>Key Provisions:</Typography>
+					<TextField
+						type="text"
+						name="key_provisions"
+						value={formData.key_provisions}
+						onChange={handleChange}
+						fullWidth
+						required
+					/>
+					<Typography>Programs/Activities:</Typography>
+					<TextField
+						type="text"
+						name="programs_activities"
+						value={formData.programs_activities}
+						onChange={handleChange}
+						fullWidth
+						required
+					/>
+					<Button type="submit">Add Objectives/Implementation</Button>
 				</form>
 			</CardContent>
 		</Card>
 	);
 };
 
-export default AddCoverageScope;
+export default AddObjectives;

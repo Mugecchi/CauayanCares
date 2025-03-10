@@ -3,7 +3,9 @@ import React from "react";
 import EOTable from "../Components/EOTable";
 import EOForm from "../Components/EOForms";
 import AddCoverageScope from "../Components/AddCoverageScope";
-import OrdinanceTable from "../Components/OrdinanceTable";
+import CoverageTable from "../Components/CoverageTable";
+import AddObjectives from "../Components/AddObjectives";
+import ObjectivesTable from "../Components/ObjectivesTable";
 
 function ManageForms() {
 	return (
@@ -13,17 +15,17 @@ function ManageForms() {
 				spacing={2}
 				sx={{ display: "flex", flexDirection: "row" }}
 			>
-				<Grid2 size={{ xs: 12, md: 12 }}>
-					<EOForm />
-				</Grid2>
+				<Grid2 size={{ xs: 12, md: 12 }}>{/* <EOForm /> */}</Grid2>
 				<Grid2 size={{ xs: 12, md: 12 }}>
 					<EOTable />
 				</Grid2>
 				<Grid2 size={{ xs: 12, md: 12 }}>
-					<AddCoverageScope />
+					{/* <AddObjectives /> */}
+					{/* <AddCoverageScope /> */}
 				</Grid2>
 				<Grid2 size={{ xs: 12, md: 12 }}>
-					<OrdinanceTable />
+					{/* <CoverageTable /> */}
+					<ObjectivesTable />
 				</Grid2>
 			</Grid2>
 		</Box>

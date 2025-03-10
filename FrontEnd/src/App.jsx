@@ -18,8 +18,8 @@ const App = () => {
 					}}
 				>
 					<Routes>
-						<Route path="/" element={<ManageForms />} />
-						<Route path="/Dashboard" element={<Dashboard />} />
+						<Route path="/ManageForms" element={<ManageForms />} />
+						<Route path="/" element={<Dashboard />} />
 					</Routes>
 				</div>
 			</div>

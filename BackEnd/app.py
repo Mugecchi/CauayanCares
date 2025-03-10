@@ -5,228 +5,227 @@ import mysql.connector
 
 app = Flask(__name__)
 CORS(app)
-
 UPLOAD_FOLDER = "uploads"
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Database connection
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="1234",
-    database="ordinances"
-)
-cursor = db.cursor()
+# Database Connection Function
+def get_db_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="1234",
+        database="ordinances"
+    )
 
-# Route to handle file uploads and ordinance data
+# Utility function to execute queries
+def execute_query(query, params=(), fetch_one=False, commit=False):
+    db = get_db_connection()
+    cursor = db.cursor()
+    cursor.execute(query, params)
+    result = cursor.fetchone() if fetch_one else cursor.fetchall()
+    if commit:
+        db.commit()
+    cursor.close()
+    db.close()
+    return result
+
+# Upload Ordinance
 @app.route("/api/ordinances", methods=["POST"])
 def add_ordinance():
     try:
-        title = request.form.get("title")
-        number = request.form.get("number")
-        date_issued = request.form.get("dateIssued")
-        policies = request.form.get("policies")
-        document_type = request.form.get("documentType")
-        date_effectivity = request.form.get("dateEffectivity")
-        status = request.form.get("status")
-        related_ordinances = request.form.get("relatedOrdinances")
-
+        data = request.form
         file = request.files.get("file")
-        file_path = None
+        file_path = file.filename if file else None
+
+        # Check for duplicate title
+        existing = execute_query("SELECT COUNT(*) FROM ordinances WHERE title = %s", (data.get("title"),), fetch_one=True)
+        if existing[0] > 0:
+            return jsonify({"error": "Ordinance with this title already exists!"}), 400
 
         if file:
-            file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-            file.save(file_path)
+            file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
 
-        # ✅ Check if title already exists
-        cursor.execute("SELECT COUNT(*) FROM ordinances WHERE title = %s", (title,))
-        result = cursor.fetchone()
-        
-        if result[0] > 0:
-            return jsonify({"error": "Ordinance with this title already exists!"}), 400  # Reject request
-
-        # ✅ Insert new ordinance if title does not exist
         query = """
             INSERT INTO ordinances (title, number, date_issued, policies, document_type, date_effectivity, status, related_ordinances, file_path)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (
-            title, number, date_issued, policies, document_type, date_effectivity, status, related_ordinances, 
-            file.filename if file else None
-        ))
-        db.commit()
+        execute_query(query, (
+            data.get("title"), data.get("number"), data.get("dateIssued"), data.get("policies"),
+            data.get("documentType"), data.get("dateEffectivity"), data.get("status"),
+            data.get("relatedOrdinances"), file_path
+        ), commit=True)
 
-        return jsonify({"message": "Ordinance added successfully!"}), 201  # ✅ Return success message
-
+        return jsonify({"message": "Ordinance added successfully!"}), 201
     except Exception as e:
-        db.rollback()
-        return jsonify({"error": str(e)}), 500  # Return error message for debugging
+        return jsonify({"error": str(e)}), 500
 
-# Route to fetch ordinances
+# Fetch Ordinances
 @app.route("/api/ordinances", methods=["GET"])
 def get_ordinances():
-    cursor.execute("SELECT id, title, number, policies, document_type, status, file_path FROM ordinances")
-    ordinances = [{"id": row[0], "title": row[1], "number": row[2], "policies": row[3], "document_type":row[4],"status": row[5], "file_path": row[6]} for row in cursor.fetchall()]
-    return jsonify(ordinances)
+    query = "SELECT id, title, number, policies, document_type, status, file_path FROM ordinances"
+    ordinances = execute_query(query)
+    return jsonify([dict(zip(["id", "title", "number", "policies", "document_type", "status", "file_path"], row)) for row in ordinances])
 
-# Route to serve uploaded files
+# Serve Uploaded Files
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-# Route to delete an ordinance
+# Delete Ordinance
 @app.route("/api/ordinances/<int:id>", methods=["DELETE"])
 def delete_ordinance(id):
-    cursor.execute("SELECT file_path FROM ordinances WHERE id = %s", (id,))
-    file_record = cursor.fetchone()
-
+    file_record = execute_query("SELECT file_path FROM ordinances WHERE id = %s", (id,), fetch_one=True)
     if file_record and file_record[0]:
         file_path = os.path.join(app.config["UPLOAD_FOLDER"], file_record[0])
         if os.path.exists(file_path):
-            os.remove(file_path)  # Delete file from storage
+            os.remove(file_path)
 
-    cursor.execute("DELETE FROM ordinances WHERE id = %s", (id,))
-    db.commit()
-
+    execute_query("DELETE FROM ordinances WHERE id = %s", (id,), commit=True)
     return jsonify({"message": "Ordinance deleted successfully!"})
 
+# Update Ordinance Status
 @app.route("/api/ordinances/<int:id>", methods=["PUT"])
 def update_status(id):
     data = request.json
-    new_status = data.get("status")
-
-    if not new_status:
+    if not data.get("status"):
         return jsonify({"error": "Status is required"}), 400
+    execute_query("UPDATE ordinances SET status = %s WHERE id = %s", (data["status"], id), commit=True)
+    return jsonify({"message": "Status updated successfully!"})
 
-    try:
-        cursor.execute("UPDATE ordinances SET status = %s WHERE id = %s", (new_status, id))
-        db.commit()
-        return jsonify({"message": "Status updated successfully!"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
+# Dashboard Counts
 @app.route("/api/dashboard", methods=["GET"])
 def get_dashboard_counts():
-    cursor.execute("SELECT COUNT(*) FROM ordinances")
-    ordinances_count = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM ordinances WHERE status = 'Pending'")
-    pending_count = cursor.fetchone()[0]
+    statuses = ["Pending", "Approved", "Amended", "Under Review", "Implemented"]
+    counts = {
+        "ordinances_count": execute_query("SELECT COUNT(*) FROM ordinances", fetch_one=True)[0]
+    }
+
+    for status in statuses:
+        key = f"{status.lower().replace(' ', '_')}_count"  # Fix key formatting
+        counts[key] = execute_query(
+            "SELECT COUNT(*) FROM ordinances WHERE status = %s", (status,), fetch_one=True
+        )[0]
+
+    return jsonify(counts)
 
 
-    cursor.execute("SELECT COUNT(*) FROM ordinances WHERE status = 'Approved'")
-    approved_count = cursor.fetchone()[0]
+# Fetch Ordinance with Coverage Scope
 
-    cursor.execute("SELECT COUNT(*) FROM ordinances WHERE status = 'Amended'")
-    amended_count = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM ordinances WHERE status = 'Under Review'")
-    under_review_count = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM ordinances WHERE status = 'Implemented'")
-    implemented_count = cursor.fetchone()[0]
-
-    return jsonify({
-        "ordinances_count": ordinances_count,
-        "pending_count": pending_count,
-        "approved_count": approved_count,
-        "amended_count": amended_count,
-        "under_review_count": under_review_count,
-        "implemented_count": implemented_count
-    })
-
-@app.route("/api/ordinances/id/<int:ordinance_id>", methods=["GET"])
-def get_ordinance_with_scope_by_id(ordinance_id):
-    cursor.execute("""
+@app.route("/api/ordinancesCoverage", methods=["GET"])
+def get_all_ordinances_with_scope():
+    query = """
         SELECT o.id, o.title, o.number, o.status, o.document_type,
                cs.id AS coverage_id, cs.inclusive_period, cs.target_beneficiaries, cs.geographical_coverage
         FROM ordinances o
         LEFT JOIN coverage_scope cs ON o.id = cs.ordinance_id
-        WHERE o.id = %s
-    """, (ordinance_id,))
-    
-    rows = cursor.fetchall()
-    
+    """
+    rows = execute_query(query)
+
     if not rows:
-        return jsonify({"error": "Ordinance not found"}), 404
+        return jsonify({"error": "No ordinances found"}), 404
 
-    # Extract ordinance details from the first row
-    ordinance = {
-        "id": rows[0][0],
-        "title": rows[0][1],
-        "number": rows[0][2],
-        "status": rows[0][3],
-        "document_type": rows[0][4],
-        "coverage_scopes": []
-    }
+    ordinances_dict = {}
 
-    # Extract coverage scopes if available
     for row in rows:
-        if row[5]:  # Check if coverage scope exists
-            ordinance["coverage_scopes"].append({
+        ordinance_id = row[0]
+        if ordinance_id not in ordinances_dict:
+            ordinances_dict[ordinance_id] = {
+                "id": row[0],
+                "title": row[1],
+                "number": row[2],
+                "status": row[3],
+                "document_type": row[4],
+                "coverage_scopes": []
+            }
+        if row[5]:  # If coverage exists
+            ordinances_dict[ordinance_id]["coverage_scopes"].append({
                 "id": row[5],
                 "inclusive_period": row[6],
                 "target_beneficiaries": row[7],
-                "geographical_coverage": row[8],
+                "geographical_coverage": row[8]
             })
 
-    return jsonify(ordinance)
-
-@app.route("/api/ordinances/title/<string:title>", methods=["GET"])
-def get_ordinance_with_scope_by_title(title):
-    search_query = f"%{title}%"
-    print("Searching for:", search_query)  # Debugging log
-
-    cursor.execute("""
-        SELECT o.id, o.title, o.number, o.status, o.document_type,
-               cs.id AS coverage_id, cs.inclusive_period, cs.target_beneficiaries, cs.geographical_coverage
-        FROM ordinances o
-        LEFT JOIN coverage_scope cs ON o.id = cs.ordinance_id
-        WHERE LOWER(o.title) LIKE LOWER(%s)  -- Case-insensitive search
-    """, (search_query,))
-
-    rows = cursor.fetchall()
-    print("Query Result:", rows)  # Debugging log
-
-    if not rows:
-        return jsonify({"error": "Ordinance not found"}), 404
-
-    # Process results (same as before)
+    return jsonify(list(ordinances_dict.values()))
 
 
-
+# Add or Update Coverage Scope
 @app.route("/api/coverage_scope", methods=["POST"])
 def add_or_update_coverage_scope():
     try:
         data = request.json
-        ordinance_title = data.get("ordinance_title")
-        inclusive_period = data.get("inclusive_period")
-        target_beneficiaries = data.get("target_beneficiaries")
-        geographical_coverage = data.get("geographical_coverage")
-
         query = """
-            INSERT INTO coverage_scope (ordinance_title, inclusive_period, target_beneficiaries, geographical_coverage)
+            INSERT INTO coverage_scope (ordinance_id, inclusive_period, target_beneficiaries, geographical_coverage)
             VALUES (%s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE 
                 inclusive_period = VALUES(inclusive_period),
                 target_beneficiaries = VALUES(target_beneficiaries),
                 geographical_coverage = VALUES(geographical_coverage)
         """
-        cursor.execute(query, (ordinance_title, inclusive_period, target_beneficiaries, geographical_coverage))
-        db.commit()
-
+        execute_query(query, (data.get("ordinance_id"), data.get("inclusive_period"), data.get("target_beneficiaries"), data.get("geographical_coverage")), commit=True)
         return jsonify({"message": "Coverage scope added/updated successfully!"})
-
     except Exception as e:
-        print("Error adding/updating coverage scope:", str(e))  # Debugging logs
-        return jsonify({"error": "Failed to add/update coverage scope"}), 500
+        return jsonify({"error": "Failed to add/update coverage scope", "details": str(e)}), 500
 
+
+# Add or Update Objective or Implementation
+@app.route("/api/objectives_implementation", methods=["POST"])
+def add_or_update_objective():
+    try:
+        data = request.json
+        query = """
+            INSERT INTO objectives_implementation (ordinance_id,policy_objectives,lead_agency,supporting_agencies,key_provisions,programs_activities)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE 
+                policy_objectives = VALUES(policy_objectives),
+                lead_agency = VALUES(lead_agency),
+                supporting_agencies = VALUES(supporting_agencies),
+                key_provisions = VALUES(key_provisions),
+                programs_activities = VALUES(programs_activities)
+        """
+        execute_query(query, (data.get("ordinance_id"), data.get("policy_objectives"), data.get("lead_agency"), data.get("supporting_agencies"),data.get("key_provisions"),data.get("programs_activities")), commit=True)
+        return jsonify({"message": "Objective added/updated successfully!"})
+    except Exception as e:
+        return jsonify({"error": "Failed to add/update Objective", "details": str(e)}), 500
+
+@app.route("/api/objectives_implementation", methods=["GET"])
+def get_all_Objective():
+    query = """
+        SELECT o.id, o.title, o.number, o.status, o.document_type,
+               oi.ordinance_id,oi.policy_objectives,oi.lead_agency,oi.supporting_agencies,oi.key_provisions, oi.programs_activities
+        FROM ordinances o
+        LEFT JOIN objectives_implementation oi ON o.id = oi.ordinance_id
+    """
+    rows = execute_query(query)
+
+    if not rows:
+        return jsonify({"error": "No ordinances found"}), 404
+
+    ordinances_dict = {}
+
+    for row in rows:
+        ordinance_id = row[0]
+        if ordinance_id not in ordinances_dict:
+            ordinances_dict[ordinance_id] = {
+                "id": row[0],
+                "title": row[1],
+                "number": row[2],
+                "status": row[3],
+                "document_type": row[4],
+                "objectives_implementation": []
+            }
+        if row[5]:  # If coverage exists
+            ordinances_dict[ordinance_id]["objectives_implementation"].append({
+                "id": row[5],
+                "policy_objectives": row[6],
+                "lead_agency": row[7],
+                "supporting_agencies": row[8],
+                "key_provisions": row[9],
+                "programs_activities": row[10]
+            })
+
+    return jsonify(list(ordinances_dict.values()))
 
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-

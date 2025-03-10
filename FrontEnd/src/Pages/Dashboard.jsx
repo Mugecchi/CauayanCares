@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Box, Card, CardContent, Grid2, Typography } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
+import Chart from "react-apexcharts";
 
 const BASE_URL = "http://localhost:5000";
 
-const Test = () => {
-	const [counts, setCounts] = useState({
-		ordinances_count: 0,
-		approved_count: 0,
-		amended_count: 0,
-		under_review_count: 0,
-		implemented_count: 0,
-	});
+const Dashboard = () => {
+	const [counts, setCounts] = useState(null);
+	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
 		fetchCounts();
@@ -23,88 +19,113 @@ const Test = () => {
 			setCounts(response.data);
 		} catch (error) {
 			console.error("Error fetching ordinance counts:", error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
+	// Show loading indicator while fetching data
+	if (loading) {
+		return (
+			<Box
+				display="flex"
+				justifyContent="center"
+				alignItems="center"
+				height="100vh"
+			>
+				<CircularProgress />
+			</Box>
+		);
+	}
+
+	// Define colors manually for each bar
+	const colors = [
+		"#5D3786",
+		"#FF5722",
+		"#4CAF50",
+		"#FFC107",
+		"#2196F3",
+		"#9C27B0",
+	];
+
+	const chartOptions = {
+		chart: {
+			type: "bar",
+			toolbar: { show: false },
+		},
+		plotOptions: {
+			bar: {
+				horizontal: false,
+				columnWidth: "50%",
+				endingShape: "rounded",
+				distributed: true,
+			},
+		},
+		dataLabels: { enabled: false },
+		xaxis: {
+			categories: [
+				"Total",
+				"Pending",
+				"Approved",
+				"Amended",
+				"Under Review",
+				"Implemented",
+			],
+		},
+		tooltip: { theme: "light" },
+		colors: colors, // Set bar colors
+		fill: { opacity: 1 },
+	};
+
+	const chartSeries = [
+		{
+			name: "Ordinances",
+			data: [
+				counts.ordinances_count,
+				counts.pending_count,
+				counts.approved_count,
+				counts.amended_count,
+				counts.under_review_count,
+				counts.implemented_count,
+			],
+		},
+	];
+
 	return (
-		<Grid2>
-			<Typography variant="h4">Dashboard</Typography>
-			<Grid2>
-				<Box>
-					<Grid2 container spacing={2} alignItems="center">
-						{[
-							{
-								label: "Total Ordinances",
-								count: counts.ordinances_count,
-								color:
-									"linear-gradient(to left, rgba(255,255,255,0.6), rgba(255,255,255,0)) , #5D3786",
-							},
-							{
-								label: "Pending",
-								count: counts.pending_count,
-								color:
-									"linear-gradient(to left, rgba(255,255,255,0.6), rgba(255,255,255,0)) , #5D3786",
-							},
-							{
-								label: "Approved",
-								count: counts.approved_count,
-								color:
-									"linear-gradient(to left, rgba(255,255,255,0.6), rgba(255,255,255,0)) , #4CAF50",
-							},
-							{
-								label: "Amended",
-								count: counts.amended_count,
-								color:
-									"linear-gradient(to left, rgba(255,255,255,0.6), rgba(255,255,255,0)) , #FFC107",
-							},
-							{
-								label: "Under Review",
-								count: counts.under_review_count,
-								color:
-									"linear-gradient(to left, rgba(255,255,255,0.6), rgba(255,255,255,0)) , #2196F3",
-							},
-							{
-								label: "Implemented",
-								count: counts.implemented_count,
-								color:
-									"linear-gradient(to left, rgba(255,255,255,0.6), rgba(255,255,255,0)) , #9C27B0",
-							},
-						].map((item, index) => (
-							<Grid2
-								item
-								size={{ xs: 12, sm: 6, md: 4 }}
-								sx={{ display: "flex" }}
-								key={index}
-							>
-								<Card
-									sx={{
-										padding: 2,
-										borderRadius: 2,
-										background: item.color,
-										color: "white",
-										flex: "auto",
-									}}
-								>
-									<CardContent>
-										<Grid2
-											container
-											spacing={2}
-											alignItems="center"
-											justifyContent="center"
-											direction="row"
-										>
-											<Typography variant="h6">{item.label}</Typography>
-											<Typography variant="h3">{item.count}</Typography>
-										</Grid2>
-									</CardContent>
-								</Card>
-							</Grid2>
-						))}
-					</Grid2>
-				</Box>
-			</Grid2>
-		</Grid2>
+		<Box
+			sx={{
+				p: 4,
+				height: "100vh",
+				display: "flex",
+				flexDirection: "column",
+				justifyContent: "center",
+				background: "#fff",
+				borderRadius: "10px",
+			}}
+		>
+			<Typography
+				variant="h4"
+				gutterBottom
+				sx={{
+					fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" }, // Adjust font size for different screens
+					fontWeight: "bold",
+					textAlign: "center",
+				}}
+			>
+				Dashboard Overview
+			</Typography>
+
+			<Box sx={{ width: "100%", height: "100%", minHeight: "300px" }}>
+				<Chart
+					options={chartOptions}
+					series={chartSeries}
+					type="bar"
+					width="100%"
+					height="100%"
+				/>
+			</Box>
+		</Box>
 	);
 };
 
-export default Test;
+export default Dashboard;

@@ -14,7 +14,7 @@ import {
 export default function EOForm() {
 	const [formData, setFormData] = useState({
 		title: "",
-		documentType: "",
+		documentType: "Executive Order",
 		number: "",
 		dateIssued: "",
 		policies: "",
@@ -92,13 +92,25 @@ export default function EOForm() {
 							fullWidth
 							required
 						/>
+
 						<TextField
 							name="documentType"
+							select
 							label="Document Type"
+							value={formData.documentType}
 							onChange={handleChange}
 							required
 							fullWidth
-						/>
+						>
+							{["Executive Order", "Ordinance", "Memo", "Resolution"].map(
+								(option) => (
+									<MenuItem key={option} value={option}>
+										{option}
+									</MenuItem>
+								)
+							)}
+						</TextField>
+
 						<TextField
 							name="number"
 							label="EO/Ordinance Number"

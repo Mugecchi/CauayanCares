@@ -28,7 +28,7 @@ const EOTable = () => {
 	const [selectedFile, setSelectedFile] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [page, setPage] = useState(0);
-	const [rowsPerPage, setRowsPerPage] = useState(5);
+	const [rowsPerPage, setRowsPerPage] = useState(10);
 
 	useEffect(() => {
 		fetchOrdinances();
@@ -58,32 +58,47 @@ const EOTable = () => {
 		link.click();
 		document.body.removeChild(link);
 	};
-
 	const handleDelete = async (id) => {
 		if (window.confirm("Are you sure you want to delete this ordinance?")) {
 			try {
-				await axios.delete(`${BASE_URL}/api/ordinances/${id}`);
-				fetchOrdinances();
+				const token = localStorage.getItem("token"); // Ensure the token is stored
+				await axios.delete(`${BASE_URL}/api/ordinances/${id}`, {
+					withCredentials: true, // Ensures cookies are sent (if using sessions)
+					headers: {
+						Authorization: `Bearer ${token}`, // Send token for authentication
+					},
+				});
+				fetchOrdinances(); // Refresh the list
 			} catch (error) {
 				console.error("Error deleting ordinance:", error);
+				alert("Failed to delete the ordinance. Check the console for details.");
 			}
 		}
 	};
 
 	const handleStatusChange = async (id, newStatus) => {
 		try {
-			await axios.put(
+			const token = localStorage.getItem("token"); // Retrieve stored token
+
+			const response = await axios.put(
 				`${BASE_URL}/api/ordinances/${id}`,
 				{ status: newStatus },
-				{ headers: { "Content-Type": "application/json" } }
+				{
+					headers: {
+						Authorization: `Bearer ${token}`, // Attach token
+						"Content-Type": "application/json",
+					},
+					withCredentials: true, // Ensures cookies are sent (if using session-based auth)
+				}
 			);
-			fetchOrdinances();
+
+			fetchOrdinances(); // Refresh table data
 		} catch (error) {
 			console.error(
 				"Error updating status:",
-				error.response ? error.response.data : error.message
+				error.response?.data || error.message
 			);
-			alert("Failed to update status. Check console for details.");
+			alert("Failed to update status. Please check console for details.");
 		}
 	};
 
@@ -115,19 +130,16 @@ const EOTable = () => {
 			<TextField
 				label="Search Ordinance"
 				variant="outlined"
-				fullWidth
 				margin="normal"
 				value={searchQuery}
 				onChange={(event) => {
 					handleSearchChange(event);
-					setPage(0);
 				}}
-				sx={{ backgroundColor: "white" }}
 			/>
 
-			<TableContainer component={Paper} sx={{ minHeight: 400 }}>
-				<Table stickyHeader>
-					<TableHead>
+			<TableContainer component={Paper} sx={{ minHeight: 400, minWidth: 1200 }}>
+				<Table stickyHeader size="small">
+					<TableHead sx={{ textAlign: "center" }}>
 						<TableRow>
 							<TableCell>Title</TableCell>
 							<TableCell>Type of Document</TableCell>
@@ -141,13 +153,14 @@ const EOTable = () => {
 						{filteredOrdinances
 							.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 							.map((ordinance) => (
-								<TableRow key={ordinance.id}>
+								<TableRow key={ordinance.id} hover>
 									<TableCell>{ordinance.title}</TableCell>
 									<TableCell>{ordinance.document_type}</TableCell>
 									<TableCell>{ordinance.number}</TableCell>
 									<TableCell>{ordinance.policies}</TableCell>
 									<TableCell>
 										<Select
+											sx={{ minWidth: "150px" }}
 											value={ordinance.status}
 											onChange={(e) =>
 												handleStatusChange(ordinance.id, e.target.value)
@@ -195,7 +208,7 @@ const EOTable = () => {
 			</TableContainer>
 
 			<TablePagination
-				rowsPerPageOptions={[5, 10, 25]}
+				rowsPerPageOptions={[10, 20, 100]}
 				component="div"
 				count={filteredOrdinances.length}
 				rowsPerPage={rowsPerPage}

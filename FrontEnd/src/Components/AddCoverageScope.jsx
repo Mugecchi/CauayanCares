@@ -41,7 +41,9 @@ const AddCoverageScope = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			await axios.post("http://localhost:5000/api/coverage_scope", formData);
+			await axios.post("http://localhost:5000/api/coverage_scope", formData, {
+				withCredentials: true,
+			});
 			alert("Coverage scope added successfully!");
 		} catch (error) {
 			console.error("Error adding coverage scope:", error);

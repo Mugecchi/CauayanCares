@@ -1,8 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const Login = () => {
+const Login = ({ setIsLoggedIn }) => {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
@@ -17,7 +17,9 @@ const Login = () => {
 				{ username, password },
 				{ withCredentials: true }
 			);
-			alert(response.data.message);
+
+			localStorage.setItem("userToken", response.data.token); // Store token
+			setIsLoggedIn(true); // Update state
 			navigate("/dashboard");
 		} catch (err) {
 			setError(err.response?.data?.error || "Login failed");

@@ -67,6 +67,18 @@ def login():
     else:
         return jsonify({"error": "Invalid credentials"}), 401
 
+@app.route('/api/protected', methods=['GET'])
+@login_required
+def protected():
+    # Access user details from session
+    user_id = session['user_id']
+    username = session['username']
+
+    return jsonify({
+        "message": "This is a protected route!",
+        "user": {"id": user_id, "username": username}
+    }), 200
+
 
 # Logout Route
 @app.route('/api/logout', methods=['POST'])
@@ -163,6 +175,7 @@ def get_dashboard_counts():
 # Fetch Ordinance with Coverage Scope
 
 @app.route("/api/ordinancesCoverage", methods=["GET"])
+@login_required
 def get_all_ordinances_with_scope():
     query = """
         SELECT o.id, o.title, o.number, o.status, o.document_type,
@@ -279,6 +292,63 @@ def get_all_Objective():
 
     return jsonify(list(ordinances_dict.values()))
 
+@app.route("/api/financial", methods=["POST"])
+@login_required
+def add_or_update_financial():
+    try:
+        data = request.json
+        query = """
+            INSERT INTO budget_allocation (ordinance_id, allocated_budget, utilized_budget, gad_budget,financial_transparency_measures)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE 
+                allocated_budget = VALUES(allocated_budget),
+                utilized_budget = VALUES(utilized_budget),
+                gad_budget = VALUES(gad_budget)
+                financial_transparency_measures = VALUES(financial_transparency_measures)
+        """
+        execute_query(query, (data.get("ordinance_id"), data.get("allocated_budget"), data.get("utilized_budget"), data.get("gad_budget"),data.get("financial_transparency_measures")), commit=True)
+        return jsonify({"message": "Budget Allocation added/updated successfully!"})
+    except Exception as e:
+        return jsonify({"error": "Failed to add/update Budget Allocation", "details": str(e)}), 500
+
+@app.route("/api/financial", methods=["GET"])
+@login_required
+def get_all_Budget():
+    query = """
+        SELECT o.id, o.title, o.number, o.status, o.document_type,
+               ba.ordinance_id,ba.allocated_budget,ba.utilized_budget,ba.gad_budget,ba.financial_transparency_measures
+        FROM ordinances o
+        LEFT JOIN budget_allocation ba ON o.id = ba.ordinance_id
+    """
+    rows = execute_query(query)
+
+    if not rows:
+        return jsonify({"error": "No ordinances found"}), 404
+
+    ordinances_dict = {}
+
+    for row in rows:
+        ordinance_id = row[0]
+        if ordinance_id not in ordinances_dict:
+            ordinances_dict[ordinance_id] = {
+                "id": row[0],
+                "title": row[1],
+                "number": row[2],
+                "status": row[3],
+                "document_type": row[4],
+                "budget_allocation": []
+            }
+        if row[5]:  
+            ordinances_dict[ordinance_id]["budget_allocation"].append({
+                "id": row[5],
+                "ordinance_id":row[6],
+                "allocated_budget":row[7]
+                ,"utilized_budget":row[8]
+                ,"gad_budget":row[9]
+                ,"financial_transparency_measures":row[10]
+            })
+
+    return jsonify(list(ordinances_dict.values()))
 
 if __name__ == "__main__":
     app.run(debug=True)

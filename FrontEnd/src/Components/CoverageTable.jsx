@@ -71,47 +71,31 @@ export default function OrdinanceTable() {
 				onChange={(e) => setSearchTerm(e.target.value)}
 				style={{ backgroundColor: "white" }}
 			/>
-			{filteredOrdinances.some(
-				(ordinance) => ordinance.coverage_scopes?.length > 0
-			) ? (
-				<>
-					<Typography variant="h4" gutterBottom>
-						Coverage Scope
-					</Typography>
-				</>
-			) : null}
 
-			{/* Coverage Scope Table */}
-			{filteredOrdinances.map((ordinance) =>
-				ordinance.coverage_scopes?.length > 0 ? (
-					<TableContainer
-						key={ordinance.id}
-						component={Paper}
-						style={{ marginTop: "20px" }}
-					>
-						<Table>
-							<TableHead>
-								<TableRow>
-									<TableCell>Title</TableCell>
-									<TableCell>Inclusive Period</TableCell>
-									<TableCell>Target Beneficiaries/Categories</TableCell>
-									<TableCell>Geographical Coverage</TableCell>
+			<TableContainer component={Paper} style={{ marginTop: "20px" }}>
+				<Table>
+					<TableHead>
+						<TableRow>
+							<TableCell>Title</TableCell>
+							<TableCell>Inclusive Period</TableCell>
+							<TableCell>Target Beneficiaries/Categories</TableCell>
+							<TableCell>Geographical Coverage</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{filteredOrdinances.map((ordinance) =>
+							ordinance.coverage_scopes.map((scope) => (
+								<TableRow key={scope.id}>
+									<TableCell>{ordinance.title}</TableCell>
+									<TableCell>{scope.inclusive_period}</TableCell>
+									<TableCell>{scope.target_beneficiaries}</TableCell>
+									<TableCell>{scope.geographical_coverage}</TableCell>
 								</TableRow>
-							</TableHead>
-							<TableBody>
-								{ordinance.coverage_scopes.map((scope) => (
-									<TableRow key={scope.id}>
-										<TableCell>{ordinance.title}</TableCell>
-										<TableCell>{scope.inclusive_period}</TableCell>
-										<TableCell>{scope.target_beneficiaries}</TableCell>
-										<TableCell>{scope.geographical_coverage}</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</TableContainer>
-				) : null
-			)}
+							))
+						)}
+					</TableBody>
+				</Table>
+			</TableContainer>
 		</div>
 	);
 }

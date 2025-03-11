@@ -29,12 +29,7 @@ const Dashboard = () => {
 	// Show loading indicator while fetching data
 	if (loading) {
 		return (
-			<Box
-				display="flex"
-				justifyContent="center"
-				alignItems="center"
-				height="100vh"
-			>
+			<Box display="flex" justifyContent="center" alignItems="center">
 				<CircularProgress />
 			</Box>
 		);
@@ -97,7 +92,7 @@ const Dashboard = () => {
 		<Box
 			sx={{
 				p: 4,
-				height: "100vh",
+				height: "calc(100vh - 40px)",
 				display: "flex",
 				flexDirection: "column",
 				justifyContent: "center",
@@ -117,7 +112,7 @@ const Dashboard = () => {
 				Dashboard Overview
 			</Typography>
 
-			<Box sx={{ width: "100%", height: "100%", minHeight: "300px" }}>
+			<Box sx={{ width: "100%", height: "90%", minHeight: "300px" }}>
 				<Chart
 					options={chartOptions}
 					series={chartSeries}

@@ -1,11 +1,10 @@
 import * as React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios"; // Import axios here
+import axios from "axios"; // Import axios
 import {
 	Box,
 	Drawer,
 	List,
-	Divider,
 	ListItem,
 	ListItemButton,
 	ListItemIcon,
@@ -25,8 +24,13 @@ export default function Sidebar() {
 	const navigate = useNavigate();
 
 	const menuItems = [
-		{ text: "Dashboard", path: "/Dashboard", icon: <DashboardIcon /> },
-		{ text: "Manage Forms", path: "/ManageForms", icon: <DescriptionIcon /> },
+		{
+			text: "Dashboard",
+			path: "/Dashboard",
+			icon: <DashboardIcon sx={{ fontSize: 26 }} />,
+		},
+		{ text: "View Forms", path: "/ViewForms", icon: <DescriptionIcon /> },
+		{ text: "LSA", path: "/", icon: "" },
 	];
 
 	// Toggle Drawer
@@ -37,10 +41,15 @@ export default function Sidebar() {
 	const handleLogout = async () => {
 		setOpen(false); // Close the sidebar
 		try {
-			// Get the token from localStorage (or wherever you're storing it)
 			const token = localStorage.getItem("userToken");
 
-			// If token exists, add it to the request header
+			if (!token) {
+				console.warn("No token found, already logged out.");
+				navigate("/");
+				return;
+			}
+
+			// Logout request
 			const response = await axios.post(
 				"http://localhost:5000/api/logout",
 				{},
@@ -48,22 +57,20 @@ export default function Sidebar() {
 					headers: {
 						Authorization: `Bearer ${token}`, // Send token in header
 					},
-					withCredentials: true, // In case you're using cookies for session management
+					withCredentials: true, // In case you're using cookies
 				}
 			);
 
 			if (response.status === 200) {
-				// Successfully logged out on the server, clear local storage
-				localStorage.removeItem("userToken"); // Remove token from local storage
-				localStorage.removeItem("user"); // Clear user session
-				navigate("/"); // Redirect to login page
-				window.location.reload(); // Refresh the page
+				// Clear session
+				localStorage.removeItem("userToken");
+				localStorage.removeItem("user");
+				navigate(0); // Refresh the app (or use navigate("/"))
 			} else {
 				throw new Error("Failed to log out on the server.");
 			}
 		} catch (error) {
 			console.error("Error during logout:", error);
-			// Optionally, display an error message to the user
 		}
 	};
 
@@ -73,6 +80,7 @@ export default function Sidebar() {
 			sx={{
 				width: 250,
 				background: "#5D3786",
+				padding: "25px",
 				height: "100vh",
 				color: "white",
 				display: "flex",
@@ -80,36 +88,53 @@ export default function Sidebar() {
 				justifyContent: "space-between",
 			}}
 			role="presentation"
-			onClick={toggleDrawer(false)}
 		>
-			<div>
+			<Box>
 				<Typography
 					variant="h6"
 					sx={{
 						color: "#ff7706",
-						padding: "20px",
+						padding: "25px",
 						fontWeight: "bold",
+						fontSize: "25px",
+						textAlign: "center",
 					}}
 				>
-					Admin Panel
+					CAUAYAN CARES{" "}
 				</Typography>
-				<Divider sx={{ backgroundColor: "white" }} />
 				<List>
 					{menuItems.map((item) => (
-						<ListItem key={item.path} disablePadding>
+						<ListItem
+							disablePadding
+							key={item.path}
+							sx={{ marginBottom: "10px" }}
+						>
 							<ListItemButton
+								disablePadding
 								component={Link}
 								to={item.path}
+								onClick={toggleDrawer(false)} // Close only when an item is clicked
 								sx={{
 									backgroundColor:
-										location.pathname === item.path ? "#ff7706" : "transparent",
-									"&:hover": { backgroundColor: "#ff7706" },
+										location.pathname === item.path ? "#fbaaff" : "transparent",
+									"&:hover": { backgroundColor: "#fbaaff" },
 									borderRadius: "5px",
-									margin: "5px",
+									width: "100%",
+									gap: "10px",
+									height: "auto",
 								}}
 							>
-								<ListItemIcon sx={{ color: "white" }}>{item.icon}</ListItemIcon>
+								<ListItemIcon
+									disablePadding
+									sx={{
+										color: "white",
+										minWidth: "0",
+									}}
+								>
+									{item.icon}
+								</ListItemIcon>
 								<ListItemText
+									disablePadding
 									primary={item.text}
 									sx={{
 										color: "white",
@@ -121,16 +146,15 @@ export default function Sidebar() {
 						</ListItem>
 					))}
 				</List>
-			</div>
+			</Box>
 			{/* Logout Button */}
 			<Button
+				disablePadding
 				onClick={handleLogout}
-				variant="contained"
 				sx={{
-					backgroundColor: "#ff7706",
+					backgroundColor: "transparent",
 					color: "white",
 					margin: "10px",
-					borderRadius: "5px",
 					"&:hover": { backgroundColor: "#e06505" },
 				}}
 				startIcon={<ExitToAppIcon />}
@@ -142,7 +166,6 @@ export default function Sidebar() {
 
 	return (
 		<>
-			{/* Mobile Menu Button */}
 			<IconButton
 				onClick={toggleDrawer(true)}
 				sx={{
@@ -163,12 +186,10 @@ export default function Sidebar() {
 				<MenuIcon />
 			</IconButton>
 
-			{/* Sidebar for Larger Screens */}
 			<Box sx={{ display: { xs: "none", sm: "block" }, width: "250px" }}>
 				{DrawerList}
 			</Box>
 
-			{/* Mobile Drawer */}
 			<Drawer open={open} onClose={toggleDrawer(false)}>
 				{DrawerList}
 			</Drawer>

@@ -1,27 +1,57 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import {
+	BrowserRouter as Router,
+	Routes,
+	Route,
+	Navigate,
+} from "react-router-dom";
 import Sidebar from "./Includes/Sidebar";
-import ManageForms from "./Pages/ManageForms";
+import ViewForms from "./Pages/ViewForms";
 import Dashboard from "./Pages/Dashboard";
 import Login from "./Pages/Login";
 
 const App = () => {
+	const [isLoggedIn, setIsLoggedIn] = useState(
+		!!localStorage.getItem("userToken") // Read from localStorage initially
+	);
+
+	useEffect(() => {
+		const token = localStorage.getItem("userToken");
+		if (token) {
+			setIsLoggedIn(true);
+		} else {
+			setIsLoggedIn(false);
+		}
+	}, []);
+
 	return (
 		<Router>
 			<div style={{ display: "flex", height: "100vh" }}>
-				<Sidebar />
-				<div
-					style={{
-						padding: "20px",
-						marginLeft: "auto",
-						width: "100%",
-						overflowY: "auto",
-					}}
-				>
+				{isLoggedIn && <Sidebar />} {/* Show Sidebar only if logged in */}
+				<div style={{ padding: "20px", width: "100%", overflowY: "auto" }}>
 					<Routes>
-						<Route path="/" element={<Login />} />
-						<Route path="/ManageForms" element={<ManageForms />} />
-						<Route path="/Dashboard" element={<Dashboard />} />
+						<Route
+							path="/login"
+							element={<Login setIsLoggedIn={setIsLoggedIn} />}
+						/>
+						<Route
+							path="/"
+							element={
+								isLoggedIn ? (
+									<Navigate to="/Dashboard" />
+								) : (
+									<Navigate to="/login" />
+								)
+							}
+						/>
+						<Route
+							path="/ViewForms"
+							element={isLoggedIn ? <ViewForms /> : <Navigate to="/login" />}
+						/>
+						<Route
+							path="/Dashboard"
+							element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />}
+						/>
 					</Routes>
 				</div>
 			</div>

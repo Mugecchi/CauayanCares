@@ -95,7 +95,6 @@ export default function ObjectivesTable() {
 			<TextField
 				label="Search Ordinance"
 				variant="outlined"
-				fullWidth
 				margin="normal"
 				value={searchTerm}
 				onChange={(e) => {
@@ -104,14 +103,19 @@ export default function ObjectivesTable() {
 				}}
 				style={{ backgroundColor: "white" }}
 			/>
-
-			{filteredOrdinances.length > 0 && (
-				<Typography variant="h4" gutterBottom>
+			<TableContainer component={Paper}>
+				<Typography
+					sx={{
+						display: "flex",
+						flexDirection: "column",
+						justifyContent: "center",
+						textAlign: "center",
+					}}
+					variant="h4"
+					gutterBottom
+				>
 					Objectives or Implementation
 				</Typography>
-			)}
-
-			<TableContainer component={Paper}>
 				<Table>
 					<TableHead>
 						<TableRow>

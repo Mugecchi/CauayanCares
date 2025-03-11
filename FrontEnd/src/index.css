@@ -6,7 +6,9 @@
 	color-scheme: light dark;
 	color: var(--text-color);
 	background-color: var(--background-color);
+	font-family: "SF Pro Display", sans-serif;
 }
 * {
 	font-family: "SF Pro Display", sans-serif;
+	box-sizing: border-box;
 }

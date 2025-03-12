@@ -1,136 +1,100 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import {
-	TextField,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableContainer,
-	TableRow,
-	Paper,
-	Typography,
-	CircularProgress,
-	TablePagination,
-} from "@mui/material";
+import { Typography, CircularProgress } from "@mui/material";
+import "datatables.net-dt/css/dataTables.dataTables.min.css";
+import $ from "jquery";
+import "datatables.net";
 
 export default function CoverageTable() {
-	const [ordinances, setOrdinances] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [searchTerm, setSearchTerm] = useState("");
+  const [ordinances, setOrdinances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const tableRef = useRef(null);
+  const containerRef = useRef(null);
+  const dataTableInstance = useRef(null);
+  const [tableHeight, setTableHeight] = useState("500px"); // Default height
 
-	// Pagination state
-	const [page, setPage] = useState(0);
-	const [rowsPerPage, setRowsPerPage] = useState(10);
+  useEffect(() => {
+    const fetchOrdinances = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/ordinancesCoverage",
+          { withCredentials: true }
+        );
+        setOrdinances(response.data);
+      } catch (err) {
+        setError("No Ordinance Found.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-	useEffect(() => {
-		const fetchOrdinances = async () => {
-			try {
-				const response = await axios.get(
-					"http://localhost:5000/api/ordinancesCoverage",
-					{
-						withCredentials: true,
-					}
-				);
-				setOrdinances(response.data);
-			} catch (err) {
-				setError("No Ordinance Found.");
-			} finally {
-				setLoading(false);
-			}
-		};
+    fetchOrdinances();
+  }, []);
 
-		fetchOrdinances();
-	}, []);
+  const adjustTableHeight = () => {
+    if (containerRef.current?.parentElement) {
+      const parentHeight = containerRef.current.parentElement.clientHeight;
+      setTableHeight(`calc(${parentHeight}px - 10px)`); // Subtract margin/padding
+    }
+  };
 
-	if (loading) return <CircularProgress />;
-	if (error) return <Typography color="error">{error}</Typography>;
+  useEffect(() => {
+    if (ordinances.length > 0) {
+      if (dataTableInstance.current) {
+        dataTableInstance.current.destroy();
+      }
 
-	// Filter ordinances based on search term
-	const filteredOrdinances = ordinances.flatMap((ordinance) =>
-		ordinance.coverage_scopes
-			.filter(
-				(scope) =>
-					ordinance.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					scope.inclusive_period
-						?.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					scope.target_beneficiaries
-						?.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					scope.geographical_coverage
-						?.toLowerCase()
-						.includes(searchTerm.toLowerCase())
-			)
-			.map((scope) => ({
-				id: `${ordinance.id}-${scope.id}`,
-				title: ordinance.title,
-				inclusive_period: scope.inclusive_period,
-				target_beneficiaries: scope.target_beneficiaries,
-				geographical_coverage: scope.geographical_coverage,
-			}))
-	);
+      // Adjust table height dynamically
+      adjustTableHeight();
 
-	// Slice for pagination
-	const displayedOrdinances = filteredOrdinances.slice(
-		page * rowsPerPage,
-		page * rowsPerPage + rowsPerPage
-	);
+      // Observe parent height changes
+      const observer = new ResizeObserver(() => adjustTableHeight());
+      observer.observe(containerRef.current.parentElement);
 
-	// Pagination handlers
-	const handlePageChange = (event, newPage) => {
-		setPage(newPage);
-	};
-	const handleRowsPerPageChange = (event) => {
-		setRowsPerPage(parseInt(event.target.value, 10));
-		setPage(0);
-	};
+      // Initialize DataTable
+      dataTableInstance.current = $(tableRef.current).DataTable({
+        responsive: true,
+        destroy: true,
+        autoWidth: false,
+        scrollY: tableHeight,
+        scrollCollapse: true,
+        paging: true,
+        pageLength: 10, // Default to 10 rows
+        lengthChange: false,
+      });
 
-	return (
-		<div>
-			<TextField
-				label="Search Ordinance"
-				variant="outlined"
-				margin="normal"
-				value={searchTerm}
-				onChange={(e) => setSearchTerm(e.target.value)}
-				style={{ backgroundColor: "white" }}
-			/>
+      return () => observer.disconnect(); // Cleanup observer
+    }
+  }, [ordinances, tableHeight]);
 
-			<TableContainer component={Paper}>
-				<Table>
-					<TableHead>
-						<TableRow>
-							<TableCell>Title</TableCell>
-							<TableCell>Inclusive Period</TableCell>
-							<TableCell>Target Beneficiaries/Categories</TableCell>
-							<TableCell>Geographical Coverage</TableCell>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						{displayedOrdinances.map((scope) => (
-							<TableRow key={scope.id} hover>
-								<TableCell>{scope.title}</TableCell>
-								<TableCell>{scope.inclusive_period}</TableCell>
-								<TableCell>{scope.target_beneficiaries}</TableCell>
-								<TableCell>{scope.geographical_coverage}</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</TableContainer>
+  if (loading) return <CircularProgress />;
+  if (error) return <Typography color="error">{error}</Typography>;
 
-			{/* Pagination */}
-			<TablePagination
-				rowsPerPageOptions={[10, 20, 50]}
-				component="div"
-				count={filteredOrdinances.length}
-				rowsPerPage={rowsPerPage}
-				page={page}
-				onPageChange={handlePageChange}
-				onRowsPerPageChange={handleRowsPerPageChange}
-			/>
-		</div>
-	);
+  return (
+    <div ref={containerRef} style={{ height: "100%", width: "100%" }}>
+      <table ref={tableRef} className="display" style={{ width: "100%" }}>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Inclusive Period</th>
+            <th>Target Beneficiaries/Categories</th>
+            <th>Geographical Coverage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ordinances.flatMap((ordinance) =>
+            ordinance.coverage_scopes.map((scope) => (
+              <tr key={`${ordinance.id}-${scope.id}`}>
+                <td>{ordinance.title}</td>
+                <td>{scope.inclusive_period}</td>
+                <td>{scope.target_beneficiaries}</td>
+                <td>{scope.geographical_coverage}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 }

@@ -5,39 +5,41 @@ import $ from "jquery";
 import "datatables.net-dt/css/dataTables.dataTables.min.css";
 import "datatables.net";
 
-export default function ObjectivesTable() {
+export default function BudgetTable() {
   const [ordinances, setOrdinances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const tableRef = useRef(null);
   const containerRef = useRef(null);
   const dataTableInstance = useRef(null);
-  const [tableHeight, setTableHeight] = useState("500px"); // Default height
+  const [tableHeight, setTableHeight] = useState(500);
 
-  // Fetch ordinances
+  // Fetch financial data
   useEffect(() => {
-    const fetchOrdinances = async () => {
+    const fetchFinancialData = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/objectives_implementation",
-          { withCredentials: true }
+          "http://localhost:5000/api/financial",
+          {
+            withCredentials: true,
+          }
         );
         setOrdinances(response.data);
       } catch (err) {
-        setError("No Ordinance Found.");
+        setError("No financial records found.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrdinances();
+    fetchFinancialData();
   }, []);
 
   // Adjust table height dynamically
   const adjustTableHeight = () => {
     if (containerRef.current) {
       const containerHeight = containerRef.current.clientHeight;
-      const adjustedHeight = Math.max(200, containerHeight - 200); // Leave room for headers
+      const adjustedHeight = Math.max(200, containerHeight - 200); // Leaves space for headers
       setTableHeight(adjustedHeight);
     }
   };
@@ -45,28 +47,28 @@ export default function ObjectivesTable() {
   useEffect(() => {
     if (ordinances.length > 0) {
       if (dataTableInstance.current) {
-        dataTableInstance.current.destroy(); // Destroy old instance
+        dataTableInstance.current.destroy(); // Destroy previous instance
       }
 
       adjustTableHeight();
 
-      // Observe parent height changes
+      // Observe container resizing
       const observer = new ResizeObserver(() => adjustTableHeight());
-      observer.observe(containerRef.current.parentElement);
+      observer.observe(containerRef.current);
 
       // Initialize DataTable
       dataTableInstance.current = $(tableRef.current).DataTable({
         responsive: true,
         destroy: true,
         autoWidth: false,
-        scrollY: tableHeight, // Dynamic scroll height
+        scrollY: `${tableHeight}px`,
         scrollCollapse: true,
         paging: true,
-        pageLength: 10, // Default to 10 rows
+        pageLength: 10,
         lengthChange: false,
       });
 
-      return () => observer.disconnect(); // Cleanup observer
+      return () => observer.disconnect(); // Cleanup
     }
   }, [ordinances, tableHeight]);
 
@@ -82,34 +84,41 @@ export default function ObjectivesTable() {
         <thead>
           <tr>
             <th>Title</th>
-            <th>Key Provisions</th>
-            <th>Lead Agency</th>
-            <th>Policy Objectives</th>
-            <th>Programs/Activities</th>
-            <th>Supporting Agencies</th>
+            <th>Number</th>
+            <th>Status</th>
+            <th>Document Type</th>
+            <th>Allocated Budget</th>
+            <th>Utilized Budget</th>
+            <th>GAD Budget</th>
+            <th>Transparency Measures</th>
           </tr>
         </thead>
         <tbody>
           {ordinances
             .flatMap((ordinance) =>
-              ordinance.objectives_implementation?.map((scope) => ({
-                id: scope.id,
+              ordinance.budget_allocation?.map((budget) => ({
+                id: budget.id,
                 title: ordinance.title,
-                key_provisions: scope.key_provisions || "N/A",
-                lead_agency: scope.lead_agency || "N/A",
-                policy_objectives: scope.policy_objectives || "N/A",
-                programs_activities: scope.programs_activities || "N/A",
-                supporting_agencies: scope.supporting_agencies || "N/A",
+                number: ordinance.number,
+                status: ordinance.status,
+                document_type: ordinance.document_type,
+                allocated_budget: budget.allocated_budget || "N/A",
+                utilized_budget: budget.utilized_budget || "N/A",
+                gad_budget: budget.gad_budget || "N/A",
+                financial_transparency_measures:
+                  budget.financial_transparency_measures || "N/A",
               }))
             )
             .map((row) => (
               <tr key={row.id}>
                 <td>{row.title}</td>
-                <td>{row.key_provisions}</td>
-                <td>{row.lead_agency}</td>
-                <td>{row.policy_objectives}</td>
-                <td>{row.programs_activities}</td>
-                <td>{row.supporting_agencies}</td>
+                <td>{row.number}</td>
+                <td>{row.status}</td>
+                <td>{row.document_type}</td>
+                <td>{row.allocated_budget}</td>
+                <td>{row.utilized_budget}</td>
+                <td>{row.gad_budget}</td>
+                <td>{row.financial_transparency_measures}</td>
               </tr>
             ))}
         </tbody>

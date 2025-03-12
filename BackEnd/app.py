@@ -331,11 +331,12 @@ def add_or_update_financial():
 @login_required
 def get_all_Budget():
     query = """
-        SELECT o.id, o.title, o.number, o.status, o.document_type,
-               ba.ordinance_id,ba.allocated_budget,ba.utilized_budget,ba.gad_budget,ba.financial_transparency_measures
-        FROM ordinances o
-        LEFT JOIN budget_allocation ba ON o.id = ba.ordinance_id
-    """
+    SELECT o.id, o.title, o.number, o.status, o.document_type,
+           ba.id, ba.ordinance_id, ba.allocated_budget, ba.utilized_budget, 
+           ba.gad_budget, ba.financial_transparency_measures
+    FROM ordinances o
+    LEFT JOIN budget_allocation ba ON o.id = ba.ordinance_id
+"""
     rows = execute_query(query)
 
     if not rows:
@@ -344,25 +345,26 @@ def get_all_Budget():
     ordinances_dict = {}
 
     for row in rows:
-        ordinance_id = row[0]
+        ordinance_id = row[0]  # ID of the ordinance
         if ordinance_id not in ordinances_dict:
             ordinances_dict[ordinance_id] = {
-                "id": row[0],
-                "title": row[1],
-                "number": row[2],
-                "status": row[3],
-                "document_type": row[4],
+                "id": row[0],  # Ordinance ID
+                "title": row[1],  # Title
+                "number": row[2],  # Number
+                "status": row[3],  # Status
+                "document_type": row[4],  # Document type
                 "budget_allocation": []
             }
-        if row[5]:  
+        if row[5] is not None:  # Ensure budget_allocation exists
             ordinances_dict[ordinance_id]["budget_allocation"].append({
-                "id": row[5],
-                "ordinance_id":row[6],
-                "allocated_budget":row[7]
-                ,"utilized_budget":row[8]
-                ,"gad_budget":row[9]
-                ,"financial_transparency_measures":row[10]
+                "id": row[5],  # Budget allocation ID
+                "ordinance_id": row[6],  # Foreign key to ordinances
+                "allocated_budget": row[7],  # Allocated budget
+                "utilized_budget": row[8],  # Utilized budget
+                "gad_budget": row[9],  # GAD budget
+                "financial_transparency_measures": row[10]  # Transparency measures
             })
+
 
     return jsonify(list(ordinances_dict.values()))
 

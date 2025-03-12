@@ -18,7 +18,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",
         user="root",
-        password="migguiyers325467",
+        password="1234",
         database="ordinances"
     )
 
@@ -46,6 +46,18 @@ def login_required(f):
     return decorated_function
 
 
+def role_required(required_role):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if "role" not in session or session["role"] != required_role:
+                return jsonify({"error": "Access denied. Insufficient permissions."}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+
 # Login Route
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -56,14 +68,17 @@ def login():
     if not username or not password:
         return jsonify({"error": "Username and password are required"}), 400
 
-    user = execute_query("SELECT id, username FROM users WHERE username = %s AND password = %s",
-                         (username, password), fetch_one=True)
+    user = execute_query(
+        "SELECT id, username, role FROM users WHERE username = %s AND password = %s",
+        (username, password), fetch_one=True
+    )
 
     if user:
         session['user_id'] = user[0]
         session['username'] = user[1]
+        session['role'] = user[2]  # Store user role in session
 
-        return jsonify({"message": "Login successful", "user": {"id": user[0], "username": user[1]}}), 200
+        return jsonify({"message": "Login successful", "user": {"id": user[0], "username": user[1], "role": user[2]}}), 200
     else:
         return jsonify({"error": "Invalid credentials"}), 401
 
@@ -134,6 +149,7 @@ def uploaded_file(filename):
 # Delete Ordinance
 @app.route("/api/ordinances/<int:id>", methods=["DELETE"])
 @login_required
+@role_required('admin')
 def delete_ordinance(id):
     file_record = execute_query("SELECT file_path FROM ordinances WHERE id = %s", (id,), fetch_one=True)
     if file_record and file_record[0]:

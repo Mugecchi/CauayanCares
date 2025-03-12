@@ -8,9 +8,7 @@
 		"dev": "vite",
 		"build": "vite build",
 		"lint": "eslint .",
-		"preview": "vite preview",
-		"predeploy": "npm run build",
-		"deploy": "gh-pages -d dist"
+		"preview": "vite preview"
 	},
 	"dependencies": {
 		"@emotion/react": "^11.14.0",
@@ -19,6 +17,9 @@
 		"@mui/material": "^6.4.6",
 		"apexcharts": "^4.5.0",
 		"axios": "^1.8.1",
+		"datatables.net": "^2.2.2",
+		"datatables.net-dt": "^2.2.2",
+		"jquery": "^3.7.1",
 		"react": "^19.0.0",
 		"react-apexcharts": "^1.7.0",
 		"react-dom": "^19.0.0",

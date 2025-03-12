@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Box, Typography, CircularProgress } from "@mui/material";
 import Chart from "react-apexcharts";
+import { WhiteBox } from "../Includes/styledComponents";
 
 const BASE_URL = "http://localhost:5000";
 
@@ -36,14 +37,7 @@ const Dashboard = () => {
 	}
 
 	// Define colors manually for each bar
-	const colors = [
-		"#5D3786",
-		"#FF5722",
-		"#4CAF50",
-		"#FFC107",
-		"#2196F3",
-		"#9C27B0",
-	];
+	const colors = ["#FF5722", "#4CAF50", "#FFC107", "#2196F3", "#9C27B0"];
 
 	const chartOptions = {
 		chart: {
@@ -61,7 +55,6 @@ const Dashboard = () => {
 		dataLabels: { enabled: false },
 		xaxis: {
 			categories: [
-				"Total",
 				"Pending",
 				"Approved",
 				"Amended",
@@ -78,7 +71,6 @@ const Dashboard = () => {
 		{
 			name: "Ordinances",
 			data: [
-				counts.ordinances_count,
 				counts.pending_count,
 				counts.approved_count,
 				counts.amended_count,
@@ -89,17 +81,7 @@ const Dashboard = () => {
 	];
 
 	return (
-		<Box
-			sx={{
-				p: 4,
-				height: "calc(100vh - 40px)",
-				display: "flex",
-				flexDirection: "column",
-				justifyContent: "center",
-				background: "#fff",
-				borderRadius: "10px",
-			}}
-		>
+		<WhiteBox>
 			<Typography
 				variant="h4"
 				gutterBottom
@@ -121,7 +103,7 @@ const Dashboard = () => {
 					height="100%"
 				/>
 			</Box>
-		</Box>
+		</WhiteBox>
 	);
 };
 

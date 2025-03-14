@@ -55,7 +55,7 @@ const AddCoverageScope = () => {
 			<CardContent>
 				<Typography variant="h5">Coverage Scope</Typography>
 				<form onSubmit={handleSubmit}>
-					<Typography>Ordinance:</Typography>
+					<Typography>Title:</Typography>
 					<Autocomplete
 						options={ordinances}
 						getOptionLabel={(option) => option.title} // Display ordinance titles
@@ -69,12 +69,7 @@ const AddCoverageScope = () => {
 							}));
 						}}
 						renderInput={(params) => (
-							<TextField
-								{...params}
-								label="Select Ordinance"
-								fullWidth
-								required
-							/>
+							<TextField {...params} label="Select Title" fullWidth required />
 						)}
 					/>
 

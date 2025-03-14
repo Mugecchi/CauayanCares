@@ -4,7 +4,7 @@ import os
 import mysql.connector
 from functools import wraps
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="dist", static_url_path="/")
 CORS(app, supports_credentials=True)  # Ensure CORS allows cookies for sessions
 app.secret_key = "supersecretkey"  # Change this to a secure key
 
@@ -34,6 +34,14 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     cursor.close()
     db.close()
     return result
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(f"dist/{path}"):
+        return send_from_directory("dist", path)
+    return send_from_directory("dist", "index.html")  # Serve index.html for all routes
 
 
 # Middleware for protecting routes
@@ -101,6 +109,17 @@ def protected():
 def logout():
     session.clear()
     return jsonify({"message": "Logged out successfully!"}), 200
+
+# Get Current User Route
+@app.route('/api/user', methods=['GET'])
+@login_required
+def get_current_user():
+    return jsonify({
+        "id": session.get("user_id"),
+        "username": session.get("username"),
+        "role": session.get("role"),
+    }), 200
+
 # Upload Ordinance
 @app.route("/api/ordinances", methods=["POST"])
 def add_ordinance():
@@ -118,11 +137,11 @@ def add_ordinance():
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
 
         query = """
-            INSERT INTO ordinances (title, number, date_issued, policies, document_type, date_effectivity, status, related_ordinances, file_path)
+            INSERT INTO ordinances (title, number, date_issued, details, document_type, date_effectivity, status, related_ordinances, file_path)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         execute_query(query, (
-            data.get("title"), data.get("number"), data.get("dateIssued"), data.get("policies"),
+            data.get("title"), data.get("number"), data.get("dateIssued"), data.get("details"),
             data.get("documentType"), data.get("dateEffectivity"), data.get("status"),
             data.get("relatedOrdinances"), file_path
         ), commit=True)
@@ -136,9 +155,9 @@ def add_ordinance():
 @login_required
 
 def get_ordinances():
-    query = "SELECT id, title, number, policies, document_type, status, file_path FROM ordinances"
+    query = "SELECT id, title, number, details, document_type, status, file_path FROM ordinances"
     ordinances = execute_query(query)
-    return jsonify([dict(zip(["id", "title", "number", "policies", "document_type", "status", "file_path"], row)) for row in ordinances])
+    return jsonify([dict(zip(["id", "title", "number", "details", "document_type", "status", "file_path"], row)) for row in ordinances])
 
 # Serve Uploaded Files
 @app.route("/uploads/<filename>")

@@ -42,13 +42,13 @@ export default function Sidebar() {
 
 	// Sidebar menu items
 	const menuItems = [
-		{ text: "Dashboard", path: "/Dashboard", icon: <DashboardIcon /> },
+		{ text: "Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
 		{
 			text: "View Forms",
 			icon: <DescriptionIcon />,
 			dropdown: [
-				{ text: "View Tables", path: "/Tables" },
-				{ text: "Form B", path: "/FormB" },
+				{ text: "View Tables", path: "/tables" },
+				{ text: "Add Record", path: "/forms" },
 			],
 		},
 	];
@@ -123,6 +123,7 @@ export default function Sidebar() {
 										primary={item.text}
 										sx={{
 											color: "white",
+
 											fontWeight:
 												location.pathname === item.path ? "bold" : "normal",
 										}}
@@ -153,7 +154,7 @@ export default function Sidebar() {
 													"&:hover": { backgroundColor: "#fbaaff" },
 													borderRadius: "5px",
 													width: "100%",
-													paddingLeft: "30px",
+													paddingLeft: "53px",
 													color: "white",
 												}}
 											>

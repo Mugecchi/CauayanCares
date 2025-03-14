@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -7,6 +7,14 @@ const Login = ({ setIsLoggedIn }) => {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
 	const navigate = useNavigate();
+
+	// ✅ Check if user is already logged in
+	useEffect(() => {
+		const token = localStorage.getItem("userToken");
+		if (token) {
+			navigate("/dashboard"); // Redirect to dashboard if already logged in
+		}
+	}, [navigate]);
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
@@ -20,7 +28,7 @@ const Login = ({ setIsLoggedIn }) => {
 
 			localStorage.setItem("userToken", response.data.token); // Store token
 			setIsLoggedIn(true); // Update state
-			navigate("/dashboard");
+			navigate("/dashboard"); // Redirect after login
 		} catch (err) {
 			setError(err.response?.data?.error || "Login failed");
 		}

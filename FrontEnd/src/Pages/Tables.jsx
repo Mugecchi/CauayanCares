@@ -22,14 +22,13 @@ function Tables() {
 
   return (
     <ThemeProv>
-      <CustomTabs value={selectedTab} onChange={handleTabChange}>
-        <CustomTab label="Ordinance Tables" />
-        <CustomTab label="Coverage" />
-        <CustomTab label="Objectives" />
-        <CustomTab label="Budget" />
-      </CustomTabs>
-
-      <WhiteBox sx={{ borderRadius: " 0   0 10px 10px" }}>
+      <WhiteBox>
+        <CustomTabs value={selectedTab} onChange={handleTabChange}>
+          <CustomTab label="Ordinance Tables" />
+          <CustomTab label="Coverage" />
+          <CustomTab label="Objectives" />
+          <CustomTab label="Budget" />
+        </CustomTabs>
         {selectedTab === 0 && <EOTable formType="A" />}
         {selectedTab === 1 && <CoverageTable formType="B" />}
         {selectedTab === 2 && <ObjectivesTable formType="C" />}

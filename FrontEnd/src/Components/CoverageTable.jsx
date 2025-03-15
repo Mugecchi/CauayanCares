@@ -86,7 +86,9 @@ export default function CoverageTable() {
           {ordinances.flatMap((ordinance) =>
             ordinance.coverage_scopes.map((scope) => (
               <tr key={`${ordinance.id}-${scope.id}`}>
-                <td>{ordinance.title}</td>
+                <td>
+                  {ordinance.title} {ordinance.number}
+                </td>
                 <td>{scope.inclusive_period}</td>
                 <td>{scope.target_beneficiaries}</td>
                 <td>{scope.geographical_coverage}</td>

@@ -3,15 +3,15 @@ from flask_cors import CORS
 import os
 import mysql.connector
 from functools import wraps
+import bcrypt
 
-app = Flask(__name__, static_folder="dist", static_url_path="/")
-CORS(app, supports_credentials=True)  # Ensure CORS allows cookies for sessions
+app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
+CORS(app, supports_credentials=True)
 app.secret_key = "supersecretkey"  # Change this to a secure key
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
 
 # Database Connection Function
 def get_db_connection():
@@ -21,7 +21,6 @@ def get_db_connection():
         password="migguiyers325467",
         database="ordinances"
     )
-
 
 # Utility function to execute queries
 def execute_query(query, params=(), fetch_one=False, commit=False):
@@ -35,16 +34,53 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     db.close()
     return result
 
+# Password hashing
+from flask import Flask, request, jsonify, session, send_from_directory
+from flask_cors import CORS
+import os
+import mysql.connector
+from functools import wraps
+import bcrypt
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve(path):
-    if path != "" and os.path.exists(f"dist/{path}"):
-        return send_from_directory("dist", path)
-    return send_from_directory("dist", "index.html")  # Serve index.html for all routes
+app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
+CORS(app, supports_credentials=True)  # Ensure CORS allows cookies for sessions
+app.secret_key = "supersecretkey"  # Change this to a secure key
 
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Middleware for protecting routes
+# Database Connection Function
+def get_db_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="migguiyers325467",
+        database="ordinances"
+    )
+
+# Utility function to execute queries
+def execute_query(query, params=(), fetch_one=False, commit=False):
+    db = get_db_connection()
+    cursor = db.cursor()
+    cursor.execute(query, params)
+    result = cursor.fetchone() if fetch_one else cursor.fetchall()
+    if commit:
+        db.commit()
+    cursor.close()
+    db.close()
+    return result
+
+# Password Hashing
+def hash_password(password):
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+# Password verification
+def verify_password(entered_password, stored_hash):
+    return bcrypt.checkpw(entered_password.encode("utf-8"), stored_hash.encode("utf-8"))
+
+# Middleware for authentication
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -53,7 +89,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
+# Middleware for role-based access control
 def role_required(required_role):
     def decorator(f):
         @wraps(f)
@@ -64,9 +100,16 @@ def role_required(required_role):
         return decorated_function
     return decorator
 
+# Serve React App
+@app.route("/")
+@app.route("/<path:path>")
+def serve_react(path="index.html"):
+    file_path = os.path.join(app.static_folder, path)
+    if os.path.exists(file_path):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")  # Fallback to index.html
 
-
-# Login Route
+# User login
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
@@ -77,40 +120,31 @@ def login():
         return jsonify({"error": "Username and password are required"}), 400
 
     user = execute_query(
-        "SELECT id, username, role FROM users WHERE username = %s AND password = %s",
-        (username, password), fetch_one=True
+        "SELECT id, username, password, role FROM users WHERE username = %s",
+        (username,), fetch_one=True
     )
 
-    if user:
+    print("User found in DB:", user)  # Debugging step
+
+    if not user:
+        return jsonify({"error": "User not found"}), 401
+
+    if verify_password(password, user[2]):
         session['user_id'] = user[0]
         session['username'] = user[1]
-        session['role'] = user[2]  # Store user role in session
+        session['role'] = user[3]
+        print("Session Data:", session)  # Debugging step
+        return jsonify({"message": "Login successful", "user": {"id": user[0], "username": user[1], "role": user[3]}}), 200
 
-        return jsonify({"message": "Login successful", "user": {"id": user[0], "username": user[1], "role": user[2]}}), 200
-    else:
-        return jsonify({"error": "Invalid credentials"}), 401
+    return jsonify({"error": "Invalid credentials"}), 401
 
-@app.route('/api/protected', methods=['GET'])
-@login_required
-def protected():
-    # Access user details from session
-    user_id = session['user_id']
-    username = session['username']
-
-    return jsonify({
-        "message": "This is a protected route!",
-        "user": {"id": user_id, "username": username}
-    }), 200
-
-
-# Logout Route
 @app.route('/api/logout', methods=['POST'])
 @login_required
 def logout():
     session.clear()
     return jsonify({"message": "Logged out successfully!"}), 200
 
-# Get Current User Route
+# Get current user
 @app.route('/api/user', methods=['GET'])
 @login_required
 def get_current_user():
@@ -119,6 +153,69 @@ def get_current_user():
         "username": session.get("username"),
         "role": session.get("role"),
     }), 200
+
+# Create new user (Admin only)
+@app.route('/api/users', methods=['POST'])
+@login_required
+@role_required('admin')
+def create_user():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    role = data.get("role", "user")  # Default role is 'user'
+
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
+
+    existing_user = execute_query("SELECT id FROM users WHERE username = %s", (username,), fetch_one=True)
+    if existing_user:
+        return jsonify({"error": "User already exists"}), 400
+
+    hashed_password = hash_password(password)  # Ensure password is hashed before storing
+    execute_query(
+        "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
+        (username, hashed_password, role),
+        commit=True
+    )
+
+    return jsonify({"message": "User created successfully"}), 201
+
+# Fetch all users (Admin only)
+@app.route('/api/users', methods=['GET'])
+@login_required
+@role_required('admin')
+def get_users():
+    users = execute_query("SELECT id, username, role FROM users")
+    return jsonify([{"id": u[0], "username": u[1], "role": u[2]} for u in users])
+
+# Update user role or password (Admin only)
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+@login_required
+@role_required('admin')
+def update_user(user_id):
+    data = request.json
+    new_role = data.get("role")
+    new_password = data.get("password")
+
+    if not new_role and not new_password:
+        return jsonify({"error": "Provide role or password to update"}), 400
+
+    if new_role:
+        execute_query("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id), commit=True)
+
+    if new_password:
+        hashed_password = hash_password(new_password)  # Ensure new password is hashed
+        execute_query("UPDATE users SET password = %s WHERE id = %s", (hashed_password, user_id), commit=True)
+
+    return jsonify({"message": "User updated successfully"}), 200
+
+# Delete user (Admin only)
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@login_required
+@role_required('admin')
+def delete_user(user_id):
+    execute_query("DELETE FROM users WHERE id = %s", (user_id,), commit=True)
+    return jsonify({"message": "User deleted successfully"}), 200
 
 # Upload Ordinance
 @app.route("/api/ordinances", methods=["POST"])
@@ -129,9 +226,9 @@ def add_ordinance():
         file_path = file.filename if file else None
 
         # Check for duplicate title
-        existing = execute_query("SELECT COUNT(*) FROM ordinances WHERE title = %s", (data.get("title"),), fetch_one=True)
+        existing = execute_query("SELECT COUNT(*) FROM ordinances WHERE number = %s", (data.get("number"),), fetch_one=True)
         if existing[0] > 0:
-            return jsonify({"error": "Ordinance with this title already exists!"}), 400
+            return jsonify({"error": "Record with this Number already exists!"}), 400
 
         if file:
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
@@ -182,6 +279,7 @@ def delete_ordinance(id):
 # Update Ordinance Status
 @app.route("/api/ordinances/<int:id>", methods=["PUT"])
 @login_required
+
 def update_status(id):
     data = request.json
     if not data.get("status"):

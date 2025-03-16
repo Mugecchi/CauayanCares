@@ -5,7 +5,7 @@ import mysql.connector
 from functools import wraps
 import bcrypt
 
-app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
+app = Flask(__name__, static_folder="dist", static_url_path="/")
 CORS(app, supports_credentials=True)
 app.secret_key = "supersecretkey"  # Change this to a secure key
 
@@ -463,4 +463,10 @@ def get_all_Budget():
     return jsonify(list(ordinances_dict.values()))
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Check if running on Railway (production)
+    if os.getenv("RAILWAY_ENVIRONMENT"):
+        port = int(os.environ.get("PORT", 8000))  # Use dynamic port in production
+    else:
+        port = 5000  # Use port 5000 during development
+
+    app.run(host="0.0.0.0", port=port, debug=not os.getenv("RAILWAY_ENVIRONMENT"))

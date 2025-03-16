@@ -1,46 +1,41 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import axios from "axios";
 import Sidebar from "./Includes/Sidebar";
 import Header from "./Includes/Header";
-import Tables from "./Pages/Tables";
-import Dashboard from "./Pages/Dashboard";
-import Login from "./Pages/Login";
 import GlobalStyles from "./GlobalStyles";
 import { AuthProvider } from "./Context";
-import Forms from "./Pages/Forms";
+import { fetchUser } from "./api";
+import { CircularProgress, Box } from "@mui/material";
 
-const BASE_URL = "http://localhost:5000"; // Update if necessary
+const Dashboard = lazy(() => import("./Pages/Dashboard"));
+const Tables = lazy(() => import("./Pages/Tables"));
+const Forms = lazy(() => import("./Pages/Forms"));
+const Login = lazy(() => import("./Pages/Login"));
 
 const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("userToken")
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    if (token) {
-      setIsLoggedIn(true);
-      fetchUser();
-    } else {
-      setIsLoggedIn(false);
-    }
+    checkLoginStatus();
   }, []);
 
-  const fetchUser = async () => {
+  const checkLoginStatus = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/api/protected`, {
-        withCredentials: true,
-      });
-      setUser(response.data.user);
+      const userData = await fetchUser();
+      setUser(userData);
+      setIsLoggedIn(true);
     } catch (error) {
-      console.error("Error fetching user:", error);
+      console.error("Not authenticated:", error);
+      setIsLoggedIn(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,6 +43,20 @@ const App = () => {
   const ProtectedRoute = ({ element }) => {
     return isLoggedIn ? element : <Navigate to="/login" />;
   };
+
+  // ✅ Loading Indicator While Fetching Authentication Status
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <AuthProvider>
@@ -60,35 +69,47 @@ const App = () => {
           >
             {isLoggedIn && <Header user={user} />}
             <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
-              <Routes>
-                {/* 🔹 Redirect to Dashboard if Logged In */}
-                <Route
-                  path="/"
-                  element={
-                    <Navigate to={isLoggedIn ? "/dashboard" : "/login"} />
-                  }
-                />
+              <Suspense
+                fallback={
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <Routes>
+                  {/* 🔹 Redirect to Dashboard if Logged In */}
+                  <Route
+                    path="/"
+                    element={
+                      <Navigate to={isLoggedIn ? "/dashboard" : "/login"} />
+                    }
+                  />
 
-                {/* 🔹 Public Route for Login */}
-                <Route
-                  path="/login"
-                  element={<Login setIsLoggedIn={setIsLoggedIn} />}
-                />
+                  {/* 🔹 Public Route for Login */}
+                  <Route
+                    path="/login"
+                    element={<Login setIsLoggedIn={setIsLoggedIn} />}
+                  />
 
-                {/* 🔹 Protected Routes */}
-                <Route
-                  path="/dashboard"
-                  element={<ProtectedRoute element={<Dashboard />} />}
-                />
-                <Route
-                  path="/tables"
-                  element={<ProtectedRoute element={<Tables />} />}
-                />
-                <Route
-                  path="/forms"
-                  element={<ProtectedRoute element={<Forms />} />}
-                />
-              </Routes>
+                  {/* 🔹 Protected Routes */}
+                  <Route
+                    path="/dashboard"
+                    element={<ProtectedRoute element={<Dashboard />} />}
+                  />
+                  <Route
+                    path="/tables"
+                    element={<ProtectedRoute element={<Tables />} />}
+                  />
+                  <Route
+                    path="/forms"
+                    element={<ProtectedRoute element={<Forms />} />}
+                  />
+                </Routes>
+              </Suspense>
             </div>
           </div>
         </div>

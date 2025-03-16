@@ -34,42 +34,7 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     db.close()
     return result
 
-# Password hashing
-from flask import Flask, request, jsonify, session, send_from_directory
-from flask_cors import CORS
-import os
-import mysql.connector
-from functools import wraps
-import bcrypt
 
-app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
-CORS(app, supports_credentials=True)  # Ensure CORS allows cookies for sessions
-app.secret_key = "supersecretkey"  # Change this to a secure key
-
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
-# Database Connection Function
-def get_db_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="migguiyers325467",
-        database="ordinances"
-    )
-
-# Utility function to execute queries
-def execute_query(query, params=(), fetch_one=False, commit=False):
-    db = get_db_connection()
-    cursor = db.cursor()
-    cursor.execute(query, params)
-    result = cursor.fetchone() if fetch_one else cursor.fetchall()
-    if commit:
-        db.commit()
-    cursor.close()
-    db.close()
-    return result
 
 # Password Hashing
 def hash_password(password):

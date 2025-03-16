@@ -53,3 +53,7 @@ export const addObjectiveImplementation = async (formData) => {
     throw error;
   }
 };
+export const fetchDashboardCounts = () => apiCall("get", "/dashboard");
+export const fetchUser = async () => {
+  return apiCall("get", "/user"); // Assuming "/protected" returns user data if logged in
+};

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api"; // Change this when deploying
+const API_BASE_URL = "cauayancares-production.up.railway.app/api"; // Change this when deploying
 
 const api = axios.create({
   baseURL: API_BASE_URL,

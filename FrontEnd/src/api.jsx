@@ -1,9 +1,8 @@
 import axios from "axios";
-
 const API_BASE_URL =
   import.meta.env.MODE === "development"
     ? "http://localhost:5000/api" // Local development
-    : `${window.location.origin}/api`; // Automatically use the Railway domain in production
+    : `https://${window.location.origin}/api`; // Automatically use the Railway domain in production
 
 export default API_BASE_URL;
 
@@ -29,8 +28,15 @@ export const apiCall = async (method, url, data = null, isFormData = false) => {
 };
 
 // Authentication endpoints
-export const login = (credentials) => apiCall("post", "/login", credentials);
-export const logout = () => apiCall("post", "/logout");
+export const logout = async () => {
+  try {
+    await api.post("/logout");
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("user");
+  } catch (error) {
+    throw error.response?.data?.error || "Logout failed";
+  }
+};
 
 // Ordinance CRUD operations
 export const fetchOrdinances = () => apiCall("get", "/ordinances");
@@ -61,4 +67,13 @@ export const addObjectiveImplementation = async (formData) => {
 export const fetchDashboardCounts = () => apiCall("get", "/dashboard");
 export const fetchUser = async () => {
   return apiCall("get", "/user"); // Assuming "/protected" returns user data if logged in
+};
+export const login = async (credentials) => {
+  try {
+    const response = await api.post("/login", credentials);
+    localStorage.setItem("userToken", response.data.token); // Store token
+    return response.data; // Return the response to handle success in Login.jsx
+  } catch (error) {
+    throw error.response?.data?.error || "Login failed";
+  }
 };

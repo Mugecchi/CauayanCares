@@ -80,6 +80,11 @@ def role_required(required_role):
         return decorated_function
     return decorator
 
+@app.before_request
+def force_https():
+    if not request.is_secure and os.getenv("RAILWAY_ENVIRONMENT"):
+        return redirect(request.url.replace("http://", "https://"), code=301)
+
 # Serve React App
 @app.route("/")
 @app.route("/<path:path>")

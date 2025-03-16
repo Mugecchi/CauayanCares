@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api"; // ✅ Import API instance
+import { login } from "../api"; // ✅ Import the login function
 
 const Login = ({ setIsLoggedIn }) => {
   const [username, setUsername] = useState("");
@@ -8,32 +8,16 @@ const Login = ({ setIsLoggedIn }) => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Check session on mount
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await api.get("/check-session"); // Create this in Flask
-        if (response.data.logged_in) {
-          setIsLoggedIn(true);
-          navigate("/dashboard");
-        }
-      } catch (err) {
-        console.log("Not logged in");
-      }
-    };
-    checkSession();
-  }, [navigate, setIsLoggedIn]);
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      await api.post("/login", { username, password }); // ✅ Uses `api.jsx`
+      await login({ username, password }); // ✅ Uses `login` from api.jsx
       setIsLoggedIn(true);
-      navigate("/dashboard"); // Redirect after login
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.error || "Login failed");
+      setError(err || "Login failed");
     }
   };
 

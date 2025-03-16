@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { logout } from "../api"; // ✅ Import logout function
 import {
   Box,
   Drawer,
@@ -58,24 +58,14 @@ export default function Sidebar() {
     setOpen(newOpen);
   };
 
-  // Handle logout
+  // ✅ Handle logout using API function
   const handleLogout = async () => {
     setOpen(false);
     try {
-      await axios.post(
-        "http://localhost:5000/api/logout",
-        {},
-        { withCredentials: true }
-      );
-
-      // ✅ Remove token & user from localStorage
-      localStorage.removeItem("userToken");
-      localStorage.removeItem("user");
-
-      // ✅ Update state immediately
+      await logout(); // ✅ Use the logout function from api.jsx
       setTimeout(() => {
         window.location.href = "/login"; // Ensure redirect happens
-      }, 100); // Small delay to allow state update
+      }, 100);
     } catch (error) {
       console.error("Error during logout:", error);
     }
@@ -117,7 +107,6 @@ export default function Sidebar() {
                     primary={item.text}
                     sx={{
                       color: "white",
-
                       fontWeight:
                         location.pathname === item.path ? "bold" : "normal",
                     }}

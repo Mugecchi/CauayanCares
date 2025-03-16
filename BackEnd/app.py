@@ -401,7 +401,7 @@ def add_or_update_financial():
             ON DUPLICATE KEY UPDATE 
                 allocated_budget = VALUES(allocated_budget),
                 utilized_budget = VALUES(utilized_budget),
-                gad_budget = VALUES(gad_budget)
+                gad_budget = VALUES(gad_budget),
                 financial_transparency_measures = VALUES(financial_transparency_measures)
         """
         execute_query(query, (data.get("ordinance_id"), data.get("allocated_budget"), data.get("utilized_budget"), data.get("gad_budget"),data.get("financial_transparency_measures")), commit=True)

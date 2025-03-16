@@ -1,6 +1,11 @@
 import axios from "axios";
 
-const API_BASE_URL = "cauayancares-production.up.railway.app/api"; // Change this when deploying
+const API_BASE_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5000/api" // Local development
+    : `${window.location.origin}/api`; // Automatically use the Railway domain in production
+
+export default API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,

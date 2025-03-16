@@ -8,6 +8,9 @@ import bcrypt
 app = Flask(__name__, static_folder="dist", static_url_path="/")
 CORS(app, supports_credentials=True)
 app.secret_key = "supersecretkey"  # Change this to a secure key
+app.config["SESSION_COOKIE_SECURE"] = True  # Secure cookie for HTTPS
+app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent JS access
+app.config["SESSION_COOKIE_SAMESITE"] = "None"  # Allow cross-origin cookies
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

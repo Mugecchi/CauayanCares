@@ -15,9 +15,10 @@ const Dashboard = () => {
   const getDashboardData = async () => {
     try {
       const data = await fetchDashboardCounts();
-      setCounts(data);
+      setCounts(data || {}); // Ensure it's never null
     } catch (error) {
       console.error("Error fetching dashboard counts:", error);
+      setCounts({}); // Set empty object to avoid crashes
     } finally {
       setLoading(false);
     }
@@ -30,6 +31,15 @@ const Dashboard = () => {
       </Box>
     );
   }
+
+  // Default values to prevent errors
+  const {
+    pending_count = 0,
+    approved_count = 0,
+    amended_count = 0,
+    under_review_count = 0,
+    implemented_count = 0,
+  } = counts || {};
 
   const colors = ["#FF5722", "#4CAF50", "#FFC107", "#2196F3", "#9C27B0"];
 
@@ -65,11 +75,11 @@ const Dashboard = () => {
     {
       name: "Ordinances",
       data: [
-        counts.pending_count,
-        counts.approved_count,
-        counts.amended_count,
-        counts.under_review_count,
-        counts.implemented_count,
+        pending_count,
+        approved_count,
+        amended_count,
+        under_review_count,
+        implemented_count,
       ],
     },
   ];

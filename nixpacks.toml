@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["python311", "pip"]  # Ensure Python and Pip are installed
+
+[phases.build]
+cmds = ["pip install -r BackEnd/requirements.txt"]  # Install dependencies
+
+[start]
+cmd = "cd BackEnd && gunicorn app:app --bind 0.0.0.0:$PORT"  # Start the Flask server

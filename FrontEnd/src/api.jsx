@@ -2,7 +2,7 @@ import axios from "axios";
 const API_BASE_URL =
   import.meta.env.MODE === "development"
     ? "http://localhost:5000/api" // Local development
-    : `https://${window.location.origin}/api`; // Automatically use the Railway domain in production
+    : `${window.location.origin}/api`; // Automatically use the Railway domain in production
 
 export default API_BASE_URL;
 

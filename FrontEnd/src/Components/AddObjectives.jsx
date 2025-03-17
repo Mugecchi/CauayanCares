@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Autocomplete, Button, TextField, Typography } from "@mui/material";
-import { fetchOrdinances, addObjectiveImplementation } from "../api";
+import {
+	Autocomplete,
+	Button,
+	Card,
+	CardContent,
+	TextField,
+	Typography,
+} from "@mui/material";
+import { fetchOrdinances, addObjectiveImplementation } from "../api"; // Import from your api.jsx
 
 const AddObjectives = () => {
 	const [ordinances, setOrdinances] = useState([]);
@@ -14,15 +21,15 @@ const AddObjectives = () => {
 	});
 
 	useEffect(() => {
-		const getOrdinances = async () => {
+		const loadOrdinances = async () => {
 			try {
-				const data = await fetchOrdinances();
-				setOrdinances(data);
+				const response = await fetchOrdinances(); // Use fetchOrdinances from api.jsx
+				setOrdinances(response);
 			} catch (error) {
-				console.error("Failed to load ordinances.");
+				console.error("Error fetching ordinances:", error);
 			}
 		};
-		getOrdinances();
+		loadOrdinances();
 	}, []);
 
 	const handleChange = (e) => {
@@ -32,10 +39,10 @@ const AddObjectives = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			await addObjectiveImplementation(formData);
+			await addObjectiveImplementation(formData); // Use addObjectiveImplementation from api.jsx
 			alert("Objective/Implementation added successfully!");
 		} catch (error) {
-			alert("Failed to add Objective/Implementation.");
+			console.error("Error adding Objective or Implementation:", error);
 		}
 	};
 
@@ -46,7 +53,7 @@ const AddObjectives = () => {
 				<Typography>Ordinance:</Typography>
 				<Autocomplete
 					options={ordinances}
-					getOptionLabel={(option) => option.title}
+					getOptionLabel={(option) => option.title} // Display ordinance titles
 					value={
 						ordinances.find((ord) => ord.id === formData.ordinance_id) || null
 					}

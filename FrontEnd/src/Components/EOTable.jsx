@@ -1,4 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import {
+	fetchOrdinances,
+	updateOrdinanceStatus,
+	deleteOrdinance,
+} from "../api"; // Import functions
 import axios from "axios";
 import $ from "jquery";
 import "datatables.net-dt/css/dataTables.dataTables.min.css";
@@ -12,9 +17,7 @@ import {
 	DialogContent,
 	Typography,
 } from "@mui/material";
-import { Delete, Visibility, Close } from "@mui/icons-material";
-
-const BASE_URL = "http://localhost:5000";
+import { Close } from "@mui/icons-material";
 
 const EOTable = () => {
 	const [ordinances, setOrdinances] = useState([]);
@@ -25,8 +28,9 @@ const EOTable = () => {
 	const [openPreview, setOpenPreview] = useState(false);
 	const [tableHeight, setTableHeight] = useState("auto");
 
+	// Fetch ordinances when component mounts
 	useEffect(() => {
-		fetchOrdinances();
+		fetchOrdinancesData();
 	}, []);
 
 	useEffect(() => {
@@ -40,6 +44,7 @@ const EOTable = () => {
 		};
 	}, []);
 
+	// Reinitialize the DataTable after ordinances change
 	useEffect(() => {
 		if (ordinances.length > 0) {
 			if (dataTableInstance.current) {
@@ -66,12 +71,10 @@ const EOTable = () => {
 		}
 	};
 
-	const fetchOrdinances = async () => {
+	const fetchOrdinancesData = async () => {
 		try {
-			const response = await axios.get(`${BASE_URL}/api/ordinances`, {
-				withCredentials: true,
-			});
-			setOrdinances(response.data);
+			const ordinancesData = await fetchOrdinances(); // Use the imported fetchOrdinances function
+			setOrdinances(ordinancesData);
 		} catch (error) {
 			console.error("Error fetching ordinances:", error);
 		}
@@ -80,12 +83,8 @@ const EOTable = () => {
 	const handleDelete = async (id) => {
 		if (window.confirm("Are you sure you want to delete this ordinance?")) {
 			try {
-				const token = localStorage.getItem("token");
-				await axios.delete(`${BASE_URL}/api/ordinances/${id}`, {
-					withCredentials: true,
-					headers: { Authorization: `Bearer ${token}` },
-				});
-				fetchOrdinances();
+				await deleteOrdinance(id); // Use the imported deleteOrdinance function
+				fetchOrdinancesData(); // Refetch ordinances after deletion
 			} catch (error) {
 				console.error("Error deleting ordinance:", error);
 				alert("Failed to delete the ordinance.");
@@ -95,24 +94,10 @@ const EOTable = () => {
 
 	const handleStatusChange = async (id, newStatus) => {
 		try {
-			const token = localStorage.getItem("token");
-			await axios.put(
-				`${BASE_URL}/api/ordinances/${id}`,
-				{ status: newStatus },
-				{
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-					withCredentials: true,
-				}
-			);
-			fetchOrdinances();
+			await updateOrdinanceStatus(id, newStatus); // Use the imported updateOrdinanceStatus function
+			fetchOrdinancesData(); // Refetch ordinances after status update
 		} catch (error) {
-			console.error(
-				"Error updating status:",
-				error.response?.data || error.message
-			);
+			console.error("Error updating status:", error);
 			alert("Failed to update status.");
 		}
 	};

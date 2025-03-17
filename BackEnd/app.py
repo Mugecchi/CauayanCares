@@ -20,24 +20,24 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 def get_db_connection():
-    # # Check if running on Railway
+    # Check if running on Railway
     # if os.getenv("RAILWAY_ENVIRONMENT"):
-    #     return mysql.connector.connect(
-    #         host=os.getenv("MYSQLHOST"),
-    #         user=os.getenv("MYSQLUSER"),
-    #         password=os.getenv("MYSQLPASSWORD"),
-    #         database=os.getenv("MYSQLDATABASE"),
-    #         port=int(os.getenv("MYSQLPORT", 3306))  # Default to 3306 if MYSQLPORT is not set
-    #     )
-    # else:
-        # Local MySQL connection
         return mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="1234",
-            database="ordinances",
-            port=3306  # Default port for local MySQL
+            host=os.getenv("MYSQLHOST"),
+            user=os.getenv("MYSQLUSER"),
+            password=os.getenv("MYSQLPASSWORD"),
+            database=os.getenv("MYSQLDATABASE"),
+            port=int(os.getenv("MYSQLPORT", 3306))  # Default to 3306 if MYSQLPORT is not set
         )
+    # else:
+    #     # Local MySQL connection
+    #     return mysql.connector.connect(
+    #         host="localhost",
+    #         user="root",
+    #         password="1234",
+    #         database="ordinances",
+    #         port=3306  # Default port for local MySQL
+    #     )
 
 # Utility function to execute queries
 def execute_query(query, params=(), fetch_one=False, commit=False):

@@ -50,7 +50,9 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     db.close()
     return result
 
-
+@app.errorhandler(404)
+def catch_all(path):
+    return app.send_static_file('index.html')
 
 # Password Hashing
 def hash_password(password):

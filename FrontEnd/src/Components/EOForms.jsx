@@ -70,37 +70,6 @@ export default function EOForm({ onClose, refreshData, onSuccess }) {
 		setOpen(false);
 	};
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-
-		const formDataToSend = new FormData();
-		Object.entries(formData).forEach(([key, value]) => {
-			formDataToSend.append(key, value);
-		});
-		if (file) {
-			formDataToSend.append("file", file); // Attach the file
-		}
-
-		try {
-			const response = await createOrdinance(formDataToSend);
-			console.log("API Response:", response);
-
-			setMessage(response?.message || "Successfully submitted!");
-			setError(null);
-			setOpen(true);
-
-			refreshData(); // Refresh table data
-			onClose?.(); // Close modal after success
-		} catch (err) {
-			console.error("Error response:", err.response);
-			setMessage(null);
-			setError(
-				err.response?.data?.error || "Failed to submit form. Try again."
-			);
-			setOpen(true);
-		}
-	};
-
 	return (
 		<div>
 			<Typography variant="h5" gutterBottom>

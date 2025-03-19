@@ -10,6 +10,7 @@ import {
 	TableBody,
 	TableContainer,
 	TablePagination,
+	Box,
 } from "@mui/material";
 import { fetchMonitoring } from "../api"; // Importing the API function
 
@@ -130,16 +131,17 @@ export default function MonitoringTable() {
 			</TableContainer>
 
 			{/* Pagination */}
-			<TablePagination
-				sx={{ position: "absolute", bottom: "0", right: "0" }}
-				rowsPerPageOptions={[10, 20, 100]}
-				component="div"
-				count={filteredOrdinances.length}
-				rowsPerPage={rowsPerPage}
-				page={page}
-				onPageChange={handlePageChange}
-				onRowsPerPageChange={handleRowsPerPageChange}
-			/>
+			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
+				<TablePagination
+					rowsPerPageOptions={[10, 20, 100]}
+					component="div"
+					count={filteredOrdinances.length}
+					rowsPerPage={rowsPerPage}
+					page={page}
+					onPageChange={handlePageChange}
+					onRowsPerPageChange={handleRowsPerPageChange}
+				/>
+			</Box>
 		</div>
 	);
 }

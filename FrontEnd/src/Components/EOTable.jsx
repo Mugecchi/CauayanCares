@@ -111,7 +111,9 @@ const EOTable = () => {
 					Add Ordinance
 				</Button>
 			</Box>
-			<TableContainer sx={{ overflowX: "auto" }}>
+			<TableContainer
+				sx={{ overflowY: "auto", maxHeight: "calc(70vh - 10px)" }}
+			>
 				<Table stickyHeader size="medium">
 					<TableHead>
 						<TableRow>
@@ -157,7 +159,7 @@ const EOTable = () => {
 
 			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
 				<TablePagination
-					rowsPerPageOptions={[5, 10, 100]}
+					rowsPerPageOptions={[10, 20, 100]}
 					component="div"
 					count={filteredOrdinances.length}
 					rowsPerPage={rowsPerPage}

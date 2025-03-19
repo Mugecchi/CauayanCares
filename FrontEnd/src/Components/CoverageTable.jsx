@@ -16,7 +16,9 @@ import {
 	DialogContent,
 	DialogActions,
 	MenuItem,
+	Snackbar,
 	Box,
+	Alert,
 } from "@mui/material";
 import {
 	fetchOrdinancesCoverage,
@@ -30,7 +32,11 @@ export default function CoverageTable() {
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState("");
+	const [error, setError] = useState({
+		open: false,
+		message: "",
+		severity: "info",
+	});
 	const [openModal, setOpenModal] = useState(false);
 	const [selectedCoverage, setSelectedCoverage] = useState(null);
 
@@ -43,7 +49,11 @@ export default function CoverageTable() {
 			const response = await fetchOrdinancesCoverage();
 			setOrdinances(response || []);
 		} catch (err) {
-			setError("No Ordinance Found.");
+			setError({
+				open: true,
+				message: "No Ordinance Found.",
+				severity: "error",
+			});
 		} finally {
 			setLoading(false);
 		}
@@ -97,7 +107,12 @@ export default function CoverageTable() {
 			setLoading(true);
 			getCoverage(); // Refresh the data
 		} catch (error) {
-			setError("Failed to save coverage scope. Please try again.");
+			setError({
+				open: true,
+				message: "Failed to save coverage scope. Please try again.",
+				severity: "error",
+			});
+
 			console.error("Error saving coverage scope:", error);
 		}
 	};
@@ -110,7 +125,6 @@ export default function CoverageTable() {
 	};
 
 	if (loading) return <CircularProgress />;
-	if (error) return <Typography color="error">{error}</Typography>;
 
 	return (
 		<div>
@@ -177,7 +191,7 @@ export default function CoverageTable() {
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box display="flex" justifyContent="flex-end" mt={2}>
+			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
 					component="div"
@@ -240,6 +254,21 @@ export default function CoverageTable() {
 					</Button>
 				</DialogActions>
 			</Dialog>
+			<Snackbar
+				open={error.open}
+				autoHideDuration={4000}
+				onClose={() => setError({ open: false, message: "", severity: "info" })}
+			>
+				<Alert
+					onClose={() =>
+						setError({ open: false, message: "", severity: "info" })
+					}
+					severity={error.severity}
+					sx={{ width: "100%" }}
+				>
+					{error.message}
+				</Alert>
+			</Snackbar>
 		</div>
 	);
 }

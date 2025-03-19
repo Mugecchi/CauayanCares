@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import axios from "axios";
 import {
 	Typography,
 	TextField,
@@ -8,10 +7,10 @@ import {
 	Snackbar,
 	Alert,
 	IconButton,
-	InputAdornment,
 } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { createOrdinance } from "../api";
+
 export default function EOForm({ onClose, refreshData, onSuccess }) {
 	const [formData, setFormData] = useState({
 		title: "",
@@ -89,13 +88,18 @@ export default function EOForm({ onClose, refreshData, onSuccess }) {
 			setError(null);
 			setOpen(true);
 
-			refreshData(); // Refresh table data
-			onClose?.(); // Close modal after success
+			// Call refreshData if it's a valid function
+			if (refreshData && typeof refreshData === "function") {
+				refreshData();
+			}
+
+			onClose?.(); // Close the form if onClose is provided
+			onSuccess?.(); // Call onSuccess if it's provided
 		} catch (err) {
-			console.error("Error response:", err.response);
+			console.error("Error response:", err?.response || err);
 			setMessage(null);
 			setError(
-				err.response?.data?.error || "Failed to submit form. Try again."
+				err?.response?.data?.error || "Failed to submit form. Try again."
 			);
 			setOpen(true);
 		}

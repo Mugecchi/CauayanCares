@@ -1,119 +1,274 @@
-import { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { Typography, CircularProgress, TableContainer } from "@mui/material";
-import $ from "jquery";
-import "datatables.net-dt/css/dataTables.dataTables.min.css";
-import "datatables.net";
+import { useState, useEffect, useMemo } from "react";
+import {
+	Typography,
+	CircularProgress,
+	TextField,
+	Table,
+	TableHead,
+	TableRow,
+	TableCell,
+	TableBody,
+	TableContainer,
+	TablePagination,
+	Button,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	MenuItem,
+	Snackbar,
+	Box,
+	Alert,
+} from "@mui/material";
+import {
+	fetchOrdinancesCoverage,
+	addCoverageScope,
+	updateCoverageScope,
+} from "../api";
 
-export default function ObjectivesTable() {
-  const [ordinances, setOrdinances] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const tableRef = useRef(null);
-  const containerRef = useRef(null);
-  const dataTableInstance = useRef(null);
-  const [tableHeight, setTableHeight] = useState("500px"); // Default height
+export default function CoverageTable() {
+	const [ordinances, setOrdinances] = useState([]);
+	const [searchQuery, setSearchQuery] = useState("");
+	const [page, setPage] = useState(0);
+	const [rowsPerPage, setRowsPerPage] = useState(10);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState({
+		open: false,
+		message: "",
+		severity: "info",
+	});
+	const [openModal, setOpenModal] = useState(false);
+	const [selectedCoverage, setSelectedCoverage] = useState(null);
 
-  // Fetch ordinances
-  useEffect(() => {
-    const fetchOrdinances = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:5000/api/objectives_implementation",
-          { withCredentials: true }
-        );
-        setOrdinances(response.data);
-      } catch (err) {
-        setError("No Ordinance Found.");
-      } finally {
-        setLoading(false);
-      }
-    };
+	useEffect(() => {
+		getCoverage();
+	}, []);
 
-    fetchOrdinances();
-  }, []);
+	const getCoverage = async () => {
+		try {
+			const response = await fetchOrdinancesCoverage();
+			setOrdinances(response || []);
+		} catch (err) {
+			setError({
+				open: true,
+				message: "No Ordinance Found.",
+				severity: "error",
+			});
+		} finally {
+			setLoading(false);
+		}
+	};
 
-  // Adjust table height dynamically
-  const adjustTableHeight = () => {
-    if (containerRef.current) {
-      const containerHeight = containerRef.current.clientHeight;
-      const adjustedHeight = Math.max(200, containerHeight - 200); // Leave room for headers
-      setTableHeight(adjustedHeight);
-    }
-  };
+	const filteredOrdinances = useMemo(() => {
+		return ordinances.filter(
+			(ordinance) =>
+				ordinance.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				ordinance.coverage_scopes.some((scope) =>
+					[
+						"target_beneficiaries",
+						"geographical_coverage",
+						"inclusive_period",
+					].some((key) =>
+						scope[key]?.toLowerCase().includes(searchQuery.toLowerCase())
+					)
+				)
+		);
+	}, [ordinances, searchQuery]);
 
-  useEffect(() => {
-    if (ordinances.length > 0) {
-      if (dataTableInstance.current) {
-        dataTableInstance.current.destroy(); // Destroy old instance
-      }
+	const handleEdit = (ordinance, scope) => {
+		setSelectedCoverage({
+			id: scope?.id || "",
+			ordinance_id: ordinance.id,
+			inclusive_period: scope?.inclusive_period || "",
+			target_beneficiaries: scope?.target_beneficiaries || "General Public",
+			geographical_coverage: scope?.geographical_coverage || "",
+		});
+		setOpenModal(true);
+	};
 
-      adjustTableHeight();
+	const handleChange = (e) => {
+		setSelectedCoverage({
+			...selectedCoverage,
+			[e.target.name]: e.target.value,
+		});
+	};
 
-      // Observe parent height changes
-      const observer = new ResizeObserver(() => adjustTableHeight());
-      observer.observe(containerRef.current.parentElement);
+	const handleSave = async () => {
+		try {
+			if (selectedCoverage.id) {
+				await updateCoverageScope(selectedCoverage.id, selectedCoverage);
+				alert("Coverage scope updated successfully!");
+			} else {
+				await addCoverageScope(selectedCoverage);
+				alert("Coverage scope added successfully!");
+			}
 
-      // Initialize DataTable
-      dataTableInstance.current = $(tableRef.current).DataTable({
-        responsive: true,
-        destroy: true,
-        autoWidth: false,
-        scrollY: tableHeight, // Dynamic scroll height
-        scrollCollapse: true,
-        paging: true,
-        pageLength: 10, // Default to 10 rows
-        lengthChange: false,
-      });
+			setOpenModal(false);
+			setLoading(true);
+			getCoverage(); // Refresh the data
+		} catch (error) {
+			setError({
+				open: true,
+				message: "Failed to save coverage scope. Please try again.",
+				severity: "error",
+			});
 
-      return () => observer.disconnect(); // Cleanup observer
-    }
-  }, [ordinances, tableHeight]);
+			console.error("Error saving coverage scope:", error);
+		}
+	};
 
-  if (loading) return <CircularProgress />;
-  if (error) return <Typography color="error">{error}</Typography>;
+	const handleSearchChange = (event) => setSearchQuery(event.target.value);
+	const handlePageChange = (event, newPage) => setPage(newPage);
+	const handleRowsPerPageChange = (event) => {
+		setRowsPerPage(parseInt(event.target.value, 10));
+		setPage(0);
+	};
 
-  return (
-    <TableContainer
-      ref={containerRef}
-      style={{ height: "100%", width: "100%" }}
-    >
-      <table ref={tableRef} className="display" style={{ width: "100%" }}>
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Key Provisions</th>
-            <th>Lead Agency</th>
-            <th>Policy Objectives</th>
-            <th>Programs/Activities</th>
-            <th>Supporting Agencies</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ordinances
-            .flatMap((ordinance) =>
-              ordinance.objectives_implementation?.map((scope) => ({
-                id: scope.id,
-                title: ordinance.title,
-                key_provisions: scope.key_provisions || "N/A",
-                lead_agency: scope.lead_agency || "N/A",
-                policy_objectives: scope.policy_objectives || "N/A",
-                programs_activities: scope.programs_activities || "N/A",
-                supporting_agencies: scope.supporting_agencies || "N/A",
-              }))
-            )
-            .map((row) => (
-              <tr key={row.id}>
-                <td>{row.title}</td>
-                <td>{row.key_provisions}</td>
-                <td>{row.lead_agency}</td>
-                <td>{row.policy_objectives}</td>
-                <td>{row.programs_activities}</td>
-                <td>{row.supporting_agencies}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </TableContainer>
-  );
+	if (loading) return <CircularProgress />;
+
+	return (
+		<div>
+			<TextField
+				label="Search Record"
+				variant="outlined"
+				margin="normal"
+				value={searchQuery}
+				onChange={handleSearchChange}
+			/>
+			<TableContainer>
+				<Table>
+					<TableHead>
+						<TableRow>
+							<TableCell>Title</TableCell>
+							<TableCell>Inclusive Period</TableCell>
+							<TableCell>Target Beneficiaries</TableCell>
+							<TableCell>Geographical Coverage</TableCell>
+							<TableCell>Actions</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{filteredOrdinances
+							.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+							.flatMap((ordinance) =>
+								ordinance.coverage_scopes.length > 0 ? (
+									ordinance.coverage_scopes.map((scope) => (
+										<TableRow key={`${ordinance.id}-${scope.id}`}>
+											<TableCell>
+												{ordinance.title} {ordinance.number}
+											</TableCell>
+											<TableCell>{scope.inclusive_period}</TableCell>
+											<TableCell>{scope.target_beneficiaries}</TableCell>
+											<TableCell>{scope.geographical_coverage}</TableCell>
+											<TableCell>
+												<Button
+													variant="outlined"
+													onClick={() => handleEdit(ordinance, scope)}
+												>
+													Edit
+												</Button>
+											</TableCell>
+										</TableRow>
+									))
+								) : (
+									<TableRow key={ordinance.id}>
+										<TableCell>
+											{ordinance.title} {ordinance.number}
+										</TableCell>
+										<TableCell colSpan={3}>
+											No coverage scope available
+										</TableCell>
+										<TableCell>
+											<Button
+												variant="contained"
+												onClick={() => handleEdit(ordinance, null)}
+											>
+												Add
+											</Button>
+										</TableCell>
+									</TableRow>
+								)
+							)}
+					</TableBody>
+				</Table>
+			</TableContainer>
+			<Box display="flex" justifyContent="flex-end" mt={2}>
+				<TablePagination
+					rowsPerPageOptions={[10, 20, 100]}
+					component="div"
+					count={filteredOrdinances.length}
+					rowsPerPage={rowsPerPage}
+					page={page}
+					onPageChange={handlePageChange}
+					onRowsPerPageChange={handleRowsPerPageChange}
+				/>
+			</Box>
+			<Dialog open={openModal} onClose={() => setOpenModal(false)}>
+				<DialogTitle>
+					{selectedCoverage?.id ? "Edit" : "Add"} Coverage Scope
+				</DialogTitle>
+				<DialogContent>
+					<TextField
+						label="Inclusive Period"
+						name="inclusive_period"
+						value={selectedCoverage?.inclusive_period || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+					<TextField
+						label="Target Beneficiaries"
+						name="target_beneficiaries"
+						value={selectedCoverage?.target_beneficiaries || "General Public"}
+						onChange={handleChange}
+						select
+						fullWidth
+						margin="normal"
+					>
+						{[
+							"General Public",
+							"Women",
+							"Children",
+							"Solo Parents",
+							"PWDs",
+							"MSMEs",
+							"Others",
+						].map((option) => (
+							<MenuItem key={option} value={option}>
+								{option}
+							</MenuItem>
+						))}
+					</TextField>
+					<TextField
+						label="Geographical Coverage"
+						name="geographical_coverage"
+						value={selectedCoverage?.geographical_coverage || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOpenModal(false)}>Cancel</Button>
+					<Button variant="contained" onClick={handleSave}>
+						Save
+					</Button>
+				</DialogActions>
+			</Dialog>
+			<Snackbar
+				open={error.open}
+				autoHideDuration={4000}
+				onClose={() => setError({ open: false, message: "", severity: "info" })}
+			>
+				<Alert
+					onClose={() =>
+						setError({ open: false, message: "", severity: "info" })
+					}
+					severity={error.severity}
+					sx={{ width: "100%" }}
+				>
+					{error.message}
+				</Alert>
+			</Snackbar>
+		</div>
+	);
 }

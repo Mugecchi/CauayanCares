@@ -81,11 +81,6 @@ const theme = createTheme({
 				},
 			},
 		},
-		MuiTableContainer: {
-			styleOverrides: {
-				root: {},
-			},
-		},
 
 		MuiInputBase: {
 			styleOverrides: {
@@ -105,6 +100,37 @@ const theme = createTheme({
 					"&.Mui-focused": {
 						color: "var(--orange) !important", // Use `--orange` if `--eminence` is undefined
 					},
+				},
+			},
+		},
+		MuiButton: {
+			styleOverrides: {
+				root: {
+					height: "3rem", // Set height globally for all buttons
+					backgroundColor: "var(--eminence)", // Use the --eminence color globally
+					color: "var(--white)",
+					"&:hover": {
+						backgroundColor: "var(--orange)",
+						// Maintain background color on hover
+					},
+				},
+				outlined: {
+					borderColor: "transparent",
+					backgroundColor: "var(--orange)", // Set the border color for outlined buttons
+					color: "var(--white)", // Set the text color for outlined buttons
+					"&:hover": {
+						backgroundColor: "var(--white)",
+						borderColor: "var(--eminence)", // Change border color on hover
+						color: "var(--eminence)", // Change text color on hover
+					},
+				},
+			},
+		},
+		MuiTableContainer: {
+			styleOverrides: {
+				root: {
+					overflowY: "auto", // Enable vertical scrolling
+					maxHeight: "calc(70vh - 15px)", // Set the max height to 70% of the viewport height
 				},
 			},
 		},

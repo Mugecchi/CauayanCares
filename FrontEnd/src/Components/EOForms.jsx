@@ -1,234 +1,241 @@
 import { useState, useRef } from "react";
 import axios from "axios";
 import {
-  Typography,
-  TextField,
-  MenuItem,
-  Button,
-  Snackbar,
-  Alert,
-  IconButton,
-  InputAdornment,
+	Typography,
+	TextField,
+	MenuItem,
+	Button,
+	Snackbar,
+	Alert,
+	IconButton,
+	InputAdornment,
 } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { createOrdinance } from "../api";
-export default function EOForm() {
-  const [formData, setFormData] = useState({
-    title: "",
-    documentType: "Executive Order",
-    number: "EO No. ",
-    dateIssued: "",
-    details: "",
-    dateEffectivity: "",
-    status: "Pending",
-    relatedOrdinances: "",
-  });
-  const dateInputRef = useRef(null);
-  const [file, setFile] = useState(null);
-  const [message, setMessage] = useState(null);
-  const [error, setError] = useState(null);
-  const [open, setOpen] = useState(false);
+export default function EOForm({ onClose, refreshData, onSuccess }) {
+	const [formData, setFormData] = useState({
+		title: "",
+		documentType: "Executive Order",
+		number: "EO No. ",
+		dateIssued: "",
+		details: "",
+		dateEffectivity: "",
+		status: "Pending",
+		relatedOrdinances: "",
+	});
+	const dateInputRef = useRef(null);
+	const [file, setFile] = useState(null);
+	const [message, setMessage] = useState(null);
+	const [error, setError] = useState(null);
+	const [open, setOpen] = useState(false);
 
-  const getNumberPrefix = (type) => {
-    switch (type) {
-      case "Executive Order":
-        return "EO No. ";
-      case "Ordinance":
-        return "ORD No. ";
-      case "Memo":
-        return "MEMO No. ";
-      case "Resolution":
-        return "RESO No. ";
-      default:
-        return "";
-    }
-  };
+	const getNumberPrefix = (type) => {
+		switch (type) {
+			case "Executive Order":
+				return "EO No. ";
+			case "Ordinance":
+				return "ORD No. ";
+			case "Memo":
+				return "MEMO No. ";
+			case "Resolution":
+				return "RESO No. ";
+			default:
+				return "";
+		}
+	};
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "number") {
-      setFormData({
-        ...formData,
-        [name]:
-          getNumberPrefix(formData.documentType) +
-          value.replace(getNumberPrefix(formData.documentType), ""),
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-        ...(name === "documentType" && { number: getNumberPrefix(value) }),
-      });
-    }
-  };
+	const handleChange = (e) => {
+		const { name, value } = e.target;
+		if (name === "number") {
+			setFormData({
+				...formData,
+				[name]:
+					getNumberPrefix(formData.documentType) +
+					value.replace(getNumberPrefix(formData.documentType), ""),
+			});
+		} else {
+			setFormData({
+				...formData,
+				[name]: value,
+				...(name === "documentType" && { number: getNumberPrefix(value) }),
+			});
+		}
+	};
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
+	const handleFileChange = (e) => {
+		setFile(e.target.files[0]);
+	};
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const data = new FormData();
+	const handleClose = () => {
+		setOpen(false);
+	};
 
-    Object.keys(formData).forEach((key) => {
-      data.append(key, formData[key]);
-    });
+	const handleSubmit = async (e) => {
+		e.preventDefault();
 
-    if (file) {
-      data.append("file", file);
-    }
+		const formDataToSend = new FormData();
+		Object.entries(formData).forEach(([key, value]) => {
+			formDataToSend.append(key, value);
+		});
+		if (file) {
+			formDataToSend.append("file", file); // Attach the file
+		}
 
-    try {
-      const response = await createOrdinance(data); // ✅ Use API function
-      setMessage(response.message);
-      setError(null);
-      setOpen(true);
-    } catch (error) {
-      setMessage(null);
-      setError(error || "Failed to submit form. Try again.");
-      setOpen(true);
-    }
-  };
+		try {
+			const response = await createOrdinance(formDataToSend);
+			console.log("API Response:", response);
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+			setMessage(response?.message || "Successfully submitted!");
+			setError(null);
+			setOpen(true);
 
-  return (
-    <div>
-      <Typography variant="h5" gutterBottom>
-        File Archive System
-      </Typography>
+			refreshData(); // Refresh table data
+			onClose?.(); // Close modal after success
+		} catch (err) {
+			console.error("Error response:", err.response);
+			setMessage(null);
+			setError(
+				err.response?.data?.error || "Failed to submit form. Try again."
+			);
+			setOpen(true);
+		}
+	};
 
-      <form onSubmit={handleSubmit}>
-        <TextField
-          name="title"
-          label="Title"
-          onChange={handleChange}
-          required
-        />
+	return (
+		<div>
+			<Typography variant="h5" gutterBottom>
+				File Archive System
+			</Typography>
 
-        <TextField
-          name="documentType"
-          select
-          label="Document Type"
-          value={formData.documentType}
-          onChange={handleChange}
-          required
-        >
-          {["Executive Order", "Ordinance", "Memo", "Resolution"].map(
-            (option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            )
-          )}
-        </TextField>
+			<form onSubmit={handleSubmit}>
+				<TextField
+					name="title"
+					label="Title"
+					onChange={handleChange}
+					required
+				/>
 
-        <TextField
-          name="number"
-          label="Number"
-          value={formData.number}
-          onChange={handleChange}
-          required={formData.documentType !== "Memo"}
-          disabled={formData.documentType === "Memo"}
-        />
+				<TextField
+					name="documentType"
+					select
+					label="Document Type"
+					value={formData.documentType}
+					onChange={handleChange}
+					required
+				>
+					{["Executive Order", "Ordinance", "Memo", "Resolution"].map(
+						(option) => (
+							<MenuItem key={option} value={option}>
+								{option}
+							</MenuItem>
+						)
+					)}
+				</TextField>
 
-        <TextField
-          name="dateIssued"
-          type="date"
-          label="Date Enacted/Issued"
-          InputLabelProps={{ shrink: true }}
-          required
-          inputRef={dateInputRef}
-          onChange={handleChange}
-          onFocus={(e) => e.target.showPicker && e.target.showPicker()}
-        />
-        <IconButton onClick={() => dateInputRef.current?.showPicker()}>
-          <CalendarTodayIcon />
-        </IconButton>
+				<TextField
+					name="number"
+					label="Number"
+					value={formData.number}
+					onChange={handleChange}
+					required={formData.documentType !== "Memo"}
+					disabled={formData.documentType === "Memo"}
+				/>
 
-        <TextField
-          name="details"
-          label="Details"
-          onChange={handleChange}
-          required
-        />
+				<TextField
+					name="dateIssued"
+					type="date"
+					label="Date Enacted/Issued"
+					InputLabelProps={{ shrink: true }}
+					required
+					inputRef={dateInputRef}
+					onChange={handleChange}
+					onFocus={(e) => e.target.showPicker && e.target.showPicker()}
+				/>
+				<IconButton onClick={() => dateInputRef.current?.showPicker()}>
+					<CalendarTodayIcon />
+				</IconButton>
 
-        <TextField
-          name="dateEffectivity"
-          type="date"
-          label="Date of Effectivity"
-          InputLabelProps={{ shrink: true }}
-          onChange={handleChange}
-          required={formData.documentType !== "Resolution"}
-          disabled={formData.documentType === "Resolution"}
-        />
+				<TextField
+					name="details"
+					label="Details"
+					onChange={handleChange}
+					required
+				/>
 
-        <TextField
-          name="status"
-          select
-          label="Status"
-          value={formData.status}
-          onChange={handleChange}
-          required
-        >
-          {[
-            "Pending",
-            "Approved",
-            "Implemented",
-            "Under Review",
-            "Amended",
-          ].map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
+				<TextField
+					name="dateEffectivity"
+					type="date"
+					label="Date of Effectivity"
+					InputLabelProps={{ shrink: true }}
+					onChange={handleChange}
+					required={formData.documentType !== "Resolution"}
+					disabled={formData.documentType === "Resolution"}
+				/>
 
-        <TextField
-          name="relatedOrdinances"
-          label="Related Committee"
-          onChange={handleChange}
-          required
-          disabled={formData.documentType === "Executive Order"}
-        />
+				<TextField
+					name="status"
+					select
+					label="Status"
+					value={formData.status}
+					onChange={handleChange}
+					required
+				>
+					{[
+						"Pending",
+						"Approved",
+						"Implemented",
+						"Under Review",
+						"Amended",
+					].map((option) => (
+						<MenuItem key={option} value={option}>
+							{option}
+						</MenuItem>
+					))}
+				</TextField>
 
-        <Button
-          variant="contained"
-          component="label"
-          disabled={formData.documentType === "Memo"}
-        >
-          Upload PDF
-          <input
-            type="file"
-            accept="application/pdf"
-            hidden
-            onChange={handleFileChange}
-          />
-        </Button>
+				<TextField
+					name="relatedOrdinances"
+					label="Related Committee"
+					onChange={handleChange}
+					required
+					disabled={formData.documentType === "Executive Order"}
+				/>
 
-        <Button type="submit" variant="contained" color="primary">
-          Submit
-        </Button>
-      </form>
+				<Button
+					variant="contained"
+					component="label"
+					disabled={formData.documentType === "Memo"}
+				>
+					Upload PDF
+					<input
+						type="file"
+						accept="application/pdf"
+						hidden
+						onChange={handleFileChange}
+					/>
+				</Button>
 
-      <Snackbar
-        open={open}
-        autoHideDuration={3000}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        {message ? (
-          <Alert onClose={handleClose} severity="success">
-            {message}
-          </Alert>
-        ) : error ? (
-          <Alert onClose={handleClose} severity="error">
-            {error}
-          </Alert>
-        ) : null}
-      </Snackbar>
-    </div>
-  );
+				<Button type="submit" variant="contained" color="primary">
+					Submit
+				</Button>
+			</form>
+
+			<Snackbar
+				open={open}
+				autoHideDuration={3000}
+				onClose={handleClose}
+				anchorOrigin={{ vertical: "top", horizontal: "right" }}
+			>
+				{message ? (
+					<Alert onClose={handleClose} severity="success">
+						{message}
+					</Alert>
+				) : error ? (
+					<Alert onClose={handleClose} severity="error">
+						{error}
+					</Alert>
+				) : null}
+			</Snackbar>
+		</div>
+	);
 }

@@ -179,7 +179,7 @@ export default function Sidebar() {
 				sx={{
 					bottom: "20px",
 					left: "20px",
-					position: "fixed",
+					position: "sticky",
 					zIndex: 100,
 					backgroundColor: "#5D3786",
 					color: "white",
@@ -188,7 +188,7 @@ export default function Sidebar() {
 					height: "50px",
 					boxShadow: "0px 4px 6px rgba(0,0,0,0.2)",
 					"&:hover": { backgroundColor: "#ff7706", color: "white" },
-					display: { sm: "none" },
+					display: { xs: "block", md: "none" },
 				}}
 			>
 				<MenuIcon />

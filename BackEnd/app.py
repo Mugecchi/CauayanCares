@@ -51,6 +51,10 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     return result
 
 
+@app.errorhandler(404)
+def catch_all(path):
+    return app.send_static_file('index.html')   
+
 
 # Password Hashing
 def hash_password(password):
@@ -239,7 +243,11 @@ def get_ordinances():
     return jsonify([dict(zip(["id", "title", "number", "details", "document_type", "status", "file_path"], row)) for row in ordinances])
 
 # Serve Uploaded Files
-@app.route("/uploads/<filename>")
+@app.route('/uploads/<filename>')
+def serve_file(filename):
+    uploads_dir = os.path.join(app.root_path, 'uploads')
+    return send_from_directory(uploads_dir, filename)
+
 
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
@@ -309,7 +317,7 @@ def get_all_ordinances_with_scope():
         ordinance_id = row[0]
         if ordinance_id not in ordinances_dict:
             ordinances_dict[ordinance_id] = {
-                "id": row[0],
+                "id": ordinance_id,
                 "title": row[1],
                 "number": row[2],
                 "status": row[3],
@@ -345,6 +353,36 @@ def add_or_update_coverage_scope():
         return jsonify({"message": "Coverage scope added/updated successfully!"})
     except Exception as e:
         return jsonify({"error": "Failed to add/update coverage scope", "details": str(e)}), 500
+
+@app.route("/api/coverage_scope/<int:id>", methods=["PUT"])
+@login_required
+def update_coverage_scope(id):
+    try:
+        data = request.json
+
+        query = """
+            UPDATE coverage_scope 
+            SET inclusive_period = %s, 
+                target_beneficiaries = %s, 
+                geographical_coverage = %s
+            WHERE id = %s
+        """
+
+        execute_query(
+            query,
+            (
+                data.get("inclusive_period"),
+                data.get("target_beneficiaries"),
+                data.get("geographical_coverage"),
+                id,
+            ),
+            commit=True,
+        )
+
+        return jsonify({"message": "Coverage scope updated successfully!"})
+
+    except Exception as e:
+        return jsonify({"error": "Failed to update coverage scope", "details": str(e)}), 500
 
 
 # Add or Update Objective or Implementation
@@ -388,7 +426,7 @@ def get_all_Objective():
         ordinance_id = row[0]
         if ordinance_id not in ordinances_dict:
             ordinances_dict[ordinance_id] = {
-                "id": row[0],
+                "id": ordinance_id,
                 "title": row[1],
                 "number": row[2],
                 "status": row[3],
@@ -447,7 +485,7 @@ def get_all_Budget():
         ordinance_id = row[0]  # ID of the ordinance
         if ordinance_id not in ordinances_dict:
             ordinances_dict[ordinance_id] = {
-                "id": row[0],  # Ordinance ID
+                "id": ordinance_id,  # Ordinance ID
                 "title": row[1],  # Title
                 "number": row[2],  # Number
                 "status": row[3],  # Status
@@ -463,9 +501,123 @@ def get_all_Budget():
                 "gad_budget": row[9],  # GAD budget
                 "financial_transparency_measures": row[10]  # Transparency measures
             })
-
-
     return jsonify(list(ordinances_dict.values()))
+
+@app.route("/api/monitoring", methods=["GET"])
+@login_required
+def get_all_Monitoring():
+    query = """
+    SELECT o.id, o.title, o.number, o.status, o.document_type,
+           mc.id, mc.ordinance_id, mc.indicators_of_success, mc.monitoring_frequency, 
+           mc.compliance_rate, mc.challenges,mc.violations_reports,mc.feedback_mechanisms
+    FROM ordinances o
+    LEFT JOIN monitoring_compliance mc ON o.id = mc.ordinance_id
+"""
+    rows = execute_query(query)
+    if not rows:
+        return jsonify({"error": "No ordinances found"}), 404
+    ordinances_dict = {}
+    for row in rows:
+        ordinance_id = row[0]  # ID of the ordinance
+        if ordinance_id not in ordinances_dict:
+            ordinances_dict[ordinance_id] = {
+                "id": ordinance_id,  # Ordinance ID               
+                "title": row[1],  # Title
+                "number": row[2],  # Number
+                "status": row[3],  # Status
+                "document_type": row[4],  # Document type
+                "monitoring_compliance": []
+            }
+        if row[5] is not None:  # Ensure budget_allocation exists
+            ordinances_dict[ordinance_id]["monitoring_compliance"].append({
+                "id": row[5],  
+                "ordinance_id": row[6],  
+                "indicators_of_success": row[7],  
+                "monitoring_frequency":row[8],
+                "compliance_rate": row[9], 
+                "challenges": row[10], 
+                "violations_reports": row[11] ,
+                "feedback_mechanisms":row[12]
+            })
+    return jsonify(list(ordinances_dict.values()))
+
+
+@app.route("/api/assessment", methods=["GET"])
+@login_required
+def get_all_Assessment():
+    query = """
+    SELECT o.id, o.title, o.number, o.status, o.document_type,
+           ic.id, ic.ordinance_id, ic.funding_source, ic.outcomes_results, 
+           ic.gender_responsiveness_impact, ic.community_benefits,ic.adjustments_needed
+    FROM ordinances o
+    LEFT JOIN impact_assessment ic ON o.id = ic.ordinance_id
+"""
+    rows = execute_query(query)
+    if not rows:
+        return jsonify({"error": "No ordinances found"}), 404
+    ordinances_dict = {}
+    for row in rows:
+        ordinance_id = row[0]  # ID of the ordinance
+        if ordinance_id not in ordinances_dict:
+            ordinances_dict[ordinance_id] = {
+                "id": ordinance_id,  # Ordinance ID               
+                "title": row[1],  # Title
+                "number": row[2],  # Number
+                "status": row[3],  # Status
+                "document_type": row[4],  # Document type
+                "impact_assessment": []
+            }
+        if row[5] is not None:  # Ensure budget_allocation exists
+            ordinances_dict[ordinance_id]["impact_assesment"].append({
+                "id": row[5],  
+                "ordinance_id": row[6],  
+                "funding_source":row[7],
+                "outcomes_results":row[8],
+                "gender_responsiveness_impact":row[9],
+                "community_benefits":row[10],
+                "adjustments_needed":row[11]
+                
+            })
+    return jsonify(list(ordinances_dict.values()))
+
+@app.route("/api/documentation", methods=["GET"])
+@login_required
+def get_all_documentation():
+    query = """
+    SELECT o.id, o.title, o.number, o.status, o.document_type,
+           dr.id, dr.ordinance_id, dr.funding_source, dr.outcomes_results, 
+           dr.gender_responsiveness_impact, dr.community_benefits,dr.adjustments_needed
+    FROM ordinances o
+    LEFT JOIN impact_assessment dr ON o.id = dr.ordinance_id
+"""
+    rows = execute_query(query)
+    if not rows:
+        return jsonify({"error": "No ordinances found"}), 404
+    ordinances_dict = {}
+    for row in rows:
+        ordinance_id = row[0]  # ID of the ordinance
+        if ordinance_id not in ordinances_dict:
+            ordinances_dict[ordinance_id] = {
+                "id": ordinance_id,  # Ordinance ID               
+                "title": row[1],  # Title
+                "number": row[2],  # Number
+                "status": row[3],  # Status
+                "document_type": row[4],  # Document type
+                "impact_assessment": []
+            }
+        if row[5] is not None:  # Ensure budget_allocation exists
+            ordinances_dict[ordinance_id]["impact_assesment"].append({
+                "id": row[5],  
+                "ordinance_id": row[6],  
+                "funding_source":row[7],
+                "outcomes_results":row[8],
+                "gender_responsiveness_impact":row[9],
+                "community_benefits":row[10],
+                "adjustments_needed":row[11]
+                
+            })
+    return jsonify(list(ordinances_dict.values()))
+
 
 if __name__ == "__main__":
     # Check if running on Railway (production)

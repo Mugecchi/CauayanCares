@@ -47,16 +47,13 @@ export const updateOrdinanceStatus = (id, status) =>
 
 export const fetchOrdinancesCoverage = () =>
 	apiCall("get", "/ordinancesCoverage");
-// Create Ordinance (supports file upload)
-export const createOrdinance = async (formData) => {
-	const data = new FormData();
-	Object.keys(formData).forEach((key) => {
-		data.append(key, formData[key]);
-	});
 
-	return apiCall("post", "/ordinances", data, true);
-};
+export const fetchMonitoring = () => apiCall("get", "/monitoring");
+export const fetchIassesment = () => apiCall("get", "/assessment");
+export const fetchDocReports = () => apiCall("get", "/monitoring");
 
+export const createOrdinance = (formData) =>
+	apiCall("post", "/ordinances", formData);
 export const addObjectiveImplementation = async (formData) => {
 	try {
 		await api.post("/objectives_implementation", formData);
@@ -81,3 +78,17 @@ export const login = async (credentials) => {
 };
 
 export const fetchFinancialData = () => apiCall("get", "/financial");
+
+export const handlePreview = (filePath, setSelectedFile, setOpenPreview) => {
+	// Dynamically build the file preview URL based on the environment
+	const previewUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${filePath}`;
+	setSelectedFile(previewUrl); // Set the preview URL to be displayed
+	setOpenPreview(true); // Open the preview modal
+};
+
+export const addCoverageScope = (data) =>
+	apiCall("post", "/coverage_scope", data);
+export const updateCoverageScope = (id, data) =>
+	apiCall("put", `/coverage_scope/${id}`, data);
+export const deleteCoverageScope = (id) =>
+	apiCall("delete", `/coverage_scope/${id}`);

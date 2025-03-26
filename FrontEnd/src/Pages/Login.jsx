@@ -15,8 +15,14 @@ const Login = ({ setIsLoggedIn }) => {
 
 		try {
 			await login({ username, password }); // ✅ Uses `login` from api.jsx
+			sessionStorage.setItem("isLoggedIn", "true"); // ✅ Save login state
 			setIsLoggedIn(true);
 			navigate("/dashboard");
+
+			// ✅ Refresh the page to reload protected routes
+			setTimeout(() => {
+				window.location.reload();
+			}, 100);
 		} catch (err) {
 			setError(err || "Login failed");
 		}

@@ -151,11 +151,11 @@ export default function Monitoring() {
 							<TableCell>Title</TableCell>
 
 							<TableCell>Indicators of Success</TableCell>
-							<TableCell>Monitoring Frequency</TableCell>
+							<TableCell>Frequency</TableCell>
 							<TableCell>Compliance Rate</TableCell>
 							<TableCell>Challenges</TableCell>
 							<TableCell>Violations</TableCell>
-							<TableCell>Feedback Mechanisms</TableCell>
+							<TableCell>Feedback</TableCell>
 							<TableCell>Actions</TableCell>
 						</TableRow>
 					</TableHead>

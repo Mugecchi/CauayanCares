@@ -6,9 +6,12 @@ import {
 	Button,
 	Snackbar,
 	Alert,
-	IconButton,
+	Box,
+	Card,
+	CardContent,
+	CardActions,
+	Grid,
 } from "@mui/material";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { createOrdinance } from "../api";
 
 export default function EOForm({ onClose, refreshData, onSuccess }) {
@@ -77,26 +80,22 @@ export default function EOForm({ onClose, refreshData, onSuccess }) {
 			formDataToSend.append(key, value);
 		});
 		if (file) {
-			formDataToSend.append("file", file); // Attach the file
+			formDataToSend.append("file", file);
 		}
 
 		try {
 			const response = await createOrdinance(formDataToSend);
-			console.log("API Response:", response);
-
 			setMessage(response?.message || "Successfully submitted!");
 			setError(null);
 			setOpen(true);
 
-			// Call refreshData if it's a valid function
 			if (refreshData && typeof refreshData === "function") {
 				refreshData();
 			}
 
-			onClose?.(); // Close the form if onClose is provided
-			onSuccess?.(); // Call onSuccess if it's provided
+			onClose?.();
+			onSuccess?.(); // Close modal after successful submission
 		} catch (err) {
-			console.error("Error response:", err?.response || err);
 			setMessage(null);
 			setError(
 				err?.response?.data?.error || "Failed to submit form. Try again."
@@ -106,123 +105,160 @@ export default function EOForm({ onClose, refreshData, onSuccess }) {
 	};
 
 	return (
-		<div>
-			<Typography variant="h5" gutterBottom>
-				File Archive System
-			</Typography>
-
-			<form onSubmit={handleSubmit}>
-				<TextField
-					name="title"
-					label="Title"
-					onChange={handleChange}
-					required
-				/>
-
-				<TextField
-					name="documentType"
-					select
-					label="Document Type"
-					value={formData.documentType}
-					onChange={handleChange}
-					required
+		<Box sx={{ maxWidth: 600, mx: "auto", mt: 3 }}>
+			<CardContent>
+				<Typography
+					variant="h5"
+					sx={{ mb: 2, fontWeight: "bold", textAlign: "center" }}
 				>
-					{["Executive Order", "Ordinance", "Memo", "Resolution"].map(
-						(option) => (
-							<MenuItem key={option} value={option}>
-								{option}
-							</MenuItem>
-						)
-					)}
-				</TextField>
+					File Archive System
+				</Typography>
 
-				<TextField
-					name="number"
-					label="Number"
-					value={formData.number}
-					onChange={handleChange}
-					required={formData.documentType !== "Memo"}
-					disabled={formData.documentType === "Memo"}
-				/>
+				<form onSubmit={handleSubmit}>
+					<Grid container spacing={2}>
+						<Grid item xs={12}>
+							<TextField
+								fullWidth
+								name="title"
+								label="Title"
+								onChange={handleChange}
+								required
+							/>
+						</Grid>
 
-				<TextField
-					name="dateIssued"
-					type="date"
-					label="Date Enacted/Issued"
-					InputLabelProps={{ shrink: true }}
-					required
-					inputRef={dateInputRef}
-					onChange={handleChange}
-					onFocus={(e) => e.target.showPicker && e.target.showPicker()}
-				/>
-				<IconButton onClick={() => dateInputRef.current?.showPicker()}>
-					<CalendarTodayIcon />
-				</IconButton>
+						<Grid item xs={6}>
+							<TextField
+								fullWidth
+								name="documentType"
+								select
+								label="Document Type"
+								value={formData.documentType}
+								onChange={handleChange}
+								required
+							>
+								{["Executive Order", "Ordinance", "Memo", "Resolution"].map(
+									(option) => (
+										<MenuItem key={option} value={option}>
+											{option}
+										</MenuItem>
+									)
+								)}
+							</TextField>
+						</Grid>
 
-				<TextField
-					name="details"
-					label="Details"
-					onChange={handleChange}
-					required
-				/>
+						<Grid item xs={6}>
+							<TextField
+								fullWidth
+								name="number"
+								label="Number"
+								value={formData.number}
+								onChange={handleChange}
+								required={formData.documentType !== "Memo"}
+								disabled={formData.documentType === "Memo"}
+							/>
+						</Grid>
 
-				<TextField
-					name="dateEffectivity"
-					type="date"
-					label="Date of Effectivity"
-					InputLabelProps={{ shrink: true }}
-					onChange={handleChange}
-					required={formData.documentType !== "Resolution"}
-					disabled={formData.documentType === "Resolution"}
-				/>
+						<Grid item xs={6}>
+							<TextField
+								fullWidth
+								name="dateIssued"
+								type="date"
+								label="Date Enacted/Issued"
+								InputLabelProps={{ shrink: true }}
+								required
+								inputRef={dateInputRef}
+								onChange={handleChange}
+							/>
+						</Grid>
 
-				<TextField
-					name="status"
-					select
-					label="Status"
-					value={formData.status}
-					onChange={handleChange}
-					required
-				>
-					{[
-						"Pending",
-						"Approved",
-						"Implemented",
-						"Under Review",
-						"Amended",
-					].map((option) => (
-						<MenuItem key={option} value={option}>
-							{option}
-						</MenuItem>
-					))}
-				</TextField>
+						<Grid item xs={6}>
+							<TextField
+								fullWidth
+								name="dateEffectivity"
+								type="date"
+								label="Date of Effectivity"
+								InputLabelProps={{ shrink: true }}
+								onChange={handleChange}
+								required={formData.documentType !== "Resolution"}
+								disabled={formData.documentType === "Resolution"}
+							/>
+						</Grid>
 
-				<TextField
-					name="relatedOrdinances"
-					label="Related Committee"
-					onChange={handleChange}
-					required
-					disabled={formData.documentType === "Executive Order"}
-				/>
+						<Grid item xs={12}>
+							<TextField
+								fullWidth
+								name="details"
+								label="Details"
+								onChange={handleChange}
+								required
+								multiline
+								rows={3}
+							/>
+						</Grid>
 
-				<Button
-					variant="contained"
-					component="label"
-					disabled={formData.documentType === "Memo"}
-				>
-					Upload PDF
-					<input
-						type="file"
-						accept="application/pdf"
-						hidden
-						onChange={handleFileChange}
-					/>
-				</Button>
+						<Grid item xs={6}>
+							<TextField
+								fullWidth
+								name="status"
+								select
+								label="Status"
+								value={formData.status}
+								onChange={handleChange}
+								required
+							>
+								{[
+									"Pending",
+									"Approved",
+									"Implemented",
+									"Under Review",
+									"Amended",
+								].map((option) => (
+									<MenuItem key={option} value={option}>
+										{option}
+									</MenuItem>
+								))}
+							</TextField>
+						</Grid>
 
-				<Button type="submit" variant="contained" color="primary">
-					Submit
-				</Button>
-			</form>
+						<Grid item xs={6}>
+							<TextField
+								fullWidth
+								name="relatedOrdinances"
+								label="Related Committee"
+								onChange={handleChange}
+								required
+								disabled={formData.documentType === "Executive Order"}
+							/>
+						</Grid>
+
+						<Grid item xs={12}>
+							<Button
+								fullWidth
+								variant="outlined"
+								component="label"
+								disabled={formData.documentType === "Memo"}
+							>
+								Upload PDF
+								<input
+									type="file"
+									accept="application/pdf"
+									hidden
+									onChange={handleFileChange}
+								/>
+							</Button>
+						</Grid>
+					</Grid>
+
+					<CardActions sx={{ mt: 2, justifyContent: "flex-end" }}>
+						<Button type="submit" variant="contained" color="primary">
+							Submit
+						</Button>
+						<Button onClick={onClose} variant="outlined">
+							Cancel
+						</Button>
+					</CardActions>
+				</form>
+			</CardContent>
 
 			<Snackbar
 				open={open}
@@ -240,6 +276,6 @@ export default function EOForm({ onClose, refreshData, onSuccess }) {
 					</Alert>
 				) : null}
 			</Snackbar>
-		</div>
+		</Box>
 	);
 }

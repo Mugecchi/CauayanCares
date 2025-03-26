@@ -1,20 +1,13 @@
-import * as React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { logout } from "../api"; // ✅ Import logout function
-import {
-	Box,
-	Drawer,
-	IconButton,
-	List,
-	ListItemButton,
-	Collapse,
-} from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { logout, fetchUser } from "../api"; // ✅ Import API functions
+import { Box, Drawer, IconButton, CircularProgress } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import DescriptionIcon from "@mui/icons-material/Description";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import GroupIcon from "@mui/icons-material/Group";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import ExpandLess from "@mui/icons-material/ExpandLess";
-import ExpandMore from "@mui/icons-material/ExpandMore";
+
 import {
 	SidebarButton,
 	SidebarContainer,
@@ -27,130 +20,104 @@ import {
 } from "./styledComponents";
 
 export default function Sidebar() {
-	const [open, setOpen] = React.useState(false);
+	const [open, setOpen] = useState(false);
+	const [user, setUser] = useState(null);
+	const [loading, setLoading] = useState(true);
 	const location = useLocation();
-	const navigate = useNavigate();
-	const [dropdownOpen, setDropdownOpen] = React.useState({});
 
-	// Toggle dropdown
-	const toggleDropdown = (item) => {
-		setDropdownOpen((prev) => ({
-			...prev,
-			[item]: !prev[item],
-		}));
-	};
+	// ✅ Fetch user details
+	useEffect(() => {
+		const getUser = async () => {
+			try {
+				const userData = await fetchUser();
+				setUser(userData);
+			} catch (error) {
+				console.error("Not authenticated:", error);
+			} finally {
+				setLoading(false);
+			}
+		};
+		getUser();
+	}, []);
 
-	// Sidebar menu items
-	const menuItems = [
-		{ text: "Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
-		{
-			text: "View Forms",
-			icon: <DescriptionIcon />,
-			dropdown: [
-				{ text: "View Tables", path: "/tables" },
-				{ text: "Add Record", path: "/forms" },
-			],
-		},
-	];
-
-	// Toggle Drawer
-	const toggleDrawer = (newOpen) => () => {
-		setOpen(newOpen);
-	};
-
-	// ✅ Handle logout using API function
+	// ✅ Handle logout
 	const handleLogout = async () => {
 		setOpen(false);
 		try {
-			await logout(); // ✅ Use the logout function from api.jsx
-			setTimeout(() => {
-				window.location.href = "/"; // Ensure redirect happens
-			}, 100);
+			await logout();
+			window.location.href = "/";
 		} catch (error) {
 			console.error("Error during logout:", error);
 		}
 	};
 
-	// Sidebar Drawer Content
+	// ✅ Sidebar menu items (conditionally show User Management)
+	const menuItems = [
+		{ text: "Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
+		{ text: "Tables", path: "/tables", icon: <TableChartIcon /> },
+	];
+
+	// ✅ Add "User Management" only if user is an admin
+	if (user?.role === "admin") {
+		menuItems.push({
+			text: "User Management",
+			path: "/users",
+			icon: <GroupIcon />,
+		});
+	}
+
+	// ✅ Loading state while fetching user data
+	if (loading) {
+		return (
+			<Box
+				display="flex"
+				justifyContent="center"
+				alignItems="center"
+				height="100vh"
+			>
+				<CircularProgress />
+			</Box>
+		);
+	}
+	// ✅ Sidebar Drawer Content
 	const DrawerList = (
 		<SidebarContainer>
 			<Box>
-				<SidebarTitle>CAUAYAN CARES </SidebarTitle>
+				<SidebarTitle>CAUAYAN CARES</SidebarTitle>
 				<SidebarList>
 					{menuItems.map((item) => (
-						<React.Fragment key={item.text}>
-							<SidebarItem disablePadding sx={{ marginBottom: "10px" }}>
-								<SidebarButton
-									component={item.dropdown ? "button" : Link}
-									to={item.dropdown ? undefined : item.path}
-									onClick={
-										item.dropdown
-											? () => toggleDropdown(item.text)
-											: toggleDrawer(false)
-									}
+						<SidebarItem
+							disablePadding
+							sx={{ marginBottom: "10px" }}
+							key={item.text}
+						>
+							<SidebarButton
+								component={Link}
+								to={item.path}
+								onClick={() => setOpen(false)}
+								sx={{
+									backgroundColor:
+										location.pathname === item.path ? "#fbaaff" : "transparent",
+									"&:hover": { backgroundColor: "#fbaaff" },
+									borderRadius: "5px",
+									width: "100%",
+									display: "flex",
+									alignItems: "center",
+									gap: "10px",
+									color: "white",
+								}}
+							>
+								<SidebarItemIcon>{item.icon}</SidebarItemIcon>
+								<SidebarItemText
+									primary={item.text}
 									sx={{
-										backgroundColor:
-											location.pathname === item.path
-												? "#fbaaff"
-												: "transparent",
-										"&:hover": { backgroundColor: "#fbaaff" },
-										borderRadius: "5px",
-										width: "100%",
-										display: "flex",
-										alignItems: "center",
-										gap: "10px",
 										color: "white",
+										fontWeight:
+											location.pathname === item.path ? "bold" : "normal",
 									}}
-								>
-									<SidebarItemIcon>{item.icon}</SidebarItemIcon>
-									<SidebarItemText
-										primary={item.text}
-										sx={{
-											color: "white",
-											fontWeight:
-												location.pathname === item.path ? "bold" : "normal",
-										}}
-									/>
-									{item.dropdown &&
-										(dropdownOpen[item.text] ? <ExpandLess /> : <ExpandMore />)}
-								</SidebarButton>
-							</SidebarItem>
-
-							{item.dropdown && (
-								<Collapse
-									in={dropdownOpen[item.text]}
-									timeout="auto"
-									unmountOnExit
-								>
-									<List>
-										{item.dropdown.map((subItem) => (
-											<ListItemButton
-												key={subItem.text}
-												component={Link}
-												to={subItem.path}
-												onClick={toggleDrawer(false)}
-												sx={{
-													backgroundColor:
-														location.pathname === subItem.path
-															? "#fbaaff"
-															: "transparent",
-													"&:hover": { backgroundColor: "#fbaaff" },
-													borderRadius: "5px",
-													width: "100%",
-													paddingLeft: "53px",
-													color: "white",
-												}}
-											>
-												<SidebarItemText
-													primary={subItem.text}
-													sx={{ color: "white" }}
-												/>
-											</ListItemButton>
-										))}
-									</List>
-								</Collapse>
-							)}
-						</React.Fragment>
+								/>
+							</SidebarButton>
+						</SidebarItem>
 					))}
 				</SidebarList>
 			</Box>
@@ -175,12 +142,12 @@ export default function Sidebar() {
 		<>
 			{/* Mobile Sidebar Toggle Button */}
 			<IconButton
-				onClick={toggleDrawer(true)}
+				onClick={() => setOpen(true)}
 				sx={{
-					bottom: "20px",
-					left: "20px",
-					position: "sticky",
-					zIndex: 100,
+					bottom: "20%",
+					left: "20%",
+					position: { xs: "absolute", md: "sticky" },
+					zIndex: 1000000,
 					backgroundColor: "#5D3786",
 					color: "white",
 					borderRadius: "50%",
@@ -200,7 +167,7 @@ export default function Sidebar() {
 			</Box>
 
 			{/* Mobile Sidebar Drawer */}
-			<Drawer open={open} onClose={toggleDrawer(false)}>
+			<Drawer open={open} onClose={() => setOpen(false)}>
 				{DrawerList}
 			</Drawer>
 		</>

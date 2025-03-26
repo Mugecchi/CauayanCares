@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-	Typography,
+	MenuItem,
 	CircularProgress,
 	TextField,
 	Table,
@@ -9,68 +9,124 @@ import {
 	TableCell,
 	TableBody,
 	TableContainer,
-	Box,
 	TablePagination,
+	Button,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	Snackbar,
+	Box,
+	Alert,
 } from "@mui/material";
-import { fetchIassesment } from "../api"; // Importing the API function
+import { fetchAssesment, addAssesment, updateAssesment } from "../api";
 
-export default function IASsesment() {
+export default function iAssesment() {
 	const [ordinances, setOrdinances] = useState([]);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [loading, setLoading] = useState(true);
-	const [err, setError] = useState("");
+	const [error, setError] = useState({
+		open: false,
+		message: "",
+		severity: "info",
+	});
+	const [openModal, setOpenModal] = useState(false);
+	const [selectedCoverage, setSelectedCoverage] = useState(null);
 
 	useEffect(() => {
-		const getCoverage = async () => {
-			try {
-				const response = await fetchIassesment();
-				setOrdinances(response || []); // Ensure it is an array
-			} catch (err) {
-				setError("No Ordinance Found.");
-			} finally {
-				setLoading(false);
-			}
-		};
-
 		getCoverage();
 	}, []);
 
-	// Filter ordinances based on the search query
-	const filteredOrdinances = ordinances.filter(
-		(ordinance) =>
-			ordinance.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			(ordinance.monitoring_compliance ?? []).some(
-				(scope) =>
-					scope.indicators_of_success
-						?.toLowerCase()
-						.includes(searchQuery.toLowerCase()) ||
-					scope.compliance_rate
-						?.toLowerCase()
-						.includes(searchQuery.toLowerCase()) ||
-					scope.challenges?.toLowerCase().includes(searchQuery.toLowerCase())
-			)
-	);
-
-	const handleSearchChange = (event) => {
-		setSearchQuery(event.target.value);
+	const getCoverage = async () => {
+		try {
+			const response = await fetchAssesment();
+			setOrdinances(response || []);
+		} catch (err) {
+			setError({
+				open: true,
+				message: "No Ordinance Found.",
+				severity: "error",
+			});
+		} finally {
+			setLoading(false);
+		}
 	};
 
-	const handlePageChange = (event, newPage) => {
-		setPage(newPage);
+	const filteredOrdinances = useMemo(() => {
+		return ordinances.filter((ordinance) => {
+			const searchLower = searchQuery.toLowerCase();
+
+			// Match title or ordinance number
+			const titleOrNumberMatch =
+				ordinance.title?.toLowerCase().includes(searchLower) ||
+				ordinance.number?.toString().toLowerCase().includes(searchLower);
+
+			// Match any coverage scope fields
+			const scopeMatch = ordinance.impact_assessment?.some((scope) =>
+				[].some(
+					(key) => scope[key] && scope[key].toLowerCase().includes(searchLower)
+				)
+			);
+
+			return titleOrNumberMatch || scopeMatch;
+		});
+	}, [ordinances, searchQuery]);
+
+	const handleEdit = (ordinance, scope) => {
+		setSelectedCoverage({
+			id: scope?.id || "",
+			ordinance_id: ordinance.id,
+			funding_source: scope?.funding_source || "General Fund",
+			outcomes_results: scope?.outcomes_results || "",
+			gender_responsiveness_impact: scope?.gender_responsiveness_impact || "",
+			community_benefits: scope?.community_benefits || "",
+			adjustments_needed: scope?.adjustments_needed || "",
+			feedback_mechanisms: scope?.feedback_mechanisms || "",
+		});
+		setOpenModal(true);
 	};
 
+	const handleChange = (e) => {
+		setSelectedCoverage({
+			...selectedCoverage,
+			[e.target.name]: e.target.value,
+		});
+	};
+
+	const handleSave = async () => {
+		try {
+			if (selectedCoverage.id) {
+				await updateAssesment(selectedCoverage.id, selectedCoverage);
+				alert("Monitoring Data updated successfully!");
+			} else {
+				await addAssesment(selectedCoverage);
+				alert("Monitoring Data added successfully!");
+			}
+
+			setOpenModal(false);
+			setLoading(true);
+			getCoverage(); // Refresh the data
+		} catch (error) {
+			setError({
+				open: true,
+				message: "Failed to save Monitoring Data. Please try again.",
+				severity: "error",
+			});
+
+			console.error("Error saving Monitoring Data:", error);
+		}
+	};
+
+	const handleSearchChange = (event) => setSearchQuery(event.target.value);
+	const handlePageChange = (event, newPage) => setPage(newPage);
 	const handleRowsPerPageChange = (event) => {
 		setRowsPerPage(parseInt(event.target.value, 10));
 		setPage(0);
 	};
 
-	// Loading state
 	if (loading) return <CircularProgress />;
-
-	// Error state
-	if (err) return <Typography color="error">{err}</Typography>;
 
 	return (
 		<div>
@@ -81,56 +137,66 @@ export default function IASsesment() {
 				value={searchQuery}
 				onChange={handleSearchChange}
 			/>
-			<TableContainer sx={{ maxHeight: 600 }}>
-				<Table stickyHeader>
+			<TableContainer>
+				<Table>
 					<TableHead>
 						<TableRow>
-							<TableCell>Title & Number</TableCell>
-							<TableCell>Indicators of Success</TableCell>
-							<TableCell>Monitoring Frequency</TableCell>
-							<TableCell>Compliance Rate</TableCell>
-							<TableCell>Challenges</TableCell>
-							<TableCell>Violations Reports</TableCell>
-							<TableCell>Feedback Mechanisms</TableCell>
+							<TableCell>Title</TableCell>
+							<TableCell>Outcome Results</TableCell>
+							<TableCell>Gender Responsiveness Impact</TableCell>
+							<TableCell>Funding Source</TableCell>
+							<TableCell>Community Benefits</TableCell>
+							<TableCell>Adjustments Needed</TableCell>
+							<TableCell>Actions</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{filteredOrdinances.length === 0 ? (
-							<TableRow>
-								<TableCell colSpan={7} align="center">
-									No results found.
-								</TableCell>
-							</TableRow>
-						) : (
-							filteredOrdinances
-								.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-								.flatMap((ordinance) =>
-									(ordinance.monitoring_compliance || []).map((scope) => (
+						{filteredOrdinances
+							.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+							.flatMap((ordinance) =>
+								ordinance.impact_assessment.length > 0 ? (
+									ordinance.impact_assessment.map((scope) => (
 										<TableRow key={`${ordinance.id}-${scope.id}`}>
 											<TableCell>
 												{ordinance.title} {ordinance.number}
 											</TableCell>
+											<TableCell>{scope.outcomes_results}</TableCell>
 											<TableCell>
-												{scope.indicators_of_success || "N/A"}
+												{scope.gender_responsiveness_impact}
 											</TableCell>
+											<TableCell>{scope.funding_source}%</TableCell>
+											<TableCell>{scope.community_benefits}</TableCell>
+											<TableCell>{scope.adjustments_needed}</TableCell>
 											<TableCell>
-												{scope.monitoring_frequency || "N/A"}
-											</TableCell>
-											<TableCell>{scope.compliance_rate || "N/A"}</TableCell>
-											<TableCell>{scope.challenges || "N/A"}</TableCell>
-											<TableCell>{scope.violations_reports || "N/A"}</TableCell>
-											<TableCell>
-												{scope.feedback_mechanisms || "N/A"}
+												<Button
+													variant="outlined"
+													onClick={() => handleEdit(ordinance, scope)}
+												>
+													Edit
+												</Button>
 											</TableCell>
 										</TableRow>
 									))
+								) : (
+									<TableRow key={ordinance.id}>
+										<TableCell>
+											{ordinance.title} {ordinance.number}
+										</TableCell>
+										<TableCell colSpan={5}>No Assessment Data</TableCell>
+										<TableCell>
+											<Button
+												variant="contained"
+												onClick={() => handleEdit(ordinance, null)}
+											>
+												Add
+											</Button>
+										</TableCell>
+									</TableRow>
 								)
-						)}
+							)}
 					</TableBody>
 				</Table>
 			</TableContainer>
-
-			{/* Pagination */}
 			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
@@ -142,6 +208,89 @@ export default function IASsesment() {
 					onRowsPerPageChange={handleRowsPerPageChange}
 				/>
 			</Box>
+			<Dialog open={openModal} onClose={() => setOpenModal(false)}>
+				<DialogTitle>
+					{selectedCoverage?.id ? "Edit" : "Add"} Monitoring Data
+				</DialogTitle>
+				<DialogContent>
+					<TextField
+						label="Outcome Results"
+						name="outcomes_results"
+						value={selectedCoverage?.outcomes_results || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+					<TextField
+						label="Funding Source"
+						name="funding_source"
+						select
+						onChange={handleChange}
+						value={selectedCoverage?.funding_source || ""}
+						fullWidth
+						margin="normal"
+					>
+						<MenuItem value="Monthly">General Fund</MenuItem>
+						<MenuItem value="Quarterly">Grants</MenuItem>
+						<MenuItem value="Yearly">Others</MenuItem>
+					</TextField>
+
+					<TextField
+						label="Gender Responsiveness Impact"
+						name="gender_responsiveness_impact"
+						value={selectedCoverage?.gender_responsiveness_impact || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+
+					<TextField
+						label="Community Benefits"
+						name="community_benefits"
+						value={selectedCoverage?.community_benefits || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+					<TextField
+						label="Adjustments Needed"
+						name="adjustments_needed"
+						value={selectedCoverage?.adjustments_needed || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+					<TextField
+						label="Feedback Mechanisms"
+						name="feedback_mechanisms"
+						value={selectedCoverage?.feedback_mechanisms || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOpenModal(false)}>Cancel</Button>
+					<Button variant="contained" onClick={handleSave}>
+						Save
+					</Button>
+				</DialogActions>
+			</Dialog>
+			<Snackbar
+				open={error.open}
+				autoHideDuration={4000}
+				onClose={() => setError({ open: false, message: "", severity: "info" })}
+			>
+				<Alert
+					onClose={() =>
+						setError({ open: false, message: "", severity: "info" })
+					}
+					severity={error.severity}
+					sx={{ width: "100%" }}
+				>
+					{error.message}
+				</Alert>
+			</Snackbar>
 		</div>
 	);
 }

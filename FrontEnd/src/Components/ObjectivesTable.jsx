@@ -15,18 +15,17 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogActions,
-	MenuItem,
 	Snackbar,
 	Box,
 	Alert,
 } from "@mui/material";
 import {
-	fetchOrdinancesCoverage,
-	addCoverageScope,
-	updateCoverageScope,
+	fetchObjectivesImplementation,
+	addObjectivesImplementation,
+	updateObjectivesImplementation,
 } from "../api";
 
-export default function CoverageTable() {
+export default function ObjectivesTable() {
 	const [ordinances, setOrdinances] = useState([]);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [page, setPage] = useState(0);
@@ -46,7 +45,7 @@ export default function CoverageTable() {
 
 	const getCoverage = async () => {
 		try {
-			const response = await fetchOrdinancesCoverage();
+			const response = await fetchObjectivesImplementation();
 			setOrdinances(response || []);
 		} catch (err) {
 			setError({
@@ -60,28 +59,40 @@ export default function CoverageTable() {
 	};
 
 	const filteredOrdinances = useMemo(() => {
-		return ordinances.filter(
-			(ordinance) =>
-				ordinance.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				ordinance.coverage_scopes.some((scope) =>
-					[
-						"target_beneficiaries",
-						"geographical_coverage",
-						"inclusive_period",
-					].some((key) =>
-						scope[key]?.toLowerCase().includes(searchQuery.toLowerCase())
-					)
+		return ordinances.filter((ordinance) => {
+			const searchLower = searchQuery.toLowerCase();
+
+			// Match title or ordinance number
+			const titleOrNumberMatch =
+				ordinance.title?.toLowerCase().includes(searchLower) ||
+				ordinance.number?.toString().toLowerCase().includes(searchLower);
+
+			// Match any coverage scope fields
+			const scopeMatch = ordinance.coverage_scopes?.some((scope) =>
+				[
+					"lead_agency",
+					"supporting_agencies",
+					"policy_objectives",
+					"key_provisions",
+					"programs_activities",
+				].some(
+					(key) => scope[key] && scope[key].toLowerCase().includes(searchLower)
 				)
-		);
+			);
+
+			return titleOrNumberMatch || scopeMatch;
+		});
 	}, [ordinances, searchQuery]);
 
 	const handleEdit = (ordinance, scope) => {
 		setSelectedCoverage({
 			id: scope?.id || "",
 			ordinance_id: ordinance.id,
-			inclusive_period: scope?.inclusive_period || "",
-			target_beneficiaries: scope?.target_beneficiaries || "General Public",
-			geographical_coverage: scope?.geographical_coverage || "",
+			policy_objectives: scope?.policy_objectives || "",
+			lead_agency: scope?.lead_agency || "",
+			supporting_agencies: scope?.supporting_agencies || "",
+			key_provisions: scope?.key_provisions || "",
+			programs_activities: scope?.programs_activities || "",
 		});
 		setOpenModal(true);
 	};
@@ -96,10 +107,13 @@ export default function CoverageTable() {
 	const handleSave = async () => {
 		try {
 			if (selectedCoverage.id) {
-				await updateCoverageScope(selectedCoverage.id, selectedCoverage);
+				await updateObjectivesImplementation(
+					selectedCoverage.id,
+					selectedCoverage
+				);
 				alert("Coverage scope updated successfully!");
 			} else {
-				await addCoverageScope(selectedCoverage);
+				await addObjectivesImplementation(selectedCoverage);
 				alert("Coverage scope added successfully!");
 			}
 
@@ -140,9 +154,11 @@ export default function CoverageTable() {
 					<TableHead>
 						<TableRow>
 							<TableCell>Title</TableCell>
-							<TableCell>Inclusive Period</TableCell>
-							<TableCell>Target Beneficiaries</TableCell>
-							<TableCell>Geographical Coverage</TableCell>
+							<TableCell>Policy Objectives</TableCell>
+							<TableCell>Lead Agency</TableCell>
+							<TableCell>Supporting Agencies</TableCell>
+							<TableCell>Key Provisions</TableCell>
+							<TableCell>Programs/Activities</TableCell>
 							<TableCell>Actions</TableCell>
 						</TableRow>
 					</TableHead>
@@ -150,15 +166,18 @@ export default function CoverageTable() {
 						{filteredOrdinances
 							.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 							.flatMap((ordinance) =>
-								ordinance.coverage_scopes.length > 0 ? (
-									ordinance.coverage_scopes.map((scope) => (
+								ordinance.objectives_implementation.length > 0 ? (
+									ordinance.objectives_implementation.map((scope) => (
 										<TableRow key={`${ordinance.id}-${scope.id}`}>
 											<TableCell>
 												{ordinance.title} {ordinance.number}
 											</TableCell>
-											<TableCell>{scope.inclusive_period}</TableCell>
-											<TableCell>{scope.target_beneficiaries}</TableCell>
-											<TableCell>{scope.geographical_coverage}</TableCell>
+											{console.log(scope)}
+											<TableCell>{scope.policy_objectives || " "}</TableCell>
+											<TableCell>{scope.lead_agency || " "}</TableCell>
+											<TableCell>{scope.supporting_agencies || " "}</TableCell>
+											<TableCell>{scope.key_provisions || " "}</TableCell>
+											<TableCell>{scope.programs_activities || " "}</TableCell>
 											<TableCell>
 												<Button
 													variant="outlined"
@@ -174,8 +193,8 @@ export default function CoverageTable() {
 										<TableCell>
 											{ordinance.title} {ordinance.number}
 										</TableCell>
-										<TableCell colSpan={3}>
-											No coverage scope available
+										<TableCell colSpan={5}>
+											No Objectives/Implementation
 										</TableCell>
 										<TableCell>
 											<Button
@@ -191,7 +210,7 @@ export default function CoverageTable() {
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box display="flex" justifyContent="flex-end" mt={2}>
+			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
 					component="div"
@@ -208,40 +227,42 @@ export default function CoverageTable() {
 				</DialogTitle>
 				<DialogContent>
 					<TextField
-						label="Inclusive Period"
-						name="inclusive_period"
-						value={selectedCoverage?.inclusive_period || ""}
+						label="Policy Objectives"
+						name="policy_objectives"
+						value={selectedCoverage?.policy_objectives || ""}
 						onChange={handleChange}
 						fullWidth
 						margin="normal"
 					/>
 					<TextField
-						label="Target Beneficiaries"
-						name="target_beneficiaries"
-						value={selectedCoverage?.target_beneficiaries || "General Public"}
+						label="Lead Agency "
+						name="lead_agency"
+						value={selectedCoverage?.lead_agency || ""}
 						onChange={handleChange}
-						select
 						fullWidth
 						margin="normal"
-					>
-						{[
-							"General Public",
-							"Women",
-							"Children",
-							"Solo Parents",
-							"PWDs",
-							"MSMEs",
-							"Others",
-						].map((option) => (
-							<MenuItem key={option} value={option}>
-								{option}
-							</MenuItem>
-						))}
-					</TextField>
+					/>
+
 					<TextField
-						label="Geographical Coverage"
-						name="geographical_coverage"
-						value={selectedCoverage?.geographical_coverage || ""}
+						label="Supporting Agencies"
+						name="supporting_agencies"
+						value={selectedCoverage?.supporting_agencies || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+					<TextField
+						label="Key Provisions"
+						name="key_provisions"
+						value={selectedCoverage?.key_provisions || ""}
+						onChange={handleChange}
+						fullWidth
+						margin="normal"
+					/>
+					<TextField
+						label="Programs Activities"
+						name="programs_activities"
+						value={selectedCoverage?.programs_activities || ""}
 						onChange={handleChange}
 						fullWidth
 						margin="normal"

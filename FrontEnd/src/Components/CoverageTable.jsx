@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-	Typography,
 	CircularProgress,
 	TextField,
 	Table,
@@ -60,19 +59,27 @@ export default function CoverageTable() {
 	};
 
 	const filteredOrdinances = useMemo(() => {
-		return ordinances.filter(
-			(ordinance) =>
-				ordinance.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				ordinance.coverage_scopes.some((scope) =>
-					[
-						"target_beneficiaries",
-						"geographical_coverage",
-						"inclusive_period",
-					].some((key) =>
-						scope[key]?.toLowerCase().includes(searchQuery.toLowerCase())
-					)
+		return ordinances.filter((ordinance) => {
+			const searchLower = searchQuery.toLowerCase();
+
+			// Match title or ordinance number
+			const titleOrNumberMatch =
+				ordinance.title?.toLowerCase().includes(searchLower) ||
+				ordinance.number?.toString().toLowerCase().includes(searchLower);
+
+			// Match any coverage scope fields
+			const scopeMatch = ordinance.coverage_scopes?.some((scope) =>
+				[
+					"target_beneficiaries",
+					"geographical_coverage",
+					"inclusive_period",
+				].some(
+					(key) => scope[key] && scope[key].toLowerCase().includes(searchLower)
 				)
-		);
+			);
+
+			return titleOrNumberMatch || scopeMatch;
+		});
 	}, [ordinances, searchQuery]);
 
 	const handleEdit = (ordinance, scope) => {

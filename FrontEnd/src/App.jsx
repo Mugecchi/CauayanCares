@@ -12,6 +12,7 @@ import { AuthProvider } from "./Context";
 import { fetchUser } from "./api";
 import { CircularProgress, Box } from "@mui/material";
 import { WhiteBox } from "./Includes/styledComponents";
+import Registration from "./Pages/Registration";
 
 const Dashboard = lazy(() => import("./Pages/Dashboard"));
 const Tables = lazy(() => import("./Pages/Tables"));
@@ -40,12 +41,20 @@ const App = () => {
 		}
 	};
 
-	// ✅ Protected Route Wrapper
-	const ProtectedRoute = ({ element }) => {
-		return isLoggedIn ? element : <Navigate to="/login" />;
+	const ProtectedRoute = ({ element, role }) => {
+		if (!isLoggedIn) {
+			console.log("User is not logged in. Redirecting to login...");
+			return <Navigate to="/login" />;
+		}
+
+		if (role && user?.role !== role) {
+			console.log(`Unauthorized access attempt to ${role}-only page.`);
+			return <Navigate to="/dashboard" />;
+		}
+
+		return element;
 	};
 
-	// ✅ Loading Indicator While Fetching Authentication Status
 	if (loading) {
 		return (
 			<Box
@@ -89,36 +98,43 @@ const App = () => {
 									</Box>
 								}
 							>
-								<WhiteBox>
+								{isLoggedIn ? (
+									<WhiteBox>
+										<Routes>
+											<Route path="/" element={<Navigate to="/dashboard" />} />
+											<Route
+												path="/dashboard"
+												element={<ProtectedRoute element={<Dashboard />} />}
+											/>
+											<Route
+												path="/tables"
+												element={<ProtectedRoute element={<Tables />} />}
+											/>
+											<Route
+												path="/forms"
+												element={<ProtectedRoute element={<Forms />} />}
+											/>
+											{/* ✅ Only Admins can access /users */}
+											<Route
+												path="/users"
+												element={
+													<ProtectedRoute
+														element={<Registration />}
+														role="admin"
+													/>
+												}
+											/>
+										</Routes>
+									</WhiteBox>
+								) : (
 									<Routes>
-										{/* 🔹 Redirect to Dashboard if Logged In */}
-										<Route
-											path="/"
-											element={
-												<Navigate to={isLoggedIn ? "/dashboard" : "/login"} />
-											}
-										/>
-
 										<Route
 											path="/login"
 											element={<Login setIsLoggedIn={setIsLoggedIn} />}
 										/>
-
-										{/* 🔹 Protected Routes */}
-										<Route
-											path="/dashboard"
-											element={<ProtectedRoute element={<Dashboard />} />}
-										/>
-										<Route
-											path="/tables"
-											element={<ProtectedRoute element={<Tables />} />}
-										/>
-										<Route
-											path="/forms"
-											element={<ProtectedRoute element={<Forms />} />}
-										/>
+										<Route path="*" element={<Navigate to="/login" />} />
 									</Routes>
-								</WhiteBox>
+								)}
 							</Suspense>
 						</div>
 					</div>

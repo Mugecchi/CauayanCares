@@ -16,10 +16,8 @@ import {
 	Box,
 } from "@mui/material";
 import { Close, Add } from "@mui/icons-material";
-import { fetchOrdinances, deleteOrdinance } from "../api";
+import { fetchOrdinances, deleteOrdinance, handlePreview } from "../api";
 import EOForms from "./EOForms";
-
-const BASE_URL = "http://localhost:5000";
 
 const EOTable = () => {
 	const [ordinances, setOrdinances] = useState([]);
@@ -29,7 +27,14 @@ const EOTable = () => {
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [openForm, setOpenForm] = useState(false);
-
+	const formatDate = (dateString) => {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-US", {
+			month: "2-digit",
+			day: "2-digit",
+			year: "numeric",
+		});
+	};
 	useEffect(() => {
 		fetchOrdinancesData();
 	}, []);
@@ -41,20 +46,6 @@ const EOTable = () => {
 		} catch (error) {
 			console.error("Error fetching ordinances:", error);
 		}
-	};
-
-	const handlePreview = (filePath) => {
-		if (!filePath) {
-			console.error("Error: No file path provided.");
-			alert("File not found.");
-			return;
-		}
-
-		const previewUrl = `${BASE_URL}/uploads/${filePath}`;
-		console.log("Previewing file:", previewUrl);
-
-		setSelectedFile(previewUrl);
-		setOpenPreview(true);
 	};
 
 	const handleDelete = async (id) => {
@@ -108,12 +99,10 @@ const EOTable = () => {
 					startIcon={<Add />}
 					onClick={() => setOpenForm(true)}
 				>
-					Add Ordinance
+					Add Record
 				</Button>
 			</Box>
-			<TableContainer
-				sx={{ overflowY: "auto", maxHeight: "calc(70vh - 10px)" }}
-			>
+			<TableContainer>
 				<Table stickyHeader size="medium">
 					<TableHead>
 						<TableRow>
@@ -121,6 +110,8 @@ const EOTable = () => {
 							<TableCell>Type of Document</TableCell>
 							<TableCell>Number</TableCell>
 							<TableCell>Details</TableCell>
+							<TableCell>Date Issued</TableCell>
+							<TableCell>Date of Effectivity</TableCell>
 							<TableCell>Status</TableCell>
 							<TableCell>Actions</TableCell>
 						</TableRow>
@@ -130,15 +121,26 @@ const EOTable = () => {
 							.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 							.map((ordinance) => (
 								<TableRow key={ordinance.id} hover>
+									{console.log(ordinance)}
 									<TableCell>{ordinance.title}</TableCell>
 									<TableCell>{ordinance.document_type}</TableCell>
 									<TableCell>{ordinance.number}</TableCell>
 									<TableCell>{ordinance.details}</TableCell>
+									<TableCell>{formatDate(ordinance.date_issued)}</TableCell>
+									<TableCell>
+										{formatDate(ordinance.date_effectivity)}
+									</TableCell>
 									<TableCell>{ordinance.status}</TableCell>
 									<TableCell>
 										{ordinance.file_path && (
 											<IconButton
-												onClick={() => handlePreview(ordinance.file_path)}
+												onClick={() =>
+													handlePreview(
+														ordinance.file_path,
+														setSelectedFile,
+														setOpenPreview
+													)
+												}
 											>
 												<img src="/Printer.svg" alt="preview" />
 											</IconButton>
@@ -200,7 +202,7 @@ const EOTable = () => {
 				fullWidth
 			>
 				<DialogTitle>
-					Preview Ordinance
+					Preview Records
 					<IconButton
 						onClick={() => setOpenPreview(false)}
 						style={{ float: "right" }}

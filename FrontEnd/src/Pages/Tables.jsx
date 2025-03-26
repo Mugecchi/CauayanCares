@@ -1,18 +1,11 @@
-import { Box, createTheme, ThemeProvider, Typography } from "@mui/material";
 import React, { useState } from "react";
 import EOTable from "../Components/EOTable";
 import CoverageTable from "../Components/CoverageTable";
 import ObjectivesTable from "../Components/ObjectivesTable";
-import {
-	CustomTabs,
-	CustomTab,
-	ThemeProv,
-	WhiteBox,
-} from "../Includes/styledComponents"; // Import styled components
+import { CustomTabs, CustomTab, ThemeProv } from "../Includes/styledComponents"; // Import styled components
 import BudgetTable from "../Components/BudgetTable";
 import MonitoringTable from "../Components/MonitoringTable";
 import IASsesment from "../Components/iAssesment";
-import DocumentationReps from "../Components/DocumentationReps";
 
 // ✅ Define Custom MUI Theme (Overrides TableRow height globally)
 
@@ -30,9 +23,8 @@ function Tables() {
 				<CustomTab label="Coverage" />
 				<CustomTab label="Objectives" />
 				<CustomTab label="Budget" />
-				<CustomTab label="MonitoringTable" />
+				<CustomTab label="Records Monitoring" />
 				<CustomTab label="IAS" />
-				<CustomTab label="Doc Reports" />
 			</CustomTabs>
 			<div style={{ marginTop: "30px" }}>
 				{selectedTab === 0 && <EOTable formType="A" />}
@@ -41,7 +33,6 @@ function Tables() {
 				{selectedTab === 3 && <BudgetTable formType="D" />}
 				{selectedTab === 4 && <MonitoringTable formType="E" />}
 				{selectedTab === 5 && <IASsesment formType="F" />}
-				{selectedTab === 6 && <DocumentationReps formType="G" />}
 			</div>
 		</ThemeProv>
 	);

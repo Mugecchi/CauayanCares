@@ -267,6 +267,7 @@ export const CustomTabs = styled(Tabs)`
 	left: 0;
 	top: 0;
 	width: 100%;
+	overflow-x: auto;
 	& .MuiTabs-indicator {
 		background-color: var(--eminence) !important;
 		height: 4px;

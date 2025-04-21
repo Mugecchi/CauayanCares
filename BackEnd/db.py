@@ -8,7 +8,8 @@ def get_db_connection():
             user=os.getenv("MYSQLUSER", "root"),
             password=os.getenv("MYSQLPASSWORD","XwhUhljiWpsysxiDPgBeGazfTHMHBUre"),
             database=os.getenv("MYSQLDATABASE","railway"),
-            port=int(os.getenv("MYSQLPORT", 10041))
+            port=int(os.getenv("MYSQLPORT", 10041)),
+            connection_timeout=10
         )
     else:
         return mysql.connector.connect(
@@ -17,6 +18,7 @@ def get_db_connection():
             password="1234",
             database="ordinances",
             port=3306
+
         )
 
 def execute_query(query, params=(), fetch_one=False, commit=False):

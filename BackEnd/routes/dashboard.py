@@ -19,24 +19,25 @@ def get_dashboard_counts():
         "date_issued": {}
     }
 
-    # Get total counts per document type
+    # Query to get the count per document type and status
+    query = """
+        SELECT document_type, status, COUNT(*) 
+        FROM ordinances 
+        WHERE document_type IN (%s) 
+        GROUP BY document_type, status
+    """
+    document_status_counts = execute_query(query, (tuple(document_types),))
+
     for doc_type in document_types:
         doc_key = doc_type.lower().replace(" ", "_")
-        counts["document_types"][doc_key] = execute_query(
-            "SELECT COUNT(*) FROM ordinances WHERE document_type = %s",
-            (doc_type,),
-            fetch_one=True
-        )[0]
-
-        # Get count per status for each document type
-        counts["document_types"][doc_key + "_statuses"] = {}
-        for status in statuses:
-            status_key = status.lower().replace(" ", "_")
-            counts["document_types"][doc_key + "_statuses"][status_key] = execute_query(
-                "SELECT COUNT(*) FROM ordinances WHERE document_type = %s AND status = %s",
-                (doc_type, status),
-                fetch_one=True
-            )[0]
+        counts["document_types"][doc_key] = sum(
+            1 for doc in document_status_counts if doc['document_type'] == doc_type
+        )
+        counts["document_types"][doc_key + "_statuses"] = {
+            status.lower().replace(" ", "_"): sum(
+                1 for doc in document_status_counts if doc['document_type'] == doc_type and doc['status'] == status
+            ) for status in statuses
+        }
 
     # Get total count per funding source
     for source in funding_sources:
@@ -57,7 +58,6 @@ def get_dashboard_counts():
     """
     date_issued_data = execute_query(date_issued_query)
 
-    # Process the results into a dictionary for histogram
     for year, count in date_issued_data:
         if year is not None:
             counts["date_issued"][str(year)] = count

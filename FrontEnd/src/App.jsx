@@ -11,13 +11,15 @@ import { AuthProvider } from "./Context";
 import { fetchUser } from "./api";
 import { CircularProgress, Box } from "@mui/material";
 import { ContentContainer, ThemeProv } from "./Includes/styledComponents";
-import Registration from "./Pages/Registration";
-import DocumentationReps from "./Components/DocumentationReps";
-import AddRecord from "./Pages/AddRecord";
-import LogsTable from "./Components/LogsTable";
+
+// Lazy load pages
 const Dashboard = lazy(() => import("./Pages/Dashboard"));
 const Tables = lazy(() => import("./Pages/Tables"));
 const Login = lazy(() => import("./Pages/Login"));
+const Registration = lazy(() => import("./Pages/Registration"));
+const DocumentationReps = lazy(() => import("./Components/DocumentationReps"));
+const AddRecord = lazy(() => import("./Pages/AddRecord"));
+const LogsTable = lazy(() => import("./Components/LogsTable"));
 
 const App = () => {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -28,6 +30,7 @@ const App = () => {
 		checkLoginStatus();
 	}, []);
 
+	// Check user login status
 	const checkLoginStatus = async () => {
 		try {
 			const userData = await fetchUser();
@@ -41,6 +44,7 @@ const App = () => {
 		}
 	};
 
+	// Protected route wrapper
 	const ProtectedRoute = ({ element, role }) => {
 		if (!isLoggedIn) {
 			console.log("User is not logged in. Redirecting to login...");
@@ -127,15 +131,10 @@ const App = () => {
 													path="/logs"
 													element={<ProtectedRoute element={<LogsTable />} />}
 												/>
-
-												{/* ✅ Only Admins can access /users */}
 												<Route
 													path="/users"
 													element={
-														<ProtectedRoute
-															element={<Registration />}
-															// role="admin"
-														/>
+														<ProtectedRoute element={<Registration />} />
 													}
 												/>
 											</Routes>

@@ -154,14 +154,39 @@ def add_ordinance():
         # Log the error
         current_app.logger.error(f"Error in adding record: {str(e)}")
         return jsonify({"error": f"Failed to add record. {str(e)}"}), 500
-
-# Fetch Ordinances
 @ordinances_bp.route("/api/ordinances", methods=["GET"])
 @login_required
 def get_ordinances():
-    query = "SELECT id, title, number, date_issued, date_effectivity, details, document_type, status, file_path FROM ordinances"
-    ordinances = execute_query(query)
-    return jsonify([dict(zip(["id", "title", "number", "date_issued", "date_effectivity", "details", "document_type", "status", "file_path"], row)) for row in ordinances])
+    # Pagination parameters (default values: page 1, per_page 10)
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 10))
+
+    # Calculate the OFFSET for pagination
+    offset = (page - 1) * per_page
+
+    # Query to fetch ordinances with pagination
+    query = """
+        SELECT id, title, number, date_issued, date_effectivity, details, document_type, status, file_path
+        FROM ordinances
+        LIMIT %s OFFSET %s
+    """
+    ordinances = execute_query(query, (per_page, offset))
+
+    # Query to get the total number of ordinances
+    count_query = "SELECT COUNT(*) FROM ordinances"
+    total_count = execute_query(count_query)[0][0]  # Fetch the count value from the result
+
+    # Calculate the total number of pages
+    total_pages = (total_count + per_page - 1) // per_page  # Ceiling division
+
+    # Return the ordinances and pagination information as a JSON response
+    return jsonify({
+        "ordinances": [dict(zip(["id", "title", "number", "date_issued", "date_effectivity", "details", "document_type", "status", "file_path"], row)) for row in ordinances],
+        "total_pages": total_pages,
+        "total_count": total_count,
+        "current_page": page
+    })
+
 
 # Serve Uploaded Files (Proper File Serving)
 @ordinances_bp.route("/uploads/<path:filename>")

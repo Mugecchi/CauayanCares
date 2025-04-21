@@ -34,15 +34,21 @@ const EOTable = () => {
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [order, setOrder] = useState("asc");
 	const [orderBy, setOrderBy] = useState("title");
+	const [totalRecords, setTotalRecords] = useState();
+	console.log(totalRecords);
 
 	useEffect(() => {
-		fetchOrdinancesData();
-	}, []);
+		fetchOrdinancesData(page + 1, rowsPerPage); // Adding 1 to the page for 1-based indexing
+	}, [page, rowsPerPage]);
 
-	const fetchOrdinancesData = async () => {
+	const fetchOrdinancesData = async (page, rowsPerPage) => {
 		try {
-			const ordinancesData = await fetchOrdinances();
-			setOrdinances(ordinancesData);
+			// Fetch paginated data from the backend
+			const ordinancesData = await fetchOrdinances(page, rowsPerPage);
+			// Update the ordinances state with the paginated data
+			setOrdinances(ordinancesData.ordinances);
+			// Set the total count of ordinances from the backend response
+			setTotalRecords(ordinancesData.total_pages);
 		} catch (error) {
 			console.error("Error fetching ordinances:", error);
 		}
@@ -360,7 +366,7 @@ const EOTable = () => {
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
 					component="div"
-					count={filteredOrdinances.length}
+					count={totalRecords} // Total count from backend
 					rowsPerPage={rowsPerPage}
 					page={page}
 					onPageChange={handlePageChange}

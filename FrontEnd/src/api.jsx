@@ -102,7 +102,15 @@ export const handlePreview = async (
 // Ordinances
 export const createOrdinance = (formData) =>
 	apiCall("post", "/ordinances", formData);
-export const fetchOrdinances = () => apiCall("get", "/ordinances");
+export const fetchOrdinances = (page = 1, limit = 10) => {
+	return apiCall("get", "/ordinances", {
+		params: {
+			page,
+			limit,
+		},
+	});
+};
+
 export const deleteOrdinance = (id) => apiCall("delete", `/ordinances/${id}`);
 export const updateOrdinance = (id, formData) =>
 	apiCall("put", `/ordinances/${id}`, formData);

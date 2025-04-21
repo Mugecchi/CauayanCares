@@ -9,6 +9,8 @@ import {
 	Typography,
 	Grid,
 	StepConnector,
+	Snackbar,
+	Alert,
 } from "@mui/material";
 import { createOrdinance } from "../api";
 import Step1 from "../Components/Formsteps/firstStep";
@@ -31,6 +33,7 @@ const steps = [
 ];
 
 const AddRecord = () => {
+	const [snackbarOpen, setSnackbarOpen] = useState(false);
 	const [activeStep, setActiveStep] = useState(0);
 	const [formValues, setFormValues] = useState({});
 
@@ -43,21 +46,19 @@ const AddRecord = () => {
 	};
 
 	const handleSubmit = async () => {
-		// Perform verification first
 		const isValid = validateForm();
 		if (!isValid) {
-			console.log("Form validation failed. Please check the inputs.");
+			setSnackbar({
+				open: true,
+				message: "Form validation failed. Please check the inputs.",
+				severity: "error",
+			});
 			return;
 		}
 
-		// Log form values before submission
-		console.log("Form values:", formValues);
-
 		try {
 			const data = new FormData();
-			// Append all fields from formValues
 			Object.entries(formValues).forEach(([key, value]) => {
-				// Handle files
 				if (key === "file_path" && value instanceof File) {
 					data.append("file_path", value);
 				} else {
@@ -66,10 +67,20 @@ const AddRecord = () => {
 			});
 
 			await createOrdinance(data);
-			console.log("Record created successfully!");
-			// Optionally reset form or show success
+			setSnackbar({
+				open: true,
+				message: "Record created successfully!",
+				severity: "success",
+			});
+			setFormValues({}); // reset form
+			setActiveStep(0); // go back to step 1
 		} catch (error) {
 			console.error("Error submitting form:", error);
+			setSnackbar({
+				open: true,
+				message: "An error occurred while submitting the form.",
+				severity: "error",
+			});
 		}
 	};
 
@@ -109,6 +120,11 @@ const AddRecord = () => {
 				return null;
 		}
 	};
+	const [snackbar, setSnackbar] = useState({
+		open: false,
+		message: "",
+		severity: "success", // 'success' | 'error'
+	});
 
 	const stepInstructions = [
 		"Provide the title, ordinance number, and basic description.",
@@ -121,117 +137,133 @@ const AddRecord = () => {
 	];
 
 	return (
-		<WhiteBox sx={{ padding: "60px" }}>
-			<Grid container spacing={3}>
-				{/* Stepper Column */}
-				<Grid item xs={3}>
-					<Stepper
-						activeStep={activeStep}
-						orientation="vertical"
-						connector={
-							<StepConnector
-								sx={{
-									"& .MuiStepConnector-line": {
-										borderColor: "var(--eminence)", // Default line color
-										borderWidth: 3,
-									},
-									"& .Mui-active .MuiStepConnector-line": {
-										borderColor: "var(--eminence)", // Active step line color'
-									},
-								}}
-							/>
-						}
-					>
-						{steps.map((label, index) => (
-							<Step key={label}>
-								<StepLabel
-									onClick={() => setActiveStep(index)}
+		<>
+			<WhiteBox sx={{ padding: "60px" }}>
+				<Grid container spacing={3}>
+					{/* Stepper Column */}
+					<Grid item xs={3}>
+						<Stepper
+							activeStep={activeStep}
+							orientation="vertical"
+							connector={
+								<StepConnector
 									sx={{
-										cursor: "pointer",
-										fontSize: "1rem", // Font size for the label
-										fontWeight: activeStep === index ? "bold" : "normal", // Bold font for the active step
-										"& .MuiStepLabel-iconContainer": {
-											color: "var(--eminence)", // Change the icon color
-											"& .MuiStepIcon-root": {
-												border: "2px solid var(--eminence)", // Border color
-												borderRadius: "50%", // Circle shape
-												fontSize: "2rem", // Icon size
-												backgroundColor: "var(--eminence)", // Background color
-												fill: activeStep === index ? "white" : "var(--white)",
-											},
+										"& .MuiStepConnector-line": {
+											borderColor: "var(--eminence)", // Default line color
+											borderWidth: 3,
+										},
+										"& .Mui-active .MuiStepConnector-line": {
+											borderColor: "var(--eminence)", // Active step line color'
 										},
 									}}
-								>
-									<Typography
-										variant={activeStep === index ? "h6" : "body2"}
-										fontWeight="bold"
+								/>
+							}
+						>
+							{steps.map((label, index) => (
+								<Step key={label}>
+									<StepLabel
+										onClick={() => setActiveStep(index)}
+										sx={{
+											cursor: "pointer",
+											fontSize: "1rem", // Font size for the label
+											fontWeight: activeStep === index ? "bold" : "normal", // Bold font for the active step
+											"& .MuiStepLabel-iconContainer": {
+												color: "var(--eminence)", // Change the icon color
+												"& .MuiStepIcon-root": {
+													border: "2px solid var(--eminence)", // Border color
+													borderRadius: "50%", // Circle shape
+													fontSize: "2rem", // Icon size
+													backgroundColor: "var(--eminence)", // Background color
+													fill: activeStep === index ? "white" : "var(--white)",
+												},
+											},
+										}}
 									>
-										{label}
-									</Typography>
-								</StepLabel>
-								<StepContent
-									sx={{
-										borderLeft: "3px solid var(--eminence)", // Left border color
-									}}
-								>
-									<Typography variant="body2">
-										{stepInstructions[index]}
-									</Typography>
-								</StepContent>
-							</Step>
-						))}
-					</Stepper>
-				</Grid>
+										<Typography
+											variant={activeStep === index ? "h6" : "body2"}
+											fontWeight="bold"
+										>
+											{label}
+										</Typography>
+									</StepLabel>
+									<StepContent
+										sx={{
+											borderLeft: "3px solid var(--eminence)", // Left border color
+										}}
+									>
+										<Typography variant="body2">
+											{stepInstructions[index]}
+										</Typography>
+									</StepContent>
+								</Step>
+							))}
+						</Stepper>
+					</Grid>
 
-				<Grid item xs={9}>
-					<Box
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							minHeight: "550px",
-							height: "100%",
-							maxHeight: "550px",
-						}}
-					>
-						<Box sx={{ flexGrow: 1 }}>{renderStep()}</Box>
-
+					<Grid item xs={9}>
 						<Box
 							sx={{
 								display: "flex",
-								justifyContent: "space-between",
-								mt: 2,
-								pt: 2,
+								flexDirection: "column",
+								minHeight: "550px",
+								height: "100%",
+								maxHeight: "550px",
 							}}
 						>
-							<Button
-								disabled={activeStep === 0}
-								onClick={handleBack}
-								sx={{ mt: 1, mr: 1 }}
+							<Box sx={{ flexGrow: 1 }}>{renderStep()}</Box>
+
+							<Box
+								sx={{
+									display: "flex",
+									justifyContent: "space-between",
+									mt: 2,
+									pt: 2,
+								}}
 							>
-								Back
-							</Button>
-							{activeStep === steps.length - 1 ? (
 								<Button
-									variant="contained"
-									onClick={handleSubmit}
+									disabled={activeStep === 0}
+									onClick={handleBack}
 									sx={{ mt: 1, mr: 1 }}
 								>
-									Submit
+									Back
 								</Button>
-							) : (
-								<Button
-									variant="contained"
-									onClick={handleNext}
-									sx={{ mt: 1, mr: 1 }}
-								>
-									Continue
-								</Button>
-							)}
+								{activeStep === steps.length - 1 ? (
+									<Button
+										variant="contained"
+										onClick={handleSubmit}
+										sx={{ mt: 1, mr: 1 }}
+									>
+										Submit
+									</Button>
+								) : (
+									<Button
+										variant="contained"
+										onClick={handleNext}
+										sx={{ mt: 1, mr: 1 }}
+									>
+										Continue
+									</Button>
+								)}
+							</Box>
 						</Box>
-					</Box>
+					</Grid>
 				</Grid>
-			</Grid>
-		</WhiteBox>
+			</WhiteBox>
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={() => setSnackbar({ ...snackbar, open: false })}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+			>
+				<Alert
+					onClose={() => setSnackbar({ ...snackbar, open: false })}
+					severity={snackbar.severity}
+					sx={{ width: "100%" }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
+		</>
 	);
 };
 

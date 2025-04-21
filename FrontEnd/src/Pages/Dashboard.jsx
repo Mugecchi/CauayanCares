@@ -61,18 +61,14 @@ const Dashboard = () => {
 		<Box sx={{ flexGrow: 1, p: 0 }}>
 			<Grid container spacing={2}>
 				<Grid item xs={12}>
-					<Paper sx={{ p: 2 }}>
-						<StatusBarChart documentTypes={documentTypes} statuses={statuses} />
-					</Paper>
+					<StatusBarChart documentTypes={documentTypes} statuses={statuses} />
 				</Grid>
 				<Grid item xs={12}>
-					<Paper sx={{ p: 2 }}>
-						<LineGraph
-							documentTypes={dates}
-							colors={["#FF7704"]}
-							title={"Historical Data"}
-						/>
-					</Paper>
+					<LineGraph
+						documentTypes={dates}
+						colors={["#FF7704"]}
+						title={"Historical Data"}
+					/>
 				</Grid>
 				<Grid item xs={6}>
 					<Paper sx={{ p: 2 }}>
@@ -90,11 +86,6 @@ const Dashboard = () => {
 							documentTypes={fundingSource}
 							colorPalette={fundingColor}
 						/>
-					</Paper>
-				</Grid>
-				<Grid item xs={12}>
-					<Paper sx={{ p: 2 }}>
-						<Skeleton variant="rectangular" height={100} />
 					</Paper>
 				</Grid>
 			</Grid>

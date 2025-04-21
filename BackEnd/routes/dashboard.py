@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from db import execute_query, exec_tuple
+from db import execute_query,exec_tuple
 from utils import login_required
 from datetime import datetime
 
@@ -12,6 +12,7 @@ def get_dashboard_counts():
     document_types = ["Executive Order", "Ordinance", "Memo", "Resolution"]
     funding_sources = ["General Fund", "Special Fund", "Trust Fund"]
 
+    # Initialize the counts dictionary
     counts = {
         "total_documents": execute_query("SELECT COUNT(*) FROM ordinances", fetch_one=True)[0],
         "document_types": {},
@@ -19,36 +20,59 @@ def get_dashboard_counts():
         "date_issued": {}
     }
 
-    # Query to get the count per document type and status
-    query = """
+    # Grouped query for document types and their respective statuses
+    document_type_query = """
         SELECT document_type, status, COUNT(*) 
         FROM ordinances 
-        WHERE document_type IN (%s) 
+        WHERE document_type IN (%s) AND status IN (%s)
         GROUP BY document_type, status
     """
-    document_status_counts = execute_query(query, (tuple(document_types),))
+    document_types_placeholders = ", ".join(["%s"] * len(document_types))
+    statuses_placeholders = ", ".join(["%s"] * len(statuses))
+    
+    # Execute grouped query
+    document_type_data = execute_query(
+        document_type_query % (document_types_placeholders, statuses_placeholders),
+        (*document_types, *statuses)
+    )
 
-    for doc_type in document_types:
+    # Process grouped data into the desired structure
+    for doc_type, status, count in document_type_data:
         doc_key = doc_type.lower().replace(" ", "_")
-        counts["document_types"][doc_key] = sum(
-            1 for doc in document_status_counts if doc['document_type'] == doc_type
-        )
-        counts["document_types"][doc_key + "_statuses"] = {
-            status.lower().replace(" ", "_"): sum(
-                1 for doc in document_status_counts if doc['document_type'] == doc_type and doc['status'] == status
-            ) for status in statuses
-        }
+        status_key = status.lower().replace(" ", "_")
 
-    # Get total count per funding source
-    for source in funding_sources:
+        # Initialize document type if not yet
+        if doc_key not in counts["document_types"]:
+            counts["document_types"][doc_key] = 0
+        counts["document_types"][doc_key] += count
+
+        # Initialize statuses for each document type
+        if doc_key + "_statuses" not in counts["document_types"]:
+            counts["document_types"][doc_key + "_statuses"] = {}
+
+        counts["document_types"][doc_key + "_statuses"][status_key] = count
+
+    # Get funding sources counts (grouped query)
+    funding_source_query = """
+        SELECT funding_source, COUNT(*) 
+        FROM impact_assessment 
+        WHERE funding_source IN (%s)
+        GROUP BY funding_source
+    """
+    funding_source_placeholders = ", ".join(["%s"] * len(funding_sources))
+    
+    # Execute grouped funding source query
+    funding_source_data = execute_query(
+        funding_source_query % funding_source_placeholders,
+        tuple(funding_sources)
+    )
+
+    # Process funding source data
+    for source, count in funding_source_data:
         source_key = source.lower().replace(" ", "_")
-        counts["funding_source"][source_key] = execute_query(
-            "SELECT COUNT(*) FROM impact_assessment WHERE funding_source = %s",
-            (source,),
-            fetch_one=True
-        )[0]
+        counts["funding_source"][source_key] = count
 
-    # Get counts by year for `date_issued` to generate histogram
+    # Get counts for each year of 'date_issued' (grouped query)
     date_issued_query = """
         SELECT DATE_FORMAT(date_issued, '%Y') AS year, COUNT(*) 
         FROM ordinances 
@@ -58,6 +82,7 @@ def get_dashboard_counts():
     """
     date_issued_data = execute_query(date_issued_query)
 
+    # Process the results into a dictionary for histogram
     for year, count in date_issued_data:
         if year is not None:
             counts["date_issued"][str(year)] = count
@@ -105,4 +130,3 @@ def get_merged_dashboard():
     
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-

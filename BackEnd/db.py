@@ -2,24 +2,19 @@ import os
 import mysql.connector
 
 def get_db_connection():
-    if os.getenv("RAILWAY_ENVIRONMENT"):
+    try:
         return mysql.connector.connect(
-            host=os.getenv("switchback.proxy.rlwy.net"),
-            user=os.getenv("MYSQLUSER"),
-            password=os.getenv("MYSQLPASSWORD"),
-            database=os.getenv("MYSQLDATABASE"),
-            port=int(os.getenv("MYSQLPORT", 11457)),
+            host=os.getenv("MYSQLHOST", "localhost"),
+            user=os.getenv("MYSQLUSER", "root"),
+            password=os.getenv("MYSQLPASSWORD", "1234"),
+            database=os.getenv("MYSQLDATABASE", "ordinances"),
+            port=int(os.getenv("MYSQLPORT", 3306)),
             connection_timeout=10
         )
-    else:
-        return mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="1234",
-            database="ordinances",
-            port=3306
+    except mysql.connector.Error as err:
+        print(f"⚠️ Database connection error: {err}")
+        raise
 
-        )
 
 def execute_query(query, params=(), fetch_one=False, commit=False):
     db = get_db_connection()

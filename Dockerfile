@@ -10,8 +10,11 @@ COPY BackEnd /app
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port Railway assigns
-EXPOSE $PORT
+# Expose port 5000 (or use an environment variable for flexibility)
+EXPOSE 5000
+
+# Set environment variable for the port (optional if you want flexibility)
+ENV PORT 5000
 
 # Run Flask with Gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:$PORT", "app:app"]

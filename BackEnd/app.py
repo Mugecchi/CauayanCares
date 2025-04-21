@@ -42,11 +42,11 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(logs_bp)
 
 
-if __name__ == "__main__":
-    # Check if running on Railway (production)
-    if os.getenv("RAILWAY_ENVIRONMENT"):
-        port = int(os.environ.get("PORT", 8000))  # Use dynamic port in production
-    else:
-        port = 5000  # Use port 5000 during development
+# if __name__ == "__main__":
+#     # Check if running on Railway (production)
+#     if os.getenv("RAILWAY_ENVIRONMENT"):
+#         port = int(os.environ.get("PORT", 8000))  # Use dynamic port in production
+#     else:
+#         port = 5000  # Use port 5000 during development
 
-    app.run(host="0.0.0.0", port=port, debug=not os.getenv("RAILWAY_ENVIRONMENT"))
+#     app.run(host="0.0.0.0", port=port, debug=not os.getenv("RAILWAY_ENVIRONMENT"))

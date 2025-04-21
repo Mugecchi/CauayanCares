@@ -4,7 +4,7 @@ import mysql.connector
 def get_db_connection():
     if os.getenv("RAILWAY_ENVIRONMENT"):
         return mysql.connector.connect(
-            host=os.getenv("MYSQLHOST"),
+            host=os.getenv("switchback.proxy.rlwy.net"),
             user=os.getenv("MYSQLUSER"),
             password=os.getenv("MYSQLPASSWORD"),
             database=os.getenv("MYSQLDATABASE"),

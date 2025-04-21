@@ -9,7 +9,6 @@ def get_db_connection():
             password=os.getenv("MYSQLPASSWORD", "1234"),
             database=os.getenv("MYSQLDATABASE", "ordinances"),
             port=int(os.getenv("MYSQLPORT", 3306)),
-            connection_timeout=10
         )
     except mysql.connector.Error as err:
         print(f"⚠️ Database connection error: {err}")

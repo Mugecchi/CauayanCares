@@ -1,17 +1,17 @@
 # Use official Python image
 FROM python:3.12
 
-# Set working directory
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy the backend
+# Copy the backend code
 COPY BackEnd /app
 
-# Install Python dependencies
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port (for local testing, not used by Railway)
-EXPOSE 5000
+# Expose the port Railway assigns
+EXPOSE $PORT
 
-# Run app with Gunicorn on Railway's provided PORT
-CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT} app:app"]
+# Run Flask with Gunicorn
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]

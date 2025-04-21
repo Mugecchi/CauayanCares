@@ -19,25 +19,24 @@ def get_dashboard_counts():
         "date_issued": {}
     }
 
-    # Get total counts per document type and their respective statuses
-    query = """
-        SELECT document_type, status, COUNT(*) 
-        FROM ordinances 
-        WHERE document_type IN (%s) 
-        GROUP BY document_type, status
-    """
-    document_status_counts = execute_query(query, (tuple(document_types),))
-
+    # Get total counts per document type
     for doc_type in document_types:
         doc_key = doc_type.lower().replace(" ", "_")
-        counts["document_types"][doc_key] = sum(
-            1 for doc in document_status_counts if doc['document_type'] == doc_type
-        )
-        counts["document_types"][doc_key + "_statuses"] = {
-            status.lower().replace(" ", "_"): sum(
-                1 for doc in document_status_counts if doc['document_type'] == doc_type and doc['status'] == status
-            ) for status in statuses
-        }
+        counts["document_types"][doc_key] = execute_query(
+            "SELECT COUNT(*) FROM ordinances WHERE document_type = %s",
+            (doc_type,),
+            fetch_one=True
+        )[0]
+
+        # Get count per status for each document type
+        counts["document_types"][doc_key + "_statuses"] = {}
+        for status in statuses:
+            status_key = status.lower().replace(" ", "_")
+            counts["document_types"][doc_key + "_statuses"][status_key] = execute_query(
+                "SELECT COUNT(*) FROM ordinances WHERE document_type = %s AND status = %s",
+                (doc_type, status),
+                fetch_one=True
+            )[0]
 
     # Get total count per funding source
     for source in funding_sources:
@@ -58,30 +57,52 @@ def get_dashboard_counts():
     """
     date_issued_data = execute_query(date_issued_query)
 
+    # Process the results into a dictionary for histogram
     for year, count in date_issued_data:
         if year is not None:
             counts["date_issued"][str(year)] = count
 
     return jsonify(counts)
+
+
 @dashboard_bp.route("/api/table", methods=["GET"])
 @login_required
 def get_merged_dashboard():
     try:
-        # Using JOIN to fetch data from multiple tables in a single query
-        merged_query = """
-            SELECT o.*, o2.*, m.*, a.*, c.*, b.*
-            FROM ordinances o
-            LEFT JOIN objectives_implementation o2 ON o.id = o2.ordinance_id
-            LEFT JOIN monitoring_compliance m ON o.id = m.ordinance_id
-            LEFT JOIN impact_assessment a ON o.id = a.ordinance_id
-            LEFT JOIN coverage_scope c ON o.id = c.ordinance_id
-            LEFT JOIN budget_allocation b ON o.id = b.ordinance_id
-        """
-        
-        # Execute the merged query
-        merged_data = execute_query(merged_query, fetch_one=False)
+        # Fetch data from each table
+        ordinances_data = exec_tuple("SELECT * FROM ordinances", fetch_one=False)
+        objectives_data = exec_tuple("SELECT * FROM objectives_implementation", fetch_one=False)
+        monitoring_data = exec_tuple("SELECT * FROM monitoring_compliance", fetch_one=False)
+        assessment_data = exec_tuple("SELECT * FROM impact_assessment", fetch_one=False)
+        coverage_data = exec_tuple("SELECT * FROM coverage_scope", fetch_one=False)
+        budget_data = exec_tuple("SELECT * FROM budget_allocation", fetch_one=False)
+
+        # Merge data based on `ordinance_id`
+        merged_data = []
+
+        for ordinance in ordinances_data:
+            ordinance_id = ordinance['id']
+
+            objectives = next((item for item in objectives_data if item['ordinance_id'] == ordinance_id), None)
+            monitoring = next((item for item in monitoring_data if item['ordinance_id'] == ordinance_id), None)
+            assessment = next((item for item in assessment_data if item['ordinance_id'] == ordinance_id), None)
+            coverage = next((item for item in coverage_data if item['ordinance_id'] == ordinance_id), None)
+            budget = next((item for item in budget_data if item['ordinance_id'] == ordinance_id), None)
+
+       
+            merged_record = {
+                "ordinance": ordinance,
+                "objectives": objectives,
+                "monitoring": monitoring,
+                "assessment": assessment,
+                "coverage": coverage,
+                "budget": budget,
+            }
+
+            merged_data.append(merged_record)
 
         return jsonify(merged_data)
-
+    
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+

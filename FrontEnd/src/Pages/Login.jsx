@@ -1,9 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api"; // ✅ Import the login function
+import {
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+} from "@mui/material";
+
 import { Box, TextField, Typography, Button } from "@mui/material";
 
 const Login = ({ setIsLoggedIn }) => {
+	const [forgotOpen, setForgotOpen] = useState(false);
+	const [forgotEmail, setForgotEmail] = useState("");
+	const [forgotMessage, setForgotMessage] = useState("");
+	const [forgotError, setForgotError] = useState("");
+
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
@@ -136,7 +148,76 @@ const Login = ({ setIsLoggedIn }) => {
 						Login
 					</Button>
 				</form>
+				<Typography
+					variant="body2"
+					sx={{
+						mt: 2,
+						textAlign: "center",
+						cursor: "pointer",
+						color: "#5D378C",
+					}}
+					onClick={() => setForgotOpen(true)}
+				>
+					Forgot your password?
+				</Typography>
 			</Box>
+			<Dialog open={forgotOpen} onClose={() => setForgotOpen(false)}>
+				<DialogTitle>Forgot Password</DialogTitle>
+				<DialogContent>
+					<Typography mb={2}>
+						Enter your registered email address to receive a password reset
+						link.
+					</Typography>
+					{forgotError && (
+						<Typography color="error" mb={2}>
+							{forgotError}
+						</Typography>
+					)}
+					{forgotMessage && (
+						<Typography color="primary" mb={2}>
+							{forgotMessage}
+						</Typography>
+					)}
+					<TextField
+						autoFocus
+						margin="dense"
+						label="Email Address"
+						type="email"
+						fullWidth
+						variant="outlined"
+						value={forgotEmail}
+						onChange={(e) => setForgotEmail(e.target.value)}
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setForgotOpen(false)}>Cancel</Button>
+					<Button
+						variant="contained"
+						sx={{ bgcolor: "#5D378C", ":hover": { bgcolor: "#4B2A6F" } }}
+						onClick={async () => {
+							setForgotError("");
+							setForgotMessage("");
+							try {
+								const res = await fetch("/api/forgot-password", {
+									method: "POST",
+									headers: { "Content-Type": "application/json" },
+									body: JSON.stringify({ email: forgotEmail }),
+								});
+								const data = await res.json();
+								if (res.ok) {
+									setForgotMessage(data.message || "Reset link sent.");
+								} else {
+									setForgotError(data.error || "Something went wrong.");
+								}
+							} catch (err) {
+								setForgotError("Network error. Try again later.");
+							}
+						}}
+					>
+						Send Reset Link
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Box>
 	);
 };

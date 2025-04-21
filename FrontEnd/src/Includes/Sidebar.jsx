@@ -7,7 +7,6 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import GroupIcon from "@mui/icons-material/Group";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-
 import {
 	SidebarButton,
 	SidebarContainer,
@@ -18,11 +17,13 @@ import {
 	LogoutButton,
 	SidebarItem,
 } from "./styledComponents";
+import { DescriptionOutlined } from "@mui/icons-material";
 
 export default function Sidebar() {
 	const [open, setOpen] = useState(false);
 	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(true);
+
 	const location = useLocation();
 
 	// ✅ Fetch user details
@@ -54,17 +55,24 @@ export default function Sidebar() {
 	// ✅ Sidebar menu items (conditionally show User Management)
 	const menuItems = [
 		{ text: "Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
-		{ text: "Tables", path: "/tables", icon: <TableChartIcon /> },
+		{ text: "Records", path: "/tables", icon: <TableChartIcon /> },
+		{
+			text: "Add Records",
+			path: "/addrecords",
+			icon: <img src="note.svg" alt="add record" />,
+		},
+		{
+			text: "GFPS Corner",
+			path: "/documentation",
+			icon: <img src="image.svg" alt="GFPS Corner" />,
+		},
+		{
+			text: "Logs",
+			path: "/logs",
+			icon: <DescriptionOutlined />,
+		},
+		{ text: "User Management", path: "/users", icon: <GroupIcon /> },
 	];
-
-	// ✅ Add "User Management" only if user is an admin
-	if (user?.role === "admin") {
-		menuItems.push({
-			text: "User Management",
-			path: "/users",
-			icon: <GroupIcon />,
-		});
-	}
 
 	// ✅ Loading state while fetching user data
 	if (loading) {
@@ -79,6 +87,7 @@ export default function Sidebar() {
 			</Box>
 		);
 	}
+
 	// ✅ Sidebar Drawer Content
 	const DrawerList = (
 		<SidebarContainer>
@@ -96,9 +105,17 @@ export default function Sidebar() {
 								to={item.path}
 								onClick={() => setOpen(false)}
 								sx={{
+									border: "1px solid transparent",
+
 									backgroundColor:
 										location.pathname === item.path ? "#fbaaff" : "transparent",
-									"&:hover": { backgroundColor: "#fbaaff" },
+									"&:hover": {
+										backgroundColor:
+											location.pathname === item.path
+												? "#fbaaff"
+												: "transparent",
+										border: "1px solid #fbaaff",
+									},
 									borderRadius: "5px",
 									width: "100%",
 									display: "flex",
@@ -140,34 +157,25 @@ export default function Sidebar() {
 
 	return (
 		<>
-			{/* Mobile Sidebar Toggle Button */}
-			<IconButton
-				onClick={() => setOpen(true)}
-				sx={{
-					bottom: "20%",
-					left: "20%",
-					position: { xs: "absolute", md: "sticky" },
-					zIndex: 1000000,
-					backgroundColor: "#5D3786",
-					color: "white",
-					borderRadius: "50%",
-					width: "50px",
-					height: "50px",
-					boxShadow: "0px 4px 6px rgba(0,0,0,0.2)",
-					"&:hover": { backgroundColor: "#ff7706", color: "white" },
-					display: { xs: "block", md: "none" },
-				}}
-			>
-				<MenuIcon />
-			</IconButton>
+			{/* ✅ Mobile Sidebar Toggle Button (Fixed Position) */}
 
-			{/* Desktop Sidebar */}
+			{/* ✅ Desktop Sidebar (Always Visible) */}
 			<Box sx={{ display: { xs: "none", sm: "block" }, width: "250px" }}>
 				{DrawerList}
 			</Box>
 
-			{/* Mobile Sidebar Drawer */}
-			<Drawer open={open} onClose={() => setOpen(false)}>
+			{/* ✅ Mobile Sidebar Drawer (Slides from Left) */}
+			<Drawer
+				anchor="left" // ✅ Slide in from the left
+				open={open}
+				onClose={() => setOpen(false)}
+				sx={{
+					"& .MuiDrawer-paper": {
+						backgroundColor: "#2C2C2C", // ✅ Adjust sidebar color
+						color: "white",
+					},
+				}}
+			>
 				{DrawerList}
 			</Drawer>
 		</>

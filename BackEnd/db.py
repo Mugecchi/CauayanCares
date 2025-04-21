@@ -29,3 +29,13 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     cursor.close()
     db.close()
     return result
+def exec_tuple(query, params=(), fetch_one=False, commit=False):
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)  # <-- This line fixes the tuple vs dict issue
+    cursor.execute(query, params)
+    result = cursor.fetchone() if fetch_one else cursor.fetchall()
+    if commit:
+        db.commit()
+    cursor.close()
+    db.close()
+    return result

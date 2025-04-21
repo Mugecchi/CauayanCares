@@ -14,6 +14,7 @@ from routes.frontend import frontend_bp
 from routes.objectives import objectives_bp
 from routes.coverage import coverage_bp
 from routes.dashboard import dashboard_bp
+from routes.logs import logs_bp
 
 app = Flask(__name__, static_folder="dist", static_url_path="/")
 CORS(app, supports_credentials=True)
@@ -38,6 +39,7 @@ app.register_blueprint(frontend_bp)
 app.register_blueprint(objectives_bp)
 app.register_blueprint(coverage_bp)
 app.register_blueprint(dashboard_bp)
+app.register_blueprint(logs_bp)
 
 
 if __name__ == "__main__":

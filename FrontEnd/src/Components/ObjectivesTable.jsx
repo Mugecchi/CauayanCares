@@ -68,7 +68,7 @@ export default function ObjectivesTable() {
 				ordinance.number?.toString().toLowerCase().includes(searchLower);
 
 			// Match any coverage scope fields
-			const scopeMatch = ordinance.coverage_scopes?.some((scope) =>
+			const scopeMatch = ordinance.objectives_implementation?.some((scope) =>
 				[
 					"lead_agency",
 					"supporting_agencies",
@@ -173,11 +173,13 @@ export default function ObjectivesTable() {
 												{ordinance.title} {ordinance.number}
 											</TableCell>
 											{console.log(scope)}
-											<TableCell>{scope.policy_objectives || " "}</TableCell>
-											<TableCell>{scope.lead_agency || " "}</TableCell>
-											<TableCell>{scope.supporting_agencies || " "}</TableCell>
-											<TableCell>{scope.key_provisions || " "}</TableCell>
-											<TableCell>{scope.programs_activities || " "}</TableCell>
+											<TableCell>
+												{scope.policy_objectives || "No Objectives Data"}
+											</TableCell>
+											<TableCell>{scope.lead_agency}</TableCell>
+											<TableCell>{scope.supporting_agencies}</TableCell>
+											<TableCell>{scope.key_provisions}</TableCell>
+											<TableCell>{scope.programs_activities}</TableCell>
 											<TableCell>
 												<Button
 													variant="outlined"

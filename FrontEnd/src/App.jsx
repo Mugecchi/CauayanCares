@@ -7,16 +7,16 @@ import {
 } from "react-router-dom";
 import Sidebar from "./Includes/Sidebar";
 import Header from "./Includes/Header";
-import GlobalStyles from "./GlobalStyles";
 import { AuthProvider } from "./Context";
 import { fetchUser } from "./api";
 import { CircularProgress, Box } from "@mui/material";
-import { WhiteBox } from "./Includes/styledComponents";
+import { ContentContainer, ThemeProv } from "./Includes/styledComponents";
 import Registration from "./Pages/Registration";
-
+import DocumentationReps from "./Components/DocumentationReps";
+import AddRecord from "./Pages/AddRecord";
+import LogsTable from "./Components/LogsTable";
 const Dashboard = lazy(() => import("./Pages/Dashboard"));
 const Tables = lazy(() => import("./Pages/Tables"));
-const Forms = lazy(() => import("./Pages/Forms"));
 const Login = lazy(() => import("./Pages/Login"));
 
 const App = () => {
@@ -71,7 +71,6 @@ const App = () => {
 	return (
 		<AuthProvider>
 			<Router>
-				<GlobalStyles />
 				<div style={{ display: "flex", height: "100vh" }}>
 					<div style={{ display: "flex", position: "sticky" }}>
 						{isLoggedIn && <Sidebar />}
@@ -99,41 +98,59 @@ const App = () => {
 								}
 							>
 								{isLoggedIn ? (
-									<WhiteBox>
-										<Routes>
-											<Route path="/" element={<Navigate to="/dashboard" />} />
-											<Route
-												path="/dashboard"
-												element={<ProtectedRoute element={<Dashboard />} />}
-											/>
-											<Route
-												path="/tables"
-												element={<ProtectedRoute element={<Tables />} />}
-											/>
-											<Route
-												path="/forms"
-												element={<ProtectedRoute element={<Forms />} />}
-											/>
-											{/* ✅ Only Admins can access /users */}
-											<Route
-												path="/users"
-												element={
-													<ProtectedRoute
-														element={<Registration />}
-														role="admin"
-													/>
-												}
-											/>
-										</Routes>
-									</WhiteBox>
+									<ThemeProv>
+										<ContentContainer>
+											<Routes>
+												<Route
+													path="/"
+													element={<Navigate to="/dashboard" />}
+												/>
+												<Route
+													path="/addrecords"
+													element={<ProtectedRoute element={<AddRecord />} />}
+												/>
+												<Route
+													path="/dashboard"
+													element={<ProtectedRoute element={<Dashboard />} />}
+												/>
+												<Route
+													path="/tables"
+													element={<ProtectedRoute element={<Tables />} />}
+												/>
+												<Route
+													path="/documentation"
+													element={
+														<ProtectedRoute element={<DocumentationReps />} />
+													}
+												/>
+												<Route
+													path="/logs"
+													element={<ProtectedRoute element={<LogsTable />} />}
+												/>
+
+												{/* ✅ Only Admins can access /users */}
+												<Route
+													path="/users"
+													element={
+														<ProtectedRoute
+															element={<Registration />}
+															// role="admin"
+														/>
+													}
+												/>
+											</Routes>
+										</ContentContainer>
+									</ThemeProv>
 								) : (
-									<Routes>
-										<Route
-											path="/login"
-											element={<Login setIsLoggedIn={setIsLoggedIn} />}
-										/>
-										<Route path="*" element={<Navigate to="/login" />} />
-									</Routes>
+									<ThemeProv>
+										<Routes>
+											<Route
+												path="/login"
+												element={<Login setIsLoggedIn={setIsLoggedIn} />}
+											/>
+											<Route path="*" element={<Navigate to="/login" />} />
+										</Routes>
+									</ThemeProv>
 								)}
 							</Suspense>
 						</div>

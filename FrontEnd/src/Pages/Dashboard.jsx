@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, CircularProgress } from "@mui/material";
-import Chart from "react-apexcharts";
-import { WhiteBox } from "../Includes/styledComponents";
+import { Box, CircularProgress, Paper } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import { fetchDashboardCounts } from "../api"; // Import API function
-
+import DonutChart from "../Charts/DonutChart";
+import StatusBarChart from "../Charts/StatusBarChart"; // Import your chart component
+import LineGraph from "../Charts/LineGraph";
 const Dashboard = () => {
 	const [counts, setCounts] = useState(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
 		getDashboardData();
-	}, []);
+	}, [10000]);
 
 	const getDashboardData = async () => {
 		try {
@@ -26,88 +27,78 @@ const Dashboard = () => {
 
 	if (loading) {
 		return (
-			<Box display="flex" justifyContent="center" alignItems="center">
+			<Box
+				display="flex"
+				justifyContent="center"
+				alignItems="center"
+				height="100vh"
+			>
 				<CircularProgress />
 			</Box>
 		);
 	}
+	// Extract document types (excluding statuses) and statuses
+	const documentTypes = counts?.document_types || {};
+	const statuses = counts?.statuses || {};
 
-	// Default values to prevent errors
-	const {
-		pending_count = 0,
-		approved_count = 0,
-		amended_count = 0,
-		under_review_count = 0,
-		implemented_count = 0,
-	} = counts || {};
-
-	const colors = ["#FF5722", "#4CAF50", "#FFC107", "#2196F3", "#9C27B0"];
-
-	const chartOptions = {
-		chart: {
-			type: "bar",
-			toolbar: { show: false },
-		},
-		plotOptions: {
-			bar: {
-				horizontal: false,
-				columnWidth: "50%",
-				endingShape: "rounded",
-				distributed: true,
-			},
-		},
-		dataLabels: { enabled: false },
-		xaxis: {
-			categories: [
-				"Pending",
-				"Approved",
-				"Amended",
-				"Under Review",
-				"Implemented",
-			],
-		},
-		tooltip: { theme: "light" },
-		colors: colors,
-		fill: { opacity: 1 },
-	};
-
-	const chartSeries = [
-		{
-			name: "Ordinances",
-			data: [
-				pending_count,
-				approved_count,
-				amended_count,
-				under_review_count,
-				implemented_count,
-			],
-		},
+	// Filter out document types statuses for DonutChart
+	const filteredDocumentTypes = Object.fromEntries(
+		Object.entries(documentTypes).filter(
+			([key]) => !key.includes("_statuses") // Remove keys with '_statuses'
+		)
+	);
+	const fundingSource = counts?.funding_source || {};
+	const fundingColor = ["#F9F3DF", "#CDF2CA", "#FFDEFA", "#FFC898"];
+	const pastelPalette = [
+		"#F9B7D4", // Light Pink (Cotton Candy)
+		"#B3E0DC", // Pale Teal (Soft Breeze)
+		"#F6C7B6", // Peachy Beige (Peach Blossom)
+		"#D1E6F4", // Powder Blue (Sky Kiss)
+		"#F0D7B6", // Pale Yellow (Lemon Drop)
+		"#D7C0E0", // Light Lavender (Lavender Mist)
 	];
 
+	const dates = counts?.date_issued || {};
 	return (
-		<div>
-			<Typography
-				variant="h4"
-				gutterBottom
-				sx={{
-					fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
-					fontWeight: "bold",
-					textAlign: "center",
-				}}
-			>
-				Dashboard Overview
-			</Typography>
-
-			<Box sx={{ width: "100%", height: "90%", minHeight: "300px" }}>
-				<Chart
-					options={chartOptions}
-					series={chartSeries}
-					type="bar"
-					width="100%"
-					height="100%"
-				/>
-			</Box>
-		</div>
+		<Box sx={{ flexGrow: 1, p: 0 }}>
+			<Grid container spacing={2}>
+				<Grid item xs={12}>
+					{/* Pass the full counts to StatusBarChart */}
+					<StatusBarChart documentTypes={documentTypes} statuses={statuses} />
+				</Grid>
+				<Grid item xs={12}>
+					<Paper>
+						<LineGraph
+							documentTypes={dates}
+							colors={["#FF7704"]}
+							title={"Historical Data"}
+						/>
+					</Paper>
+				</Grid>
+				<Grid item xs={6}>
+					<Paper>
+						{/* Pass the filtered document types to DonutChart */}
+						<DonutChart
+							title={"Document Types"}
+							documentTypes={filteredDocumentTypes}
+							colorPalette={pastelPalette}
+						/>
+					</Paper>
+				</Grid>
+				<Grid item xs={6}>
+					<Paper>
+						<DonutChart
+							documentTypes={fundingSource}
+							title={"Funding Source"}
+							colorPalette={fundingColor}
+						/>
+					</Paper>
+				</Grid>
+				<Grid item xs={12}>
+					<Paper></Paper>
+				</Grid>
+			</Grid>
+		</Box>
 	);
 };
 

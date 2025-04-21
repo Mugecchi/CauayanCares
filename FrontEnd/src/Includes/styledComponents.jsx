@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 
 /* ✅ Inject Global CSS Variables */
-const GlobalStyles = createGlobalStyle`
+export const GlobalStyles = createGlobalStyle`
 	:root {
 		--anti-flash-white: #F0F0F0;
 		--alice-blue: #EEF7FF;
@@ -30,58 +30,129 @@ const GlobalStyles = createGlobalStyle`
 		--silver-chalice: #ACABAB;
 		--white: #FFFFFF;
 		--eminence: #69247C;
-	}
+    --primary-color: #7b2cbf; /* Purple theme */
+    --secondary-color: #ff7706;
+    --text-color: #333;
+    --background-color: #f2e6fe;
+    
+    color-scheme: light dark;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    
+    font-family: "SF Pro Display", sans-serif;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+ 
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Override Material-UI Typography */
+  .MuiTypography-root {
+    font-family: "SF Pro Display", sans-serif !important;
+  }
+
+  /* Override Material-UI Button */
+  .MuiButton-root {
+    font-family: "SF Pro Display", sans-serif !important;
+  }
+
 
 	#root {
 		margin: 0 auto;
-		min-width: 1200px;
+		overflow-x: hidden;
 		max-width: 2600px;
-		width: 100%;    
 	}
 `;
 
 /* ✅ MUI Theme */
 const theme = createTheme({
 	components: {
-		Muitr: {
+		// ✅ Table Container (Ensures Responsiveness & Auto-Fit)
+		MuiTableContainer: {
 			styleOverrides: {
 				root: {
-					padding: 0,
-					margin: 0,
-					height: "5vh", // Adjust row height dynamically
+					display: "flex",
+					flexDirection: "column",
+					flexGrow: 1, // Ensures it fills the available space
+					overflow: "auto", // Enables scrolling when needed
+					maxHeight: "calc(70vh - 20px)", // Limits height to 70% of viewport height
+					width: "100%",
 				},
 			},
 		},
+
+		// ✅ Table Itself (Ensures Full Width & Auto-Adjust)
+		MuiTable: {
+			styleOverrides: {
+				root: {
+					width: "100%", // Always stretch to fill container
+					tableLayout: "fixed", // Consistent column sizing
+					minWidth: "600px", // Prevents too small tables on narrow screens
+				},
+			},
+		},
+
+		// ✅ Table Row (Ensures Consistent Row Heights & Alternating Colors)
 		MuiTableRow: {
 			styleOverrides: {
 				root: {
+					height: "4rem", // Adjust row height dynamically
+
+					// Apply alternating colors **ONLY to body rows**
 					"&:not(:has(th)):nth-of-type(odd)": {
-						backgroundColor: "var(--alice-blue)", // Light blue for odd rows
+						backgroundColor: "rgba(255, 123, 47, 0.02)", // Light blue for odd rows
 					},
 					"&:not(:has(th)):nth-of-type(even)": {
-						backgroundColor: "#F5F5F5", // Light gray for even rows
+						backgroundColor: "rgba(105, 36, 124, 0.05)", // Light gray for even rows
+					},
+
+					"&:last-child td, &:last-child th": {
+						borderBottom: "none", // Remove bottom border for the last row
 					},
 				},
 			},
 		},
 
-		Muitd: {
+		// ✅ Table Cells (Handles Padding & Font Styling)
+		MuiTableCell: {
 			styleOverrides: {
 				root: {
-					padding: "8px", // Adjust padding to reduce extra space
-					fontSize: "14px", // Set consistent font size
-					lineHeight: "20px", // Control text height
-					borderBottom: "1px solid rgba(0, 0, 0, 0.12)", // Add subtle border
+					color: "#41444B",
+					padding: "8px",
+					fontSize: "14px",
+					overflow: "hidden", // Hide overflowing text
+					textOverflow: "ellipsis", // Show "..." for overflow
+				},
+				"&:hover": {
+					whiteSpace: "normal", // Allow wrapping
+					overflow: "visible",
+					textOverflow: "unset",
+					maxWidth: "none", // Expand to full width
+					backgroundColor: "rgba(0,0,0,0.05)", // Light hover effect
+					zIndex: 10, // Ensure it overlays other cells
+					position: "relative",
 				},
 				head: {
 					fontWeight: "bold", // Make header text bold
 				},
 				body: {
 					height: "85px",
+					textAlign: "left",
 				},
 			},
 		},
 
+		// ✅ Table Pagination (Ensures Proper Placement & Styling)
+
+		// ✅ Input Fields (Ensures Consistent Height & Font Styling)
 		MuiInputBase: {
 			styleOverrides: {
 				root: {
@@ -91,46 +162,40 @@ const theme = createTheme({
 			},
 		},
 
+		// ✅ Input Labels (Ensures Readability & Focus Effect)
 		MuiInputLabel: {
 			styleOverrides: {
 				root: {
-					color: "var(--eminence) !important", // Change label color
-					fontSize: "16px", // Adjust font size
-					fontWeight: "bold", // Make text bold
+					color: "var(--eminence) !important",
+					fontSize: "16px",
+					fontWeight: "bold",
 					"&.Mui-focused": {
-						color: "var(--orange) !important", // Use `--orange` if `--eminence` is undefined
+						color: "var(--orange) !important",
 					},
 				},
 			},
 		},
+
+		// ✅ Buttons (Ensures Consistent Sizing & Styling)
 		MuiButton: {
 			styleOverrides: {
 				root: {
-					height: "3rem", // Set height globally for all buttons
-					backgroundColor: "var(--eminence)", // Use the --eminence color globally
+					height: "3rem",
+					backgroundColor: "var(--eminence)",
 					color: "var(--white)",
 					"&:hover": {
 						backgroundColor: "var(--orange)",
-						// Maintain background color on hover
 					},
 				},
 				outlined: {
 					borderColor: "transparent",
-					backgroundColor: "var(--orange)", // Set the border color for outlined buttons
-					color: "var(--white)", // Set the text color for outlined buttons
+					backgroundColor: "var(--orange)",
+					color: "var(--white)",
 					"&:hover": {
 						backgroundColor: "var(--white)",
-						borderColor: "var(--eminence)", // Change border color on hover
-						color: "var(--eminence)", // Change text color on hover
+						borderColor: "var(--eminence)",
+						color: "var(--eminence)",
 					},
-				},
-			},
-		},
-		MuiTableContainer: {
-			styleOverrides: {
-				root: {
-					overflowY: "auto", // Enable vertical scrolling
-					maxHeight: "calc(70vh - 15px)", // Set the max height to 70% of the viewport height
 				},
 			},
 		},
@@ -147,17 +212,19 @@ export const ThemeProv = ({ children }) => (
 
 /* ✅ Styled Components */
 export const WhiteBox = styled(Box)(({ theme, sx }) => ({
-	padding: 16,
-	position: "absolute",
-	height: "calc(90vh - 20px)",
-	width: "calc(100vw - 290px)",
-	maxHeight: 1080,
-	minWidth: "280px",
-	maxWidth: 2600,
 	display: "flex",
 	flexDirection: "column",
+	justifyContent: "flex-start", // Align content at the top
+	alignItems: "center", // Center children horizontally
+	padding: 16,
+	gap: 16, // Adds spacing between child elements
+	position: "relative",
+	width: "100%", // Make it fluid inside Grid2
+	minHeight: "calc(90vh - 25px)", // Ensures it stretches properly
 	background: "white",
 	borderRadius: 10,
+	boxShadow: 3, // Adds a subtle shadow for better UI depth
+
 	...(sx || {}), // Allow external sx props to override styles
 }));
 
@@ -166,13 +233,21 @@ export const CustomAccordion = styled(Accordion)({
 });
 
 // Sidebar Container
+export const ContentContainer = styled(Box)`
+	margin-left: 0; /* Same width as the sidebar */
+	width: calc(100%); /* Ensures it takes the remaining space */
+	background: var(--background-color);
+	transition: margin-left 0.3s ease-in-out;
+	overflow-x: hidden;
+	@media (max-width: 768px) {
+		margin-left: 0; /* Full width on small screens */
+		width: 100%;
+	}
+`;
 
 export const SidebarContainer = styled(Box)`
-	position: fixed;
-	left: 0;
-	top: 0;
 	width: 250px;
-	height: 100vh;
+	height: 100%;
 	background: #5d3786;
 	color: white;
 	display: flex;
@@ -218,12 +293,6 @@ export const SidebarItemIcon = styled(ListItemIcon)`
 `;
 
 export const SidebarButton = styled(ListItemButton)`
-	&:hover {
-		border: 1px solid #fbaaff;
-	}
-	border-radius: 5px;
-	width: 100%;
-	gap: 10px;
 	height: auto;
 `;
 

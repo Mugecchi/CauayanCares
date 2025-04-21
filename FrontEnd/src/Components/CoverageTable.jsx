@@ -132,6 +132,75 @@ export default function CoverageTable() {
 	};
 
 	if (loading) return <CircularProgress />;
+	const barangays = [
+		"City-Wide",
+		"Alicaocao",
+		"Alinam",
+		"Amobocan",
+		"Andarayan",
+		"Baculod",
+		"Baringin Norte",
+		"Baringin Sur",
+		"Buena Suerte",
+		"Bugallon",
+		"Buyon",
+		"Cabaruan",
+		"Cabugao",
+		"Carabatan Bacareno",
+		"Carabatan Chica",
+		"Carabatan Grande",
+		"Carabatan Punta",
+		"Casalatan",
+		"Cassap Fuera",
+		"Catalina",
+		"Culalabat",
+		"Dabburab",
+		"De Vera",
+		"Dianao",
+		"Dissimuray",
+		"District I (Poblacion)",
+		"District II (Poblacion)",
+		"District III (Poblacion)",
+		"Duminit",
+		"Faustino (Sipay)",
+		"Gagabutan",
+		"Gappal",
+		"Guayabal",
+		"Labinab",
+		"Linglingay",
+		"Mabantad",
+		"Maligaya",
+		"Manaoag",
+		"Marabulig I",
+		"Marabulig II",
+		"Minante I",
+		"Minante II",
+		"Nagcampegan",
+		"Naganacan",
+		"Nagrumbuan",
+		"Nungnungan I",
+		"Nungnungan II",
+		"Pinoma",
+		"Rizal",
+		"Rizaluna",
+		"Rogus",
+		"San Antonio",
+		"San Fermin (Poblacion)",
+		"San Francisco",
+		"San Isidro",
+		"San Luis",
+		"San Pablo (Casap Hacienda)",
+		"Santa Luciana (Daburab 2)",
+		"Santa Maria",
+		"Sillawit",
+		"Sinippil",
+		"Tagaran",
+		"Turayong",
+		"Union",
+		"Villa Concepcion",
+		"Villa Luna",
+		"Villaflor",
+	];
 
 	return (
 		<div>
@@ -163,7 +232,9 @@ export default function CoverageTable() {
 											<TableCell>
 												{ordinance.title} {ordinance.number}
 											</TableCell>
-											<TableCell>{scope.inclusive_period}</TableCell>
+											<TableCell>
+												{scope.inclusive_period || "No coverage scope added"}
+											</TableCell>
 											<TableCell>{scope.target_beneficiaries}</TableCell>
 											<TableCell>{scope.geographical_coverage}</TableCell>
 											<TableCell>
@@ -251,8 +322,15 @@ export default function CoverageTable() {
 						value={selectedCoverage?.geographical_coverage || ""}
 						onChange={handleChange}
 						fullWidth
+						select
 						margin="normal"
-					/>
+					>
+						{barangays.map((option) => (
+							<MenuItem key={option} value={option}>
+								{option}
+							</MenuItem>
+						))}
+					</TextField>
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setOpenModal(false)}>Cancel</Button>

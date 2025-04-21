@@ -35,12 +35,13 @@ export const apiCall = async (method, url, data = null, isFormData = false) => {
 export const logout = async () => {
 	try {
 		await api.post("/logout");
-		localStorage.removeItem("userToken");
-		localStorage.removeItem("user");
+		localStorage.clear();
+		sessionStorage.clear();
 	} catch (error) {
 		throw error.response?.data?.error || "Logout failed";
 	}
 };
+
 // export const fetchOrdinanceById = (id) => apiCall("get", `/ordinances/${id}`);
 
 //Dashboard
@@ -65,33 +66,37 @@ export const handlePreview = async (
 	setOpenPreview
 ) => {
 	if (!filePath || filePath.trim() === "") {
-		setSelectedFile(null); // Set blank preview
-		setOpenPreview(true); // Open the modal with no content
-		return;
+		alert("No file selected for preview.");
+		return; // Do not open the modal
 	}
 
-	// Dynamically build the file preview URL based on the environment
+	// Construct the file URL
 	const previewUrl = `${API_BASE_URL.replace(
 		"/api",
 		""
 	)}/uploads/${encodeURIComponent(filePath)}`;
 
 	try {
-		// Check if the file exists by making a HEAD request
+		// Check if the file exists using a HEAD request
 		const response = await fetch(previewUrl, { method: "HEAD" });
 
 		if (!response.ok) {
-			throw new Error("File not found");
+			throw new Error("File not found or cannot be accessed.");
 		}
 
-		// If the file exists, set it for preview and open the modal
+		// Additional check: Ensure response is a valid file type
+		const contentType = response.headers.get("Content-Type");
+		if (!contentType || contentType.startsWith("text/html")) {
+			throw new Error("Invalid file type. The file might be missing.");
+		}
+
+		// If file exists and is valid, open preview
 		setSelectedFile(previewUrl);
+		setOpenPreview(true);
 	} catch (error) {
 		console.error("Error previewing file:", error);
-		setSelectedFile(null); // Set blank preview if file is missing
+		alert("The selected file does not exist or is inaccessible.");
 	}
-
-	setOpenPreview(true); // Open the modal regardless
 };
 
 // Ordinances
@@ -99,8 +104,8 @@ export const createOrdinance = (formData) =>
 	apiCall("post", "/ordinances", formData);
 export const fetchOrdinances = () => apiCall("get", "/ordinances");
 export const deleteOrdinance = (id) => apiCall("delete", `/ordinances/${id}`);
-export const updateOrdinanceStatus = (id, status) =>
-	apiCall("put", `/ordinances/${id}`, { status });
+export const updateOrdinance = (id, formData) =>
+	apiCall("put", `/ordinances/${id}`, formData);
 
 //Coverage Scope
 export const fetchOrdinancesCoverage = () =>
@@ -115,20 +120,20 @@ export const deleteCoverageScope = (id) =>
 //Objectives Implementation
 export const addObjectivesImplementation = (data) =>
 	apiCall("post", "/objectives_implementation", data);
-export const updateObjectivesImplementation = (data) =>
+export const updateObjectivesImplementation = (id, data) =>
 	apiCall("put", `/objectives_implementation/${id}`, data);
-export const deleteObjectivesImplementation = (data) =>
-	apiCall("post", `/objectives_implementation/${id}`, data);
+export const deleteObjectivesImplementation = (id) =>
+	apiCall("delete", `/objectives_implementation/${id}`);
 export const fetchObjectivesImplementation = () =>
 	apiCall("get", "/objectives_implementation");
 
 //Budget
 export const fetchFinancialData = () => apiCall("get", "/financial");
 export const addFinancialData = (data) => apiCall("post", "/financial", data);
-export const updateFinancialData = () =>
+export const updateFinancialData = (id, data) =>
 	apiCall("put", `/financial/${id}`, data);
-export const deleteFinancialData = () =>
-	apiCall("delete", `/financial/${id}`, data);
+export const deleteFinancialData = (id) =>
+	apiCall("delete", `/financial/${id}`);
 
 //Monitoring
 export const fetchMonitoring = () => apiCall("get", "/monitoring");
@@ -146,12 +151,19 @@ export const deleteAssesment = (id) => apiCall("delete", `/assessment/${id}`);
 
 //Documentation reports
 export const fetchDocumentation = () => apiCall("get", "/documentation");
-export const addDocumentation = (data) =>
-	apiCall("post", "/documentation", data);
-export const updateDocumentation = (id, data) =>
-	apiCall("put", `/documentation/${id}`, data);
+export const addDocumentation = (formData) =>
+	apiCall("post", "/documentation", formData, true); // 'true' indicates it's form data
+
+export const updateDocumentation = (id, formData) =>
+	apiCall("put", `/documentation/${id}`, formData, {
+		headers: { "Content-Type": "multipart/form-data" }, // Ensure correct content type
+	});
+
+export const fetchAllTable = () => apiCall("get", "/table");
+
 export const deleteDocumentation = (id) =>
 	apiCall("delete", `/documentation/${id}`);
+
 //users admin only
 // 🟢 Get user's avatar URL
 export const getAvatarUrl = (filename) => {
@@ -179,4 +191,4 @@ export const uploadAvatar = (userId, file) => {
 	return apiCall("post", `/users/${userId}/avatar`, formData, true);
 };
 
-// 🟢 Fetch the logged-in user details
+export const getLogs = () => apiCall("get", "/records/logs");

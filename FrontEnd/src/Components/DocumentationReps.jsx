@@ -1,56 +1,55 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useState } from "react";
+import { fetchDocumentation, addDocumentation } from "../api";
 import {
-	MenuItem,
 	CircularProgress,
-	TextField,
-	Table,
-	TableHead,
-	TableRow,
-	TableCell,
-	TableBody,
-	TableContainer,
-	TablePagination,
 	Button,
+	Snackbar,
+	Alert,
 	Dialog,
 	DialogTitle,
 	DialogContent,
 	DialogActions,
-	Snackbar,
 	Box,
-	Alert,
+	TextField,
+	Grid,
+	TableContainer,
+	TableHead,
+	TableRow,
+	TableCell,
+	TableBody,
+	Table,
 } from "@mui/material";
-import {
-	fetchDocumentation,
-	addDocumentation,
-	updateDocumentation,
-} from "../api";
+import { ImageList, ImageListItem, ImageListItemBar } from "@mui/material";
+import { WhiteBox } from "../Includes/styledComponents";
 
-export default function DocumentationRecords() {
-	const [ordinances, setOrdinances] = useState([]);
-	const [searchQuery, setSearchQuery] = useState("");
-	const [page, setPage] = useState(0);
-	const [rowsPerPage, setRowsPerPage] = useState(10);
+function DocumentationReps() {
+	const [records, setRecords] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [selectedFiles, setSelectedFiles] = useState([]); // [{ file, tag }]
+	const [selectedDocumentation, setSelectedDocumentation] = useState(null);
+	const [openModal, setOpenModal] = useState(false);
 	const [error, setError] = useState({
 		open: false,
 		message: "",
 		severity: "info",
 	});
-	const [openModal, setOpenModal] = useState(false);
-	const [selectedCoverage, setSelectedCoverage] = useState(null);
+	const IMG_BASE_URL =
+		import.meta.env.MODE === "development"
+			? "http://localhost:5000" // Local development
+			: `${window.location.origin}`; // Production (Railway)
 
 	useEffect(() => {
-		getCoverage();
+		getRecords();
 	}, []);
 
-	const getCoverage = async () => {
+	const getRecords = async () => {
 		try {
 			const response = await fetchDocumentation();
-			setOrdinances(response || []);
+			setRecords(response || []);
 		} catch (err) {
 			setError({
 				open: true,
-				message: "No Ordinance Found.",
+				message: "Failed to load records.",
 				severity: "error",
 			});
 		} finally {
@@ -58,189 +57,223 @@ export default function DocumentationRecords() {
 		}
 	};
 
-	const filteredOrdinances = useMemo(() => {
-		return ordinances.filter((ordinance) => {
-			const searchLower = searchQuery.toLowerCase();
-
-			// Match title or ordinance number
-			const titleOrNumberMatch =
-				ordinance.title?.toLowerCase().includes(searchLower) ||
-				ordinance.number?.toString().toLowerCase().includes(searchLower);
-
-			// Match any coverage scope fields
-			const scopeMatch = ordinance.documentation_reports?.some((scope) =>
-				[
-					"outcomes_results",
-					"gender_responsiveness_impact",
-					"funding_source",
-					"community_benefits",
-					"adjustments_needed",
-				].some(
-					(key) => scope[key] && scope[key].toLowerCase().includes(searchLower)
-				)
-			);
-
-			return titleOrNumberMatch || scopeMatch;
-		});
-	}, [ordinances, searchQuery]);
-
-	const handleEdit = (ordinance, scope) => {
-		setSelectedCoverage({
-			id: scope?.id || "",
-			ordinance_id: ordinance.id,
-			funding_source: scope?.funding_source || "General Fund",
-			outcomes_results: scope?.outcomes_results || "",
-			gender_responsiveness_impact: scope?.gender_responsiveness_impact || "",
-			community_benefits: scope?.community_benefits || "",
-			adjustments_needed: scope?.adjustments_needed || "",
-			feedback_mechanisms: scope?.feedback_mechanisms || "",
-		});
-		setOpenModal(true);
-	};
-
-	const handleChange = (e) => {
-		setSelectedCoverage({
-			...selectedCoverage,
-			[e.target.name]: e.target.value,
-		});
+	const handleFileChange = (e) => {
+		const files = Array.from(e.target.files);
+		const withTags = files.map((file) => ({ file, tag: "" }));
+		setSelectedFiles(withTags);
 	};
 
 	const handleSave = async () => {
-		try {
-			if (selectedCoverage.id) {
-				await updateDocumentation(selectedCoverage.id, selectedCoverage);
-				alert("Monitoring Data updated successfully!");
-			} else {
-				await addDocumentation(selectedCoverage);
-				alert("Monitoring Data added successfully!");
-			}
-
-			setOpenModal(false);
-			setLoading(true);
-			getCoverage(); // Refresh the data
-		} catch (error) {
+		if (selectedFiles.length === 0) {
 			setError({
 				open: true,
-				message: "Failed to save Monitoring Data. Please try again.",
+				message: "Please select files to upload.",
 				severity: "error",
 			});
+			return;
+		}
 
-			console.error("Error saving Monitoring Data:", error);
+		const missingTags = selectedFiles.some((f) => !f.tag.trim());
+		if (missingTags) {
+			setError({
+				open: true,
+				message: "Please enter tags for all files.",
+				severity: "error",
+			});
+			return;
+		}
+
+		if (!selectedDocumentation?.ordinance_id) {
+			setError({
+				open: true,
+				message: "Ordinance ID is required.",
+				severity: "error",
+			});
+			return;
+		}
+
+		try {
+			const formData = new FormData();
+			selectedFiles.forEach(({ file, tag }) => {
+				formData.append("files", file);
+				formData.append("file_tags", tag);
+			});
+			formData.append("ordinance_id", selectedDocumentation.ordinance_id);
+
+			const response = await addDocumentation(formData);
+
+			const successMessage =
+				response?.data?.message || "Documentation uploaded successfully.";
+
+			setError({
+				open: true,
+				message: successMessage,
+				severity: "success",
+			});
+
+			handleCloseModal();
+			getRecords();
+		} catch (error) {
+			console.error("Error saving documentation:", error);
+			setError({
+				open: true,
+				message:
+					error?.response?.data?.message ||
+					"Failed to save documentation. Please try again.",
+				severity: "error",
+			});
 		}
 	};
 
-	const handleSearchChange = (event) => setSearchQuery(event.target.value);
-	const handlePageChange = (event, newPage) => setPage(newPage);
-	const handleRowsPerPageChange = (event) => {
-		setRowsPerPage(parseInt(event.target.value, 10));
-		setPage(0);
+	const handleViewFiles = (documentation) => {
+		setSelectedDocumentation(documentation);
+		setOpenModal(true);
+		setSelectedFiles([]); // reset file selection
+	};
+
+	const handleCloseModal = () => {
+		setOpenModal(false);
+		setSelectedDocumentation(null);
+		setSelectedFiles([]);
 	};
 
 	if (loading) return <CircularProgress />;
-
 	return (
-		<div>
-			<TextField
-				label="Search Record"
-				variant="outlined"
-				margin="normal"
-				value={searchQuery}
-				onChange={handleSearchChange}
-			/>
+		<WhiteBox>
+			<h2>Documentation Records</h2>
+
+			{/* List of documentation records */}
 			<TableContainer>
 				<Table>
 					<TableHead>
 						<TableRow>
 							<TableCell>Title</TableCell>
-							<TableCell>Outcome Results</TableCell>
-							<TableCell>Gender Responsiveness Impact</TableCell>
-							<TableCell>Actions</TableCell>
+							<TableCell>Tags</TableCell>
+							<TableCell>Action/s</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{filteredOrdinances
-							.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-							.flatMap((ordinance) =>
-								ordinance.documentation_reports.length > 0 ? (
-									ordinance.documentation_reports.map((scope) => (
-										<TableRow key={`${ordinance.id}-${scope.id}`}>
-											<TableCell>
-												{ordinance.title} {ordinance.number}
-											</TableCell>
-											<TableCell>{scope.outcomes_results}</TableCell>
-											<TableCell>
-												{scope.gender_responsiveness_impact}
-											</TableCell>
-											<TableCell>
-												<Button
-													variant="outlined"
-													onClick={() => handleEdit(ordinance, scope)}
-												>
-													Edit
-												</Button>
-											</TableCell>
-										</TableRow>
-									))
-								) : (
-									<TableRow key={ordinance.id}>
-										<TableCell>
-											{ordinance.title} {ordinance.number}
-										</TableCell>
-										<TableCell colSpan={5}>No Documentations</TableCell>
-										<TableCell>
-											<Button
-												variant="contained"
-												onClick={() => handleEdit(ordinance, null)}
-											>
-												Add
-											</Button>
-										</TableCell>
-									</TableRow>
-								)
-							)}
+						{records
+							.filter((documentation) => documentation.title !== null)
+							.map((documentation) => (
+								<TableRow key={documentation.ordinance_id} sx={{ mb: 2 }}>
+									<TableCell>{documentation.title}</TableCell>
+									<TableCell>
+										{documentation.documentation_reports?.map((e, i, r) => (
+											<span key={i}>
+												{`${e.tag}${i === r.length - 1 ? " " : ","} `}
+												{console.log(r.length)}
+											</span>
+										))}
+									</TableCell>
+
+									<TableCell>
+										<Button
+											variant="outlined"
+											onClick={() => handleViewFiles(documentation)}
+										>
+											View / Add Files
+										</Button>
+									</TableCell>
+								</TableRow>
+							))}
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
-				<TablePagination
-					rowsPerPageOptions={[10, 20, 100]}
-					component="div"
-					count={filteredOrdinances.length}
-					rowsPerPage={rowsPerPage}
-					page={page}
-					onPageChange={handlePageChange}
-					onRowsPerPageChange={handleRowsPerPageChange}
-				/>
-			</Box>
-			<Dialog open={openModal} onClose={() => setOpenModal(false)}>
-				<DialogTitle>
-					{selectedCoverage?.id ? "Edit" : "Add"} Monitoring Data
-				</DialogTitle>
-				<DialogContent>
-					<TextField
-						label="Outcome Results"
-						name="outcomes_results"
-						value={selectedCoverage?.outcomes_results || ""}
-						onChange={handleChange}
-						fullWidth
-						margin="normal"
+
+			{/* File upload modal */}
+			<Dialog
+				open={openModal}
+				onClose={handleCloseModal}
+				maxWidth="sm"
+				fullScreen
+			>
+				<DialogTitle>Upload Documentation Files</DialogTitle>
+				<DialogContent dividers>
+					<input
+						type="file"
+						multiple
+						accept=".png,.jpg,.jpeg,.pdf,.docx"
+						onChange={handleFileChange}
+						style={{ marginBottom: "20px" }}
 					/>
-					<TextField
-						label="Gender Responsiveness Impact"
-						name="gender_responsiveness_impact"
-						value={selectedCoverage?.gender_responsiveness_impact || ""}
-						onChange={handleChange}
-						fullWidth
-						margin="normal"
-					/>
+
+					{selectedFiles.length > 0 &&
+						selectedFiles.map((fileObj, index) => (
+							<Box key={index} sx={{ mb: 2 }}>
+								<p>📄 {fileObj.file.name}</p>
+								<TextField
+									fullWidth
+									label="Tag (e.g. memo, voucher, attendance sheet)"
+									variant="outlined"
+									value={fileObj.tag}
+									onChange={(e) => {
+										const updatedFiles = [...selectedFiles];
+										updatedFiles[index].tag = e.target.value;
+										setSelectedFiles(updatedFiles);
+									}}
+								/>
+							</Box>
+						))}
+
+					{/* File Gallery (Grid to display file previews) */}
+					{selectedDocumentation?.documentation_reports?.length > 0 && (
+						<div>
+							<h4>Uploaded Files</h4>
+							<ImageList
+								sx={{ width: "100%", height: "auto" }}
+								cols={3}
+								gap={8}
+							>
+								{selectedDocumentation.documentation_reports.map(
+									(report, index) => (
+										<ImageListItem key={index}>
+											{/* Check if it's an image file and set the src accordingly */}
+											{report.filepath.match(/\.(jpg|jpeg|png)$/) ? (
+												<img
+													src={`${IMG_BASE_URL}/${report.filepath}`} // Corrected image path
+													alt={`File ${index}`}
+													style={{
+														width: "100%",
+														height: "100%",
+														maxHeight: "550px",
+														borderRadius: "8px",
+													}}
+												/>
+											) : (
+												<iframe
+													src={`${IMG_BASE_URL}/${report.filepath}`} // Corrected file preview path
+													title={`File ${index}`}
+													style={{
+														width: "100%",
+														height: "100%",
+														maxHeight: "calc(50% -10px)",
+
+														borderRadius: "8px",
+													}}
+												/>
+											)}
+											<ImageListItemBar
+												title={report.related_documents?.join(", ")} // Display tags or file info
+												position="below"
+											/>
+										</ImageListItem>
+									)
+								)}
+							</ImageList>
+						</div>
+					)}
 				</DialogContent>
+
 				<DialogActions>
-					<Button onClick={() => setOpenModal(false)}>Cancel</Button>
+					<Button onClick={handleCloseModal}>Cancel</Button>
 					<Button variant="contained" onClick={handleSave}>
 						Save
 					</Button>
 				</DialogActions>
 			</Dialog>
+
+			{/* Error Snackbar */}
 			<Snackbar
 				open={error.open}
 				autoHideDuration={4000}
@@ -256,6 +289,8 @@ export default function DocumentationRecords() {
 					{error.message}
 				</Alert>
 			</Snackbar>
-		</div>
+		</WhiteBox>
 	);
 }
+
+export default DocumentationReps;

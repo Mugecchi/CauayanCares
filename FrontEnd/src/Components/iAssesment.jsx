@@ -160,11 +160,15 @@ export default function iAssesment() {
 											<TableCell>
 												{ordinance.title} {ordinance.number}
 											</TableCell>
-											<TableCell>{scope.outcomes_results}</TableCell>
+											<TableCell>
+												{scope.outcomes_results || "No Assessment data added"}
+											</TableCell>
 											<TableCell>
 												{scope.gender_responsiveness_impact}
 											</TableCell>
-											<TableCell>{scope.funding_source}%</TableCell>
+											<TableCell>
+												{scope.funding_source && `${scope.funding_source}%`}
+											</TableCell>
 											<TableCell>{scope.community_benefits}</TableCell>
 											<TableCell>{scope.adjustments_needed}</TableCell>
 											<TableCell>

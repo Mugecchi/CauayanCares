@@ -2,7 +2,9 @@ import os
 from flask import Blueprint, request, jsonify, session, send_from_directory
 from werkzeug.utils import secure_filename
 from db import execute_query
-from utils import verify_password, login_required, role_required, hash_password
+from utils import verify_password, login_required, role_required, hash_password,send_email
+import smtplib
+from email.message import EmailMessage
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -141,6 +143,9 @@ def create_user():
             data["user_lastname"], data["user_office"], data["user_email"], filename)
 
     execute_query(query, params, commit=True)
+    subject = "Welcome to CAUAYANCARES"
+    body = f"Hello {data['user_firstname'] + data['user_lastname']},\n\nYour account has been successfully created.\nUsername: {username}"
+    send_email(subject, body, data["user_email"])
 
 
     return jsonify({"message": "User created successfully", "user_image": filename}), 201
@@ -148,9 +153,19 @@ def create_user():
 # ✅ Fetch All Users (Admin Only)
 @auth_bp.route("/api/users", methods=["GET"])
 @login_required
-@role_required("admin")
 def get_users():
-    users = execute_query("SELECT id, username, role, user_firstname, user_middlename, user_lastname, user_office, user_email, user_image FROM users")
+    user_id = session.get("user_id")
+    user_role = session.get("role")
+
+    if user_role == "admin":
+        users = execute_query(
+            "SELECT id, username, role, user_firstname, user_middlename, user_lastname, user_office, user_email, user_image FROM users"
+        )
+    else:
+        users = execute_query(
+            "SELECT id, username, role, user_firstname, user_middlename, user_lastname, user_office, user_email, user_image FROM users WHERE id = %s",
+            (user_id,),
+        )
 
     return jsonify([
         {
@@ -165,6 +180,7 @@ def get_users():
             "user_image": u[8],
         } for u in users
     ]), 200
+
 
 
 # ✅ Update User
@@ -225,3 +241,41 @@ def delete_user(user_id):
 @auth_bp.route("/uploads/profile_pictures/<filename>")
 def uploaded_avatar(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
+@auth_bp.route("/api/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.json
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    user = execute_query("SELECT id, username FROM users WHERE user_email = %s", (email,), fetch_one=True)
+    if not user:
+        return jsonify({"error": "Email not found"}), 404
+
+    # Generate token (in production, use uuid4 or JWT with expiry)
+    reset_token = str(user[0])
+
+    # Create a password reset link (replace with actual frontend URL)
+    reset_link = f"http://yourdomain.com/reset-password/{reset_token}"
+
+    subject = "Password Reset Request"
+    body = f"""
+    Hi {user[1]},
+    
+    You requested to reset your password. Please click the link below to reset it:
+    {reset_link}
+    
+    If you did not request this, please ignore this email.
+
+    Thanks,
+    CAUAYANCARES Support Team
+    """
+
+    # Send the email
+    try:
+        send_email(subject, body, email)
+        return jsonify({"message": "Password reset link has been sent to your email."}), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to send email", "details": str(e)}), 500

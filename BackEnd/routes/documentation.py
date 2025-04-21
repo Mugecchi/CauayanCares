@@ -1,101 +1,144 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_from_directory
+from werkzeug.utils import secure_filename
+import os
+import uuid
 from utils import login_required
 from db import execute_query
 
 documentation_bp = Blueprint("documentation", __name__)
 
-# ✅ Create or Update a Documentation Record
+UPLOAD_FOLDER = "uploads/documents"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "pdf", "docx"}
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ✅ Create Multiple Documentation Entries (1 row per file)
 @documentation_bp.route("/api/documentation", methods=["POST"])
 @login_required
-def add_or_update_documentation():
+def add_documentation():
     try:
-        data = request.json
-        query = """
-            INSERT INTO documentation_reports (ordinance_id, related_documents)
-            VALUES (%s, %s)
-            ON DUPLICATE KEY UPDATE 
-                related_documents = VALUES(related_documents)
-        """
-        execute_query(query, (
-            data.get("ordinance_id"), data.get("related_documents")
-        ), commit=True)
+        files = request.files.getlist("files")
+        ordinance_id = request.form.get("ordinance_id")
+        tags = request.form.getlist("file_tags")  # tags must align with files
 
-        return jsonify({"message": "Documentation record added/updated successfully!"})
+        if not ordinance_id or not files or not tags:
+            return jsonify({"error": "Ordinance ID, files, and tags are required"}), 400
+        if len(files) != len(tags):
+            return jsonify({"error": "Each file must have a corresponding tag"}), 400
+
+        for i, file in enumerate(files):
+            if file and allowed_file(file.filename):
+                filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(file_path)
+
+                tag = tags[i]
+
+                query = """
+                    INSERT INTO documentation_reports (ordinance_id, filepath, related_documents)
+                    VALUES (%s, %s, %s)
+                """
+                execute_query(query, (ordinance_id, file_path, tag), commit=True)
+
+        return jsonify({"message": "Documentation files uploaded successfully!"})
 
     except Exception as e:
-        return jsonify({"error": "Failed to add/update documentation record", "details": str(e)}), 500
+        return jsonify({"error": "Failed to upload documentation", "details": str(e)}), 500
 
 
-# ✅ Retrieve All Documentation Records (With Ordinances)
+# ✅ Retrieve Documentation Grouped by Ordinance
 @documentation_bp.route("/api/documentation", methods=["GET"])
 @login_required
 def get_all_documentation():
     try:
         query = """
         SELECT o.id AS ordinance_id, o.title, o.number, o.status, o.document_type,
-               dr.id, dr.ordinance_id, dr.related_documents
+               dr.id, dr.related_documents, dr.filepath
         FROM ordinances o
         LEFT JOIN documentation_reports dr ON o.id = dr.ordinance_id
+        ORDER BY o.id DESC
         """
         rows = execute_query(query)
-        if not rows:
-            return jsonify({"error": "No documentation records found"}), 404
 
-        ordinances_dict = {}
+        ordinances = {}
 
         for row in rows:
-            ordinance_id = row[0]
-            if ordinance_id not in ordinances_dict:
-                ordinances_dict[ordinance_id] = {
-                    "ordinance_id": ordinance_id,
+            ord_id = row[0]
+            if ord_id not in ordinances:
+                ordinances[ord_id] = {
+                    "ordinance_id": ord_id,
                     "title": row[1],
                     "number": row[2],
                     "status": row[3],
                     "document_type": row[4],
-                    "documentation_reports": []  # Store related documents
+                    "documentation_reports": []
                 }
             if row[5] is not None:
-                ordinances_dict[ordinance_id]["documentation_reports"].append({
-                    "id": row[5],  # Documentation record ID
-                    "ordinance_id": row[6],  # Ordinance ID reference
-                    "related_documents": row[7]  # Actual related document data
+                ordinances[ord_id]["documentation_reports"].append({
+                    "id": row[5],
+                    "tag": row[6],
+                    "filepath": row[7]
                 })
 
-        return jsonify(list(ordinances_dict.values()))
+        return jsonify(list(ordinances.values()))
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to retrieve documentation", "details": str(e)}), 500
 
 
-# ✅ Update an Existing Documentation Record
+# ✅ Update a Single Documentation Entry (replace file and/or tag)
 @documentation_bp.route("/api/documentation/<int:doc_id>", methods=["PUT"])
 @login_required
 def update_documentation(doc_id):
     try:
-        data = request.json
+        file = request.files.get("file")
+        tag = request.form.get("tag")
+
+        if not file or not allowed_file(file.filename):
+            return jsonify({"error": "Valid file is required"}), 400
+
+        filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+
         query = """
             UPDATE documentation_reports
-            SET related_documents = %s
+            SET filepath = %s, related_documents = %s
             WHERE id = %s
         """
-        execute_query(query, (
-            data.get("related_documents"), doc_id
-        ), commit=True)
+        execute_query(query, (file_path, tag, doc_id), commit=True)
 
-        return jsonify({"message": "Documentation record updated successfully!"})
+        return jsonify({"message": "Documentation updated successfully!"})
 
     except Exception as e:
-        return jsonify({"error": "Failed to update documentation record", "details": str(e)}), 500
+        return jsonify({"error": "Failed to update documentation", "details": str(e)}), 500
 
 
-# ✅ Delete a Documentation Record
+# ✅ Delete a Single Documentation Entry
 @documentation_bp.route("/api/documentation/<int:doc_id>", methods=["DELETE"])
 @login_required
 def delete_documentation(doc_id):
     try:
-        query = "DELETE FROM documentation_reports WHERE id = %s"
-        execute_query(query, (doc_id,), commit=True)
-        return jsonify({"message": "Documentation record deleted successfully!"})
+        # Optionally fetch and delete the file from disk
+        fetch_query = "SELECT filepath FROM documentation_reports WHERE id = %s"
+        result = execute_query(fetch_query, (doc_id,))
+        if result and result[0][0]:
+            file_path = result[0][0]
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+        delete_query = "DELETE FROM documentation_reports WHERE id = %s"
+        execute_query(delete_query, (doc_id,), commit=True)
+
+        return jsonify({"message": "Documentation entry deleted successfully!"})
 
     except Exception as e:
-        return jsonify({"error": "Failed to delete documentation record", "details": str(e)}), 500
+        return jsonify({"error": "Failed to delete documentation", "details": str(e)}), 500
+
+@documentation_bp.route('/uploads/documents/<filename>')
+def serve_document(filename):
+    return send_from_directory('uploads/documents', filename)

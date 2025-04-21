@@ -170,9 +170,12 @@ export default function Monitoring() {
 												{ordinance.title} {ordinance.number}
 											</TableCell>
 											{console.log(scope)}
-											<TableCell>{scope.indicators_of_success}</TableCell>
+											<TableCell>
+												{scope.indicators_of_success ||
+													"No Monitoring data added"}
+											</TableCell>
 											<TableCell>{scope.monitoring_frequency}</TableCell>
-											<TableCell>{scope.compliance_rate}%</TableCell>
+											<TableCell>{`${scope.compliance_rate}%`}</TableCell>
 											<TableCell>{scope.challenges}</TableCell>
 											<TableCell>{scope.violations_reports}</TableCell>
 											<TableCell>{scope.feedback_mechanisms}</TableCell>

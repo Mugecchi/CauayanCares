@@ -21,8 +21,9 @@ import {
 	Avatar,
 } from "@mui/material";
 import { Close, Add, PhotoCamera } from "@mui/icons-material";
-import { getAvatarUrl } from "../api";
+import { fetchUser, getAvatarUrl } from "../api";
 import { fetchUsers, createUser, updateUser, deleteUser } from "../api";
+import { WhiteBox } from "../Includes/styledComponents";
 
 const Registration = () => {
 	const [users, setUsers] = useState([]);
@@ -33,7 +34,6 @@ const Registration = () => {
 	const [editMode, setEditMode] = useState(false);
 	const [selectedUserId, setSelectedUserId] = useState(null);
 	const [selectedImage, setSelectedImage] = useState(null);
-
 	// User Form Data
 	const [formData, setFormData] = useState({
 		username: "",
@@ -46,6 +46,21 @@ const Registration = () => {
 		user_email: "",
 		user_image: null,
 	});
+	const [currentUser, setCurrentUser] = useState(null);
+	console.log(currentUser);
+	useEffect(() => {
+		const fetchCurrentUser = async () => {
+			try {
+				const user = await fetchUser();
+				setCurrentUser(user);
+			} catch (error) {
+				console.error("Failed to fetch current user", error);
+			}
+		};
+
+		fetchCurrentUser();
+		loadUsers();
+	}, []);
 
 	useEffect(() => {
 		loadUsers();
@@ -71,7 +86,6 @@ const Registration = () => {
 			}
 		}
 	};
-
 	const handleSearchChange = (event) => {
 		setSearchQuery(event.target.value);
 	};
@@ -98,9 +112,11 @@ const Registration = () => {
 				user_lastname: user.user_lastname,
 				user_office: user.user_office,
 				user_email: user.user_email,
-				user_image: user.user_image,
+				user_image: user.user_image, // Keep this for form submission
 			});
-			setSelectedImage(user.user_image);
+			setSelectedImage(
+				user.user_image ? getAvatarUrl(user.user_image) : "/default-avatar.png"
+			); // Ensure it gets the correct image URL
 		} else {
 			setEditMode(false);
 			setFormData({
@@ -114,7 +130,7 @@ const Registration = () => {
 				user_email: "",
 				user_image: null,
 			});
-			setSelectedImage(null);
+			setSelectedImage("/default-avatar.png");
 		}
 		setOpenForm(true);
 	};
@@ -131,13 +147,16 @@ const Registration = () => {
 	};
 
 	const handleImageUpload = (e) => {
-		const file = e.target.files[0];
+		const file = e.target.files[0]; // Get the file from the input
 		if (file) {
+			console.log("File selected:", file); // Debugging: log the selected file
 			const reader = new FileReader();
-			setSelectedImage(URL.createObjectURL(file));
-			setFormData({ ...formData, user_image: file });
-
-			reader.readAsDataURL(file);
+			reader.onloadend = () => {
+				// Set the selected image for preview
+				setSelectedImage(reader.result); // Use reader.result for preview
+				setFormData({ ...formData, user_image: file });
+			};
+			reader.readAsDataURL(file); // Read the file as DataURL to show the image preview
 		}
 	};
 
@@ -200,22 +219,32 @@ const Registration = () => {
 	);
 
 	return (
-		<div>
-			<Box display="flex" justifyContent="space-between">
+		<WhiteBox>
+			<Box
+				display="flex"
+				justifyContent="space-between"
+				alignItems="center"
+				width="100%"
+				mb={2}
+			>
 				<TextField
 					label="Search User"
 					variant="outlined"
-					margin="normal"
+					size="small"
 					value={searchQuery}
 					onChange={handleSearchChange}
+					sx={{ width: 250 }}
 				/>
-				<Button
-					variant="contained"
-					startIcon={<Add />}
-					onClick={() => handleOpenForm()}
-				>
-					Add User
-				</Button>
+				{currentUser?.role === "admin" && (
+					<Button
+						variant="contained"
+						startIcon={<Add />}
+						onClick={() => handleOpenForm()}
+						sx={{ whiteSpace: "nowrap" }}
+					>
+						Add User
+					</Button>
+				)}
 			</Box>
 			<TableContainer>
 				<Table stickyHeader size="medium">
@@ -236,16 +265,14 @@ const Registration = () => {
 							.map((user) => (
 								<TableRow key={user.id} hover>
 									<TableCell>
-										<TableCell>
-											<Avatar
-												src={
-													user.user_image
-														? getAvatarUrl(user.user_image)
-														: "/default-avatar.png"
-												}
-												alt={user.username}
-											/>
-										</TableCell>
+										<Avatar
+											src={
+												user.user_image
+													? getAvatarUrl(user.user_image)
+													: "/default-avatar.png"
+											}
+											alt={user.username}
+										/>
 									</TableCell>
 									<TableCell>{user.username}</TableCell>
 									<TableCell>{`${user.user_firstname} ${user.user_middlename} ${user.user_lastname}`}</TableCell>
@@ -253,10 +280,15 @@ const Registration = () => {
 									<TableCell>{user.user_office}</TableCell>
 									<TableCell>{user.role}</TableCell>
 									<TableCell>
-										<Button onClick={() => handleOpenForm(user)}>Edit</Button>
-										<Button color="error" onClick={() => handleDelete(user.id)}>
-											Delete
-										</Button>
+										<IconButton onClick={() => handleOpenForm(user)}>
+											<img src="/edit.svg" alt="edit" />
+										</IconButton>
+										<IconButton
+											color="error"
+											onClick={() => handleDelete(user.id)}
+										>
+											<img src="/trash.svg" alt="delete" />
+										</IconButton>
 									</TableCell>
 								</TableRow>
 							))}
@@ -274,10 +306,15 @@ const Registration = () => {
 				<DialogContent dividers>
 					<form onSubmit={handleSubmit}>
 						{/* Profile Picture Upload */}
+						{/* Profile Picture Upload */}
 						<Box display="flex" alignItems="center" gap={2} mb={2}>
 							<Avatar src={selectedImage} sx={{ width: 80, height: 80 }} />
-							<Button component="label">
-								<PhotoCamera />
+							<Button
+								component="label"
+								variant="contained"
+								startIcon={<PhotoCamera />}
+							>
+								Upload Image
 								<input
 									type="file"
 									hidden
@@ -391,7 +428,18 @@ const Registration = () => {
 					</form>
 				</DialogContent>
 			</Dialog>
-		</div>
+			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
+				<TablePagination
+					rowsPerPageOptions={[10, 20, 100]}
+					component="div"
+					count={filteredUsers.length}
+					rowsPerPage={rowsPerPage}
+					page={page}
+					onPageChange={handlePageChange}
+					onRowsPerPageChange={handleRowsPerPageChange}
+				/>
+			</Box>
+		</WhiteBox>
 	);
 };
 

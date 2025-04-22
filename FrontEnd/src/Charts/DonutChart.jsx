@@ -6,7 +6,8 @@ import { ChartsLegend } from "@mui/x-charts/ChartsLegend";
 import { ChartsTooltip } from "@mui/x-charts";
 function DonutChart({
 	title,
-	documentTypes = {},
+	data = {},
+	refreshInterval = 5000,
 	colorPalette = [
 		"#FF5722",
 		"#4CAF50",
@@ -19,16 +20,14 @@ function DonutChart({
 	// Ensure colorPalette is an array
 	colorPalette = Array.isArray(colorPalette) ? colorPalette : [];
 
-	const chartData = Object.entries(documentTypes).map(
-		([key, value], index) => ({
-			id: index,
-			value: value || 0,
-			label: key
-				.replace(/_/g, " ")
-				.replace(/\b\w/g, (char) => char.toUpperCase()),
-			color: colorPalette[index % colorPalette.length], // Use 'color' directly
-		})
-	);
+	const chartData = Object.entries(data).map(([key, value], index) => ({
+		id: index,
+		value: value || 0,
+		label: key
+			.replace(/_/g, " ")
+			.replace(/\b\w/g, (char) => char.toUpperCase()),
+		color: colorPalette[index % colorPalette.length], // Use 'color' directly
+	}));
 	return (
 		<Box
 			display="flex"

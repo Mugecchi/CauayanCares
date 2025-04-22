@@ -43,6 +43,7 @@ def get_all_Budget():
                ba.gad_budget, ba.financial_transparency_measures
         FROM ordinances o
         LEFT JOIN budget_allocation ba ON o.id = ba.ordinance_id
+            WHERE o.is_deleted = 0;
     """
     rows = execute_query(query)
 

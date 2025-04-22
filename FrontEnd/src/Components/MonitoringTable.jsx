@@ -46,7 +46,7 @@ export default function Monitoring() {
 		} catch (err) {
 			setError({
 				open: true,
-				message: "No Ordinance Found.",
+				message: "No Record Found.",
 				severity: "error",
 			});
 		} finally {

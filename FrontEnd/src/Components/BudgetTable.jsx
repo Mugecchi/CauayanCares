@@ -49,7 +49,7 @@ export default function BudgetTable() {
 		} catch (err) {
 			setError({
 				open: true,
-				message: "No Ordinance Found.",
+				message: "No Record Found.",
 				severity: "error",
 			});
 		} finally {
@@ -81,7 +81,6 @@ export default function BudgetTable() {
 			return titleOrNumberMatch || scopeMatch;
 		});
 	}, [ordinances, searchQuery]);
-
 	const handleEdit = (ordinance, scope) => {
 		setSelectedCoverage({
 			id: scope?.id || "",

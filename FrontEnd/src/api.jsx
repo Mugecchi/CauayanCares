@@ -16,13 +16,20 @@ const api = axios.create({
 });
 
 // Generic API request function
-export const apiCall = async (method, url, data = null, isFormData = false) => {
+export const apiCall = async (
+	method,
+	url,
+	data = null,
+	isFormData = false,
+	config = {}
+) => {
 	try {
-		const config = isFormData
-			? { headers: { "Content-Type": "multipart/form-data" } }
-			: {};
-
-		const response = await api({ method, url, data, ...config });
+		const response = await api({
+			method,
+			url,
+			data,
+			...config, // Ensure params are included in the config
+		});
 		return response.data;
 	} catch (error) {
 		throw (
@@ -102,11 +109,11 @@ export const handlePreview = async (
 // Ordinances
 export const createOrdinance = (formData) =>
 	apiCall("post", "/ordinances", formData);
-export const fetchOrdinances = (page = 1, limit = 10) => {
-	return apiCall("get", "/ordinances", {
+export const fetchOrdinances = (page = 1, per_page = 10) => {
+	return apiCall("get", "/ordinances", null, false, {
 		params: {
 			page,
-			limit,
+			per_page,
 		},
 	});
 };

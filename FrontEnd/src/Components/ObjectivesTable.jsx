@@ -50,7 +50,7 @@ export default function ObjectivesTable() {
 		} catch (err) {
 			setError({
 				open: true,
-				message: "No Ordinance Found.",
+				message: "No Record Found.",
 				severity: "error",
 			});
 		} finally {

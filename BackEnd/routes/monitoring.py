@@ -67,6 +67,7 @@ def get_all_monitoring():
             mc.compliance_rate, mc.challenges, mc.violations_reports, mc.feedback_mechanisms
         FROM ordinances o
         LEFT JOIN monitoring_compliance mc ON o.id = mc.ordinance_id
+            WHERE o.is_deleted = 0;
         """
         rows = execute_query(query)
         if not rows:

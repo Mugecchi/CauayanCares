@@ -3,7 +3,7 @@ import { Box, Paper, useTheme } from "@mui/material";
 import { LineChart } from "@mui/x-charts/LineChart"; // Import LineChart
 import { Label } from "@mui/icons-material";
 
-const LineGraph = ({ documentTypes = {}, colors = [], title }) => {
+const LineGraph = ({ data = {}, colors = [], title }) => {
 	const theme = useTheme();
 	const defaultColors = [
 		theme.palette.primary.main,
@@ -13,14 +13,14 @@ const LineGraph = ({ documentTypes = {}, colors = [], title }) => {
 		theme.palette.success.main,
 	];
 
-	console.log("Document Types:", documentTypes); // Debugging line to check document types
-	const statusLabels = Object.keys(documentTypes); // These are just placeholders, replace with actual data if needed
+	console.log("Document Types:", data); // Debugging line to check document types
+	const statusLabels = Object.keys(data); // These are just placeholders, replace with actual data if needed
 
-	// Example series data (replace with real data from your `documentTypes` or `statuses`)
+	// Example series data (replace with real data from your `data` or `statuses`)
 	const seriesData = [
 		{
 			label: title || "Example Label", // Replace with dynamic label if needed
-			data: Object.values(documentTypes), // Replace with dynamic data if needed
+			data: Object.values(data), // Replace with dynamic data if needed
 			color: colors[0] || defaultColors[0], // Apply color dynamically or use default
 		},
 	];

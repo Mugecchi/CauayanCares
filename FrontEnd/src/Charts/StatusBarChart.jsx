@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Paper, useTheme } from "@mui/material";
 import { BarChart } from "@mui/x-charts/BarChart";
 
-const StatusBarChart = ({ documentTypes = {}, colors = [] }) => {
+const StatusBarChart = ({ data = {}, colors = [] }) => {
 	const theme = useTheme();
 	const defaultColors = [
 		theme.palette.primary.main,
@@ -20,14 +20,13 @@ const StatusBarChart = ({ documentTypes = {}, colors = [] }) => {
 		"Implemented",
 	];
 
-	const seriesData = Object.keys(documentTypes)
+	const seriesData = Object.keys(data)
 		.filter((key) => !key.includes("_statuses")) // Get only doc type keys
-		.map((docType, index) => ({
+		.map((dat, index) => ({
 			data: statusLabels.map(
-				(status) =>
-					documentTypes[`${docType}_statuses`]?.[status.toLowerCase()] || 0
+				(status) => data[`${dat}_statuses`]?.[status.toLowerCase()] || 0
 			),
-			label: docType.replace("_", " ").toUpperCase(),
+			label: dat.replace("_", " ").toUpperCase(),
 			color: colors[index] || defaultColors[index % defaultColors.length], // Use provided color or fallback
 		}));
 

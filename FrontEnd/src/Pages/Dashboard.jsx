@@ -56,16 +56,17 @@ const Dashboard = () => {
 		"#F0D7B6",
 		"#D7C0E0",
 	];
+	console.log(documentTypes);
 
 	return (
 		<Box sx={{ flexGrow: 1, p: 0 }}>
 			<Grid container spacing={2}>
 				<Grid item xs={12}>
-					<StatusBarChart documentTypes={documentTypes} statuses={statuses} />
+					<StatusBarChart data={documentTypes} statuses={statuses} />
 				</Grid>
 				<Grid item xs={12}>
 					<LineGraph
-						documentTypes={dates}
+						data={dates}
 						colors={["#FF7704"]}
 						title={"Historical Data"}
 					/>
@@ -74,7 +75,7 @@ const Dashboard = () => {
 					<Paper sx={{ p: 2 }}>
 						<DonutChart
 							title={"Document Types"}
-							documentTypes={filteredDocumentTypes}
+							data={filteredDocumentTypes}
 							colorPalette={pastelPalette}
 						/>
 					</Paper>
@@ -83,7 +84,7 @@ const Dashboard = () => {
 					<Paper sx={{ p: 2 }}>
 						<DonutChart
 							title={"Funding Source"}
-							documentTypes={fundingSource}
+							data={fundingSource}
 							colorPalette={fundingColor}
 						/>
 					</Paper>

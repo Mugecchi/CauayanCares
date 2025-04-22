@@ -63,6 +63,7 @@ def get_all_assessment():
             ic.gender_responsiveness_impact, ic.community_benefits, ic.adjustments_needed
         FROM ordinances o
         LEFT JOIN impact_assessment ic ON o.id = ic.ordinance_id
+            WHERE o.is_deleted = 0;
         """
         rows = execute_query(query)
         if not rows:

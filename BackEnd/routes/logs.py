@@ -10,7 +10,7 @@ logs_bp = Blueprint("logs", __name__)
 def view_ordinance_logs():
     try:
         query = """
-            SELECT l.ordinance_id, l.action, l.timestamp, u.user_lastname, r.title, r.number
+            SELECT l.ordinance_id, l.action, l.timestamp, u.username, r.title, r.number
             FROM records_logs l
             JOIN users u ON l.user_id = u.id
             JOIN ordinances r ON l.ordinance_id = r.id
@@ -26,7 +26,7 @@ def view_ordinance_logs():
                 "ordinance_id": row[0],
                 "action": row[1],
                 "timestamp": row[2],
-                "last_name": row[3],
+                "username": row[3],
                 "title": row[4],
                 "number": row[5]
             } for row in logs

@@ -252,9 +252,7 @@ export default function CoverageTable() {
 										<TableCell>
 											{ordinance.title} {ordinance.number}
 										</TableCell>
-										<TableCell colSpan={3}>
-											No coverage scope available
-										</TableCell>
+										<TableCell colSpan={3}>No record</TableCell>
 										<TableCell>
 											<Button
 												variant="contained"

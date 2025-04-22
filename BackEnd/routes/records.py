@@ -154,6 +154,7 @@ def add_ordinance():
         # Log the error
         current_app.logger.error(f"Error in adding record: {str(e)}")
         return jsonify({"error": f"Failed to add record. {str(e)}"}), 500
+    
 @ordinances_bp.route("/api/ordinances", methods=["GET"])
 @login_required
 def get_ordinances():
@@ -168,7 +169,9 @@ def get_ordinances():
     query = """
         SELECT id, title, number, date_issued, date_effectivity, details, document_type, status, file_path
         FROM ordinances
+        WHERE is_deleted = FALSE
         LIMIT %s OFFSET %s
+
     """
     ordinances = execute_query(query, (per_page, offset))
 
@@ -187,7 +190,6 @@ def get_ordinances():
         "current_page": page
     })
 
-
 # Serve Uploaded Files (Proper File Serving)
 @ordinances_bp.route("/uploads/<path:filename>")
 def serve_file(filename):
@@ -203,50 +205,41 @@ def serve_file(filename):
 @role_required('admin')
 def delete_ordinance(id):
     try:
-        # Fetch the file path before deletion (optional, if you want to delete the file)
-        file_record = execute_query("SELECT file_path FROM ordinances WHERE id = %s", (id,), fetch_one=True)
+        # Optional: Get file_path for possible file deletion
+        file_record = execute_query("SELECT file_path FROM ordinances WHERE id = %s AND is_deleted = FALSE", (id,), fetch_one=True)
+        if not file_record:
+            return jsonify({"error": "Ordinance not found or already deleted."}), 404
 
-        # Delete related records from other tables first
-        execute_query("DELETE FROM budget_allocation WHERE ordinance_id = %s", (id,), commit=True)
-        execute_query("DELETE FROM coverage_scope WHERE ordinance_id = %s", (id,), commit=True)
-        execute_query("DELETE FROM documentation_reports WHERE ordinance_id = %s", (id,), commit=True)
-        execute_query("DELETE FROM impact_assessment WHERE ordinance_id = %s", (id,), commit=True)
-        execute_query("DELETE FROM objectives_implementation WHERE ordinance_id = %s", (id,), commit=True)
-        execute_query("DELETE FROM monitoring_compliance WHERE ordinance_id = %s", (id,), commit=True)
+        # Delete related records (if not using ON DELETE CASCADE)
+        related_tables = [
+            "budget_allocation",
+            "coverage_scope",
+            "documentation_reports",
+            "impact_assessment",
+            "objectives_implementation",
+            "monitoring_compliance"
+        ]
+        for table in related_tables:
+            execute_query(f"DELETE FROM {table} WHERE ordinance_id = %s", (id,), commit=True)
 
-        # Log the deletion in the records_logs table
+        # Log the deletion
         user_id = session.get("user_id")
-
-        # Log the ordinance deletion with user info
         log_query = """
-            UPDATE records_logs 
-            SET action = 'deleted', deleted_at = NOW() 
-            WHERE ordinance_id = %s AND action != 'deleted';
+            INSERT INTO records_logs (user_id, ordinance_id, action, deleted_at)
+            VALUES (%s, %s, 'deleted', NOW())
+            ON DUPLICATE KEY UPDATE action = 'deleted', deleted_at = NOW()
         """
-        execute_query(log_query, (id,), commit=True)
+        execute_query(log_query, (user_id, id), commit=True)
 
-        # Reset data in the ordinances table while keeping the ID
-        reset_ordinance_query = """
-            UPDATE ordinances 
-            SET 
-                title = NULL, 
-                number = NULL,
-                date_issued = NULL, 
-                details = NULL, 
-                date_effectivity = NULL, 
-                status = NULL, 
-                related_ordinances = NULL, 
-                file_path = NULL, 
-                document_type = NULL
-            WHERE id = %s
-        """
-        execute_query(reset_ordinance_query, (id,), commit=True)
+        # Soft-delete the ordinance
+        soft_delete_query = "UPDATE ordinances SET is_deleted = TRUE WHERE id = %s"
+        execute_query(soft_delete_query, (id,), commit=True)
 
-        return jsonify({"message": "Ordinance data cleared successfully."}), 200
+        return jsonify({"message": "Ordinance deleted successfully."}), 200
 
     except Exception as e:
-        current_app.logger.error(f"Error clearing ordinance ID {id}: {str(e)}")
-        return jsonify({"error": f"Failed to clear ordinance. {str(e)}"}), 500
+        current_app.logger.error(f"Error deleting ordinance ID {id}: {str(e)}")
+        return jsonify({"error": f"Failed to delete ordinance. {str(e)}"}), 500
 
 # Update Ordinance Status
 @ordinances_bp.route("/api/ordinances/<int:id>", methods=["PUT"])

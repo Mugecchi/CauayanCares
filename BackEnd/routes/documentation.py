@@ -60,7 +60,9 @@ def get_all_documentation():
                dr.id, dr.related_documents, dr.filepath
         FROM ordinances o
         LEFT JOIN documentation_reports dr ON o.id = dr.ordinance_id
+            WHERE o.is_deleted = 0;
         ORDER BY o.id DESC
+        
         """
         rows = execute_query(query)
 

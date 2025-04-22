@@ -44,6 +44,8 @@ def get_all_Objective():
                oi.id AS objective_id, oi.policy_objectives, oi.lead_agency, oi.supporting_agencies, oi.key_provisions, oi.programs_activities
         FROM ordinances o
         LEFT JOIN objectives_implementation oi ON o.id = oi.ordinance_id
+                    WHERE o.is_deleted = 0;
+
     """
     rows = execute_query(query)
 

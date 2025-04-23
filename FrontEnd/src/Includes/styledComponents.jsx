@@ -12,6 +12,7 @@ import {
 	createTheme,
 	ThemeProvider,
 	Accordion,
+	Drawer,
 } from "@mui/material";
 
 /* ✅ Inject Global CSS Variables */
@@ -30,9 +31,6 @@ export const GlobalStyles = createGlobalStyle`
 		--silver-chalice: #ACABAB;
 		--white: #FFFFFF;
 		--eminence: #69247C;
-    --primary-color: #7b2cbf; /* Purple theme */
-    --secondary-color: #ff7706;
-    --text-color: #333;
     --background-color: #f2e6fe;
     
     color-scheme: light dark;
@@ -44,6 +42,7 @@ export const GlobalStyles = createGlobalStyle`
 
   *, *::before, *::after {
     box-sizing: border-box;
+
     margin: 0;
     padding: 0;
   }
@@ -54,22 +53,6 @@ export const GlobalStyles = createGlobalStyle`
     line-height: 1.6;
   }
 
-  /* Override Material-UI Typography */
-  .MuiTypography-root {
-    font-family: "SF Pro Display", sans-serif !important;
-  }
-
-  /* Override Material-UI Button */
-  .MuiButton-root {
-    font-family: "SF Pro Display", sans-serif !important;
-  }
-
-
-	#root {
-		margin: 0 auto;
-		overflow-x: hidden;
-		max-width: 2600px;
-	}
 `;
 
 /* ✅ MUI Theme */
@@ -234,7 +217,6 @@ export const CustomAccordion = styled(Accordion)({
 
 // Sidebar Container
 export const ContentContainer = styled(Box)`
-	margin-left: 0; /* Same width as the sidebar */
 	width: calc(100%); /* Ensures it takes the remaining space */
 	background: var(--background-color);
 	transition: margin-left 0.3s ease-in-out;
@@ -245,18 +227,20 @@ export const ContentContainer = styled(Box)`
 	}
 `;
 
-export const SidebarContainer = styled(Box)`
-	width: 250px;
-	height: 100%;
-	background: #5d3786;
-	color: white;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	padding: 25px;
-	z-index: 1000; /* Ensures it's above other content */
-	box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-`;
+export const SidebarContainer = styled(Drawer)(({ theme }) => ({
+	"& .MuiDrawer-paper": {
+		width: 250,
+		height: "100%",
+		background: "#5d3786",
+		color: "white",
+		display: "flex",
+		flexDirection: "column",
+		justifyContent: "space-between",
+		padding: 25,
+		zIndex: 1000,
+		boxShadow: "2px 0 5px rgba(0, 0, 0, 0.2)",
+	},
+}));
 
 // Sidebar Title
 export const SidebarTitle = styled.h6`

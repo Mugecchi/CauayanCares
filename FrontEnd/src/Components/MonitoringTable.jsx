@@ -169,7 +169,6 @@ export default function Monitoring() {
 											<TableCell>
 												{ordinance.title} {ordinance.number}
 											</TableCell>
-											{console.log(scope)}
 											<TableCell>
 												{scope.indicators_of_success ||
 													"No Monitoring data added"}

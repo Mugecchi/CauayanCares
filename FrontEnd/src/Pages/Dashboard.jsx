@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, CircularProgress, Paper, Skeleton } from "@mui/material";
 import Grid from "@mui/material/Grid";
@@ -8,36 +8,22 @@ import StatusBarChart from "../Charts/StatusBarChart";
 import LineGraph from "../Charts/LineGraph";
 
 const Dashboard = () => {
-	const {
-		data: counts,
-		isLoading,
-		isError,
-		error,
-	} = useQuery({
-		queryKey: ["dashboardCounts"],
-		queryFn: fetchDashboardCounts,
-		staleTime: 1000 * 60 * 5, // cache for 5 minutes
-		cacheTime: 1000 * 60 * 30, // keep in memory for 30 mins
-		refetchOnWindowFocus: false,
-	});
+	const [counts, setCounts] = useState();
+	const [isLoading, setIsLoading] = useState(true);
+	useEffect(() => {
+		const getData = async () => {
+			try {
+				const res = await fetchDashboardCounts();
+				setCounts(res);
+				setIsLoading(false);
+			} catch (error) {
+				setIsLoading(false);
+				setIsError(true);
+			}
+		};
 
-	if (isLoading) {
-		return (
-			<Box
-				display="flex"
-				justifyContent="center"
-				alignItems="center"
-				height="100vh"
-			>
-				<CircularProgress />
-			</Box>
-		);
-	}
-
-	if (isError) {
-		console.error("Error fetching dashboard:", error);
-		return <div>Error loading dashboard data</div>;
-	}
+		getData();
+	}, []); // Empty dependency array to run once on mount
 
 	const documentTypes = counts?.document_types || {};
 	const statuses = counts?.statuses || {};
@@ -56,38 +42,43 @@ const Dashboard = () => {
 		"#F0D7B6",
 		"#D7C0E0",
 	];
-	console.log(documentTypes);
 
 	return (
 		<Box sx={{ flexGrow: 1, p: 0 }}>
 			<Grid container spacing={2}>
 				<Grid item xs={12}>
-					<StatusBarChart data={documentTypes} statuses={statuses} />
+					<StatusBarChart
+						data={documentTypes}
+						statuses={statuses}
+						isLoading={isLoading}
+					/>
 				</Grid>
+
 				<Grid item xs={12}>
 					<LineGraph
 						data={dates}
 						colors={["#FF7704"]}
 						title={"Historical Data"}
+						isLoading={isLoading}
 					/>
 				</Grid>
+
 				<Grid item xs={6}>
-					<Paper sx={{ p: 2 }}>
-						<DonutChart
-							title={"Document Types"}
-							data={filteredDocumentTypes}
-							colorPalette={pastelPalette}
-						/>
-					</Paper>
+					<DonutChart
+						title={"Document Types"}
+						data={filteredDocumentTypes}
+						colorPalette={pastelPalette}
+						isLoading={isLoading}
+					/>
 				</Grid>
+
 				<Grid item xs={6}>
-					<Paper sx={{ p: 2 }}>
-						<DonutChart
-							title={"Funding Source"}
-							data={fundingSource}
-							colorPalette={fundingColor}
-						/>
-					</Paper>
+					<DonutChart
+						title={"Funding Source"}
+						data={fundingSource}
+						colorPalette={fundingColor}
+						isLoading={isLoading}
+					/>
 				</Grid>
 			</Grid>
 		</Box>

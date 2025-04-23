@@ -172,7 +172,6 @@ export default function ObjectivesTable() {
 											<TableCell>
 												{ordinance.title} {ordinance.number}
 											</TableCell>
-											{console.log(scope)}
 											<TableCell>
 												{scope.policy_objectives || "No Objectives Data"}
 											</TableCell>

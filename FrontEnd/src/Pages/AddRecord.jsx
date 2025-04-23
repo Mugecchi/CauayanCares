@@ -92,7 +92,6 @@ const AddRecord = () => {
 		// Perform your form validation here
 		// Example: Ensure required fields are filled
 		if (!formValues.title || !formValues.number) {
-			console.log("Title and Number are required!");
 			return false;
 		}
 		// Add other validation checks as necessary

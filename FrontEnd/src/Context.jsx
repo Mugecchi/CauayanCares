@@ -1,41 +1,36 @@
-import { createContext, useState, useEffect } from "react";
-import { login, logout } from "./api";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { fetchUser } from "./api";
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		const storedUser = localStorage.getItem("user");
-		if (storedUser) {
-			setUser(JSON.parse(storedUser));
-		}
+		const checkLogin = async () => {
+			try {
+				const userData = await fetchUser();
+				setUser(userData);
+				setIsLoggedIn(true);
+			} catch (err) {
+				setIsLoggedIn(false);
+				setUser(null);
+			} finally {
+				setLoading(false);
+			}
+		};
+		checkLogin();
 	}, []);
 
-	const handleLogin = async (credentials) => {
-		try {
-			const response = await login(credentials);
-			setUser(response.data.user);
-			localStorage.setItem("user", JSON.stringify(response.data.user));
-		} catch (error) {
-			console.error("Login failed:", error.response?.data || error.message);
-		}
-	};
-
-	const handleLogout = async () => {
-		try {
-			await logout();
-			setUser(null);
-			localStorage.removeItem("user");
-		} catch (error) {
-			console.error("Logout failed:", error.response?.data || error.message);
-		}
-	};
-
 	return (
-		<AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+		<AuthContext.Provider
+			value={{ user, setUser, isLoggedIn, setIsLoggedIn, loading }}
+		>
 			{children}
 		</AuthContext.Provider>
 	);
 };
+
+export const useAuth = () => useContext(AuthContext);

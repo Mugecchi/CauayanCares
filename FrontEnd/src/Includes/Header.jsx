@@ -1,34 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Avatar } from "@mui/material";
 import { useLocation } from "react-router-dom";
-import { apiCall } from "../api"; // ✅ Import API helper function
 import { getAvatarUrl } from "../api"; // ✅ Import getAvatarUrl
-
-const Header = () => {
+const Header = React.memo(({ user }) => {
 	const location = useLocation();
-	const [user, setUser] = useState(null);
 
-	// ✅ Map routes to page names
 	const pageTitles = {
 		"/dashboard": "Dashboard",
 		"/tables": "Tables",
 		"/Forms": "Forms",
 		"/login": "Login",
 		"/addrecords": "Add Record",
+		"/documentation": "GFPS Corner",
+		"/logs": "Logs",
+		"/users": "User Management",
 	};
-
-	// ✅ Fetch user data on page load & route change
-	useEffect(() => {
-		const fetchUser = async () => {
-			try {
-				const userData = await apiCall("get", "/user"); // ✅ Use `apiCall`
-				setUser(userData);
-			} catch (error) {
-				setUser(null);
-			}
-		};
-		fetchUser();
-	}, [location.pathname]); // ✅ Runs every time the route changes
 
 	return (
 		<Box
@@ -36,13 +22,12 @@ const Header = () => {
 				justifyContent: "space-between",
 				alignItems: "center",
 				maxWidth: "100vw",
-				padding: "20px 25px 0 25px",
+				padding: "20px 25px 10px 25px",
 				position: "sticky",
 				zIndex: 1000,
 				display: { xs: "none", md: "none", lg: "flex" },
 			}}
 		>
-			{/* ✅ Page Title (Left Side) */}
 			<Typography
 				sx={{
 					fontSize: "30px",
@@ -53,8 +38,6 @@ const Header = () => {
 			>
 				{pageTitles[location.pathname] || "Page"}
 			</Typography>
-
-			{/* ✅ User Info (Right Side) */}
 			<Box sx={{ display: "flex", alignItems: "center" }}>
 				<Typography
 					sx={{ marginRight: "15px", fontWeight: "bold", fontSize: "16px" }}
@@ -68,11 +51,11 @@ const Header = () => {
 							: "/default-avatar.png"
 					}
 					alt={user?.username || "Guest"}
-					sx={{ width: 40, height: 40 }}
+					sx={{ width: 50, height: 50 }}
 				/>
 			</Box>
 		</Box>
 	);
-};
+});
 
 export default Header;

@@ -18,28 +18,13 @@ import {
 	SidebarItem,
 } from "./styledComponents";
 import { DescriptionOutlined } from "@mui/icons-material";
+import { useAuth } from "../Context";
 
 export default function Sidebar() {
 	const [open, setOpen] = useState(false);
-	const [user, setUser] = useState(null);
-	const [loading, setLoading] = useState(true);
+	const { user } = useAuth();
 
 	const location = useLocation();
-
-	// ✅ Fetch user details
-	useEffect(() => {
-		const getUser = async () => {
-			try {
-				const userData = await fetchUser();
-				setUser(userData);
-			} catch (error) {
-				console.error("Not authenticated:", error);
-			} finally {
-				setLoading(false);
-			}
-		};
-		getUser();
-	}, []);
 
 	// ✅ Handle logout
 	const handleLogout = async () => {
@@ -74,23 +59,9 @@ export default function Sidebar() {
 		{ text: "User Management", path: "/users", icon: <GroupIcon /> },
 	];
 
-	// ✅ Loading state while fetching user data
-	if (loading) {
-		return (
-			<Box
-				display="flex"
-				justifyContent="center"
-				alignItems="center"
-				height="100vh"
-			>
-				<CircularProgress />
-			</Box>
-		);
-	}
-
 	// ✅ Sidebar Drawer Content
 	const DrawerList = (
-		<SidebarContainer>
+		<SidebarContainer anchor="left" variant="permanent">
 			<Box>
 				<SidebarTitle>CAUAYAN CARES</SidebarTitle>
 				<SidebarList>

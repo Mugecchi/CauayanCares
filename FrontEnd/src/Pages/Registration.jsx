@@ -47,7 +47,6 @@ const Registration = () => {
 		user_image: null,
 	});
 	const [currentUser, setCurrentUser] = useState(null);
-	console.log(currentUser);
 	useEffect(() => {
 		const fetchCurrentUser = async () => {
 			try {
@@ -149,7 +148,6 @@ const Registration = () => {
 	const handleImageUpload = (e) => {
 		const file = e.target.files[0]; // Get the file from the input
 		if (file) {
-			console.log("File selected:", file); // Debugging: log the selected file
 			const reader = new FileReader();
 			reader.onloadend = () => {
 				// Set the selected image for preview

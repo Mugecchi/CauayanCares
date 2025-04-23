@@ -1,8 +1,8 @@
 import React from "react";
-import { Box, Paper, useTheme } from "@mui/material";
+import { Skeleton, Paper, useTheme } from "@mui/material";
 import { BarChart } from "@mui/x-charts/BarChart";
 
-const StatusBarChart = ({ data = {}, colors = [] }) => {
+const StatusBarChart = ({ data = {}, colors = [], isLoading }) => {
 	const theme = useTheme();
 	const defaultColors = [
 		theme.palette.primary.main,
@@ -29,7 +29,23 @@ const StatusBarChart = ({ data = {}, colors = [] }) => {
 			label: dat.replace("_", " ").toUpperCase(),
 			color: colors[index] || defaultColors[index % defaultColors.length], // Use provided color or fallback
 		}));
-
+	if (isLoading) {
+		return (
+			<Paper
+				sx={{
+					borderRadius: 2,
+					width: "100%",
+					height: "400px",
+					display: "flex",
+					justifyContent: "center",
+					alignItems: "center",
+					p: 2,
+				}}
+			>
+				<Skeleton variant="rectangular" width="100%" height="100%" />
+			</Paper>
+		);
+	}
 	return (
 		<Paper
 			sx={{

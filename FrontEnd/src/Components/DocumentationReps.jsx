@@ -162,7 +162,6 @@ function DocumentationReps() {
 										{documentation.documentation_reports?.map((e, i, r) => (
 											<span key={i}>
 												{`${e.tag}${i === r.length - 1 ? " " : ","} `}
-												{console.log(r.length)}
 											</span>
 										))}
 									</TableCell>

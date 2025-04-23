@@ -1,13 +1,9 @@
 import React from "react";
-import { PieChart, PiePlot } from "@mui/x-charts/PieChart";
-import { Typography, Box } from "@mui/material";
-import { ResponsiveChartContainer } from "@mui/x-charts/ResponsiveChartContainer";
-import { ChartsLegend } from "@mui/x-charts/ChartsLegend";
-import { ChartsTooltip } from "@mui/x-charts";
+import { PieChart } from "@mui/x-charts/PieChart";
+import { Typography, Paper, Skeleton } from "@mui/material";
 function DonutChart({
 	title,
 	data = {},
-	refreshInterval = 5000,
 	colorPalette = [
 		"#FF5722",
 		"#4CAF50",
@@ -16,6 +12,7 @@ function DonutChart({
 		"#9C27B0",
 		"#3F51B5",
 	],
+	isLoading,
 }) {
 	// Ensure colorPalette is an array
 	colorPalette = Array.isArray(colorPalette) ? colorPalette : [];
@@ -28,16 +25,25 @@ function DonutChart({
 			.replace(/\b\w/g, (char) => char.toUpperCase()),
 		color: colorPalette[index % colorPalette.length], // Use 'color' directly
 	}));
+	if (isLoading) {
+		return (
+			<Paper
+				sx={{
+					borderRadius: 2,
+					width: "100%",
+					height: "400px",
+					display: "flex",
+					justifyContent: "center",
+					alignItems: "center",
+					p: 2,
+				}}
+			>
+				<Skeleton variant="rectangular" width="100%" height="100%" />
+			</Paper>
+		);
+	}
 	return (
-		<Box
-			display="flex"
-			flexDirection="column"
-			alignItems="center"
-			flexGrow={1}
-			width="100%"
-			overflow="hidden"
-			justifyContent="space-between"
-		>
+		<Paper display="flex" width="100%" overflow="hidden">
 			<Typography variant="h6" align="center" gutterBottom>
 				{title || "Label"}
 			</Typography>{" "}
@@ -64,7 +70,7 @@ function DonutChart({
 				width={500}
 				height={400}
 			/>
-		</Box>
+		</Paper>
 	);
 }
 

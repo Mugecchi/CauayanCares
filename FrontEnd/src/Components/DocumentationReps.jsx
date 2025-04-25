@@ -1,25 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { fetchDocumentation, addDocumentation } from "../api";
-import {
-	CircularProgress,
-	Button,
-	Snackbar,
-	Alert,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogActions,
-	Box,
-	TextField,
-	Grid,
-	TableContainer,
-	TableHead,
-	TableRow,
-	TableCell,
-	TableBody,
-	Table,
-} from "@mui/material";
-import { ImageList, ImageListItem, ImageListItemBar } from "@mui/material";
+
+import CircularProgress from "@mui/material/CircularProgress";
+import Button from "@mui/material/Button";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import Table from "@mui/material/Table";
+import ImageList from "@mui/material/ImageList";
+import ImageListItem from "@mui/material/ImageListItem";
+import ImageListItemBar from "@mui/material/ImageListItemBar";
+
 import { WhiteBox } from "../Includes/styledComponents";
 
 function DocumentationReps() {

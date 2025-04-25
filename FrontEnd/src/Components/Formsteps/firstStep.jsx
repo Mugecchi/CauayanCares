@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Grid, TextField, MenuItem, Button } from "@mui/material";
+import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
 
 const Step1 = ({ formValues, updateForm }) => {
 	const [formState, setFormState] = useState({
@@ -167,8 +170,6 @@ const Step1 = ({ formValues, updateForm }) => {
 				<TextField
 					fullWidth
 					label="Details"
-					multiline
-					rows={5}
 					maxRows={5}
 					name="details"
 					value={formState.details || ""}

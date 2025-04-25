@@ -1,20 +1,16 @@
 import styled, { createGlobalStyle } from "styled-components";
-import {
-	Box,
-	Button,
-	ListItemButton,
-	List,
-	ListItemIcon,
-	ListItemText,
-	ListItem,
-	Tabs,
-	Tab,
-	createTheme,
-	ThemeProvider,
-	Accordion,
-	Drawer,
-} from "@mui/material";
-
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ListItemButton from "@mui/material/ListItemButton";
+import List from "@mui/material/List";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import ListItem from "@mui/material/ListItem";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Accordion from "@mui/material/Accordion";
+import Drawer from "@mui/material/Drawer";
+import { createTheme, ThemeProvider } from "@mui/material";
 /* ✅ Inject Global CSS Variables */
 export const GlobalStyles = createGlobalStyle`
 	:root {

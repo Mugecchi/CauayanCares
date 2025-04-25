@@ -1,6 +1,8 @@
 // Step5.jsx – Monitoring
 import React from "react";
-import { Grid, TextField, MenuItem } from "@mui/material";
+import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 const Step5 = ({ formValues, updateForm }) => {
 	const handleChange = (e) => updateForm({ [e.target.name]: e.target.value });

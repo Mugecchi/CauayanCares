@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Box, Typography, Avatar } from "@mui/material";
+import React from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Avatar from "@mui/material/Avatar";
 import { useLocation } from "react-router-dom";
 import { getAvatarUrl } from "../api"; // ✅ Import getAvatarUrl
 const Header = React.memo(({ user }) => {

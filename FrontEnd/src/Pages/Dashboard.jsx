@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import { fetchDates, fetchSource, fetchStatus, fetchTarget } from "../api";
 import DonutChart from "../Charts/DonutChart";

@@ -1,5 +1,8 @@
 import React from "react";
-import { Skeleton, Paper, useTheme } from "@mui/material";
+
+import Skeleton from "@mui/material/Skeleton";
+import Paper from "@mui/material/Paper";
+import useTheme from "@mui/material/styles/useTheme";
 import { BarChart } from "@mui/x-charts/BarChart";
 
 const StatusBarChart = ({ data = {}, colors = [], isLoading }) => {

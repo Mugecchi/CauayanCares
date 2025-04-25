@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from "react";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	IconButton,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	TextField,
-	TablePagination,
-	Button,
-	Box,
-	Select,
-	MenuItem,
-	InputLabel,
-	FormControl,
-	Avatar,
-} from "@mui/material";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import IconButton from "@mui/material/IconButton";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import TextField from "@mui/material/TextField";
+import TablePagination from "@mui/material/TablePagination";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
+import Avatar from "@mui/material/Avatar";
 import { Close, Add, PhotoCamera } from "@mui/icons-material";
+
 import { fetchUser, getAvatarUrl } from "../api";
 import { fetchUsers, createUser, updateUser, deleteUser } from "../api";
 import { WhiteBox } from "../Includes/styledComponents";

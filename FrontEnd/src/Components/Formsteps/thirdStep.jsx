@@ -1,6 +1,7 @@
 // Step3.jsx – Objectives & Coverage
 import React from "react";
-import { Grid, TextField } from "@mui/material";
+import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
 
 const Step3 = ({ formValues, updateForm }) => {
 	const handleChange = (e) => updateForm({ [e.target.name]: e.target.value });

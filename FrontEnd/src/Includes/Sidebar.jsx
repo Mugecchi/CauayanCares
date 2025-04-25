@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { logout, fetchUser } from "../api"; // ✅ Import API functions
-import { Box, Drawer, IconButton, CircularProgress } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import TableChartIcon from "@mui/icons-material/TableChart";
-import GroupIcon from "@mui/icons-material/Group";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import Box from "@mui/material/Box";
+import Drawer from "@mui/material/Drawer";
+import {
+	Dashboard as DashboardIcon,
+	TableChart as TableChartIcon,
+	Group as GroupIcon,
+	ExitToApp as ExitToAppIcon,
+	DescriptionOutlined,
+} from "@mui/icons-material";
 import {
 	SidebarButton,
 	SidebarContainer,
@@ -17,7 +20,6 @@ import {
 	LogoutButton,
 	SidebarItem,
 } from "./styledComponents";
-import { DescriptionOutlined } from "@mui/icons-material";
 import { useAuth } from "../Context";
 
 export default function Sidebar() {

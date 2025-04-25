@@ -1,5 +1,8 @@
 import React from "react";
-import { Paper, useTheme, Skeleton } from "@mui/material";
+import Skeleton from "@mui/material/Skeleton";
+import Paper from "@mui/material/Paper";
+import useTheme from "@mui/material/styles/useTheme";
+
 import { LineChart } from "@mui/x-charts/LineChart";
 
 const LineGraph = ({ data = {}, colors = [], title, isLoading }) => {

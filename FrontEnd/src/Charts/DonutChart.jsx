@@ -1,6 +1,9 @@
 import React from "react";
 import { PieChart } from "@mui/x-charts/PieChart";
-import { Typography, Paper, Skeleton } from "@mui/material";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
+
 function DonutChart({
 	title,
 	data = {},

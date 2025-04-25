@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	Paper,
-	Typography,
-	Chip,
-	CircularProgress,
-} from "@mui/material";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
 import { getLogs } from "../api"; // ✅ Ensure this returns a proper Promise resolving to { data: [...] }
 import { WhiteBox } from "../Includes/styledComponents";
 

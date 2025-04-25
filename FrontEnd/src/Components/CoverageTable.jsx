@@ -1,24 +1,24 @@
 import { useState, useEffect, useMemo } from "react";
-import {
-	CircularProgress,
-	TextField,
-	Table,
-	TableHead,
-	TableRow,
-	TableCell,
-	TableBody,
-	TableContainer,
-	TablePagination,
-	Button,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogActions,
-	MenuItem,
-	Snackbar,
-	Box,
-	Alert,
-} from "@mui/material";
+
+import CircularProgress from "@mui/material/CircularProgress";
+import TextField from "@mui/material/TextField";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import TableContainer from "@mui/material/TableContainer";
+import TablePagination from "@mui/material/TablePagination";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Snackbar from "@mui/material/Snackbar";
+import Box from "@mui/material/Box";
+import Alert from "@mui/material/Alert";
+import MenuItem from "@mui/material/MenuItem";
+
 import {
 	fetchOrdinancesCoverage,
 	addCoverageScope,

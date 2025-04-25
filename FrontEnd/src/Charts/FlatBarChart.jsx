@@ -1,12 +1,11 @@
 import React from "react";
-import {
-	Skeleton,
-	Paper,
-	useTheme,
-	Stack,
-	Box,
-	Typography,
-} from "@mui/material";
+import Skeleton from "@mui/material/Skeleton";
+import Paper from "@mui/material/Paper";
+import useTheme from "@mui/material/styles/useTheme";
+import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+
 import { BarChart } from "@mui/x-charts/BarChart";
 
 const FlatBarChart = ({

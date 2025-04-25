@@ -1,14 +1,12 @@
 import React from "react";
-import {
-	Grid,
-	TextField,
-	Select,
-	MenuItem,
-	FormControl,
-	InputLabel,
-	OutlinedInput,
-	Chip,
-} from "@mui/material";
+import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import Chip from "@mui/material/Chip";
 
 const Step2 = ({ formValues, updateForm }) => {
 	const handleChange = (e) => {

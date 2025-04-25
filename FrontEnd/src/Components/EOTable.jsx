@@ -1,30 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { deleteOrdinance, fetchOrdinances, handlePreview } from "../api";
-import {
-	Snackbar,
-	Alert,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	Dialog,
-	Tooltip,
-	IconButton,
-	DialogContent,
-	DialogTitle,
-	TablePagination,
-	TextField,
-	Box,
-	FormControl,
-	InputLabel,
-	Select,
-	MenuItem,
-	DialogActions,
-	Button,
-} from "@mui/material";
-import { Close } from "@mui/icons-material";
+
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Dialog from "@mui/material/Dialog";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import TablePagination from "@mui/material/TablePagination";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+
+import Close from "@mui/icons-material/Close";
+
 import PrintTableSummary from "../Includes/PrintTableSummary";
 function EOTable() {
 	const [records, setRecords] = useState([]);
@@ -264,7 +265,6 @@ function EOTable() {
 					{error.message}
 				</Alert>
 			</Snackbar>
-			{/* Preview Modal */}
 			<Dialog
 				open={openPreview}
 				onClose={() => setOpenPreview(false)}

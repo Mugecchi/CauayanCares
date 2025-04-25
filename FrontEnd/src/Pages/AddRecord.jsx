@@ -1,17 +1,16 @@
 import React, { useState } from "react";
-import {
-	Box,
-	Button,
-	Stepper,
-	Step,
-	StepLabel,
-	StepContent,
-	Typography,
-	Grid,
-	StepConnector,
-	Snackbar,
-	Alert,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Stepper from "@mui/material/Stepper";
+import Step from "@mui/material/Step";
+import StepLabel from "@mui/material/StepLabel";
+import StepContent from "@mui/material/StepContent";
+import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
+import StepConnector from "@mui/material/StepConnector";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+
 import { createOrdinance } from "../api";
 import Step1 from "../Components/Formsteps/firstStep";
 import Step2 from "../Components/Formsteps/secondStep";

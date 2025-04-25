@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, send_from_directory, current_app,session
 from db import execute_query
-from utils import login_required, role_required
+from utils import login_required,log_action
 import os
 import time
 
@@ -19,6 +19,7 @@ def add_ordinance():
         data = request.form
         file = request.files.get("file")
         file_path = None
+        user_id = session.get("user_id")
 
         # Validate file type if file is provided
         if file:
@@ -142,9 +143,7 @@ def add_ordinance():
             data.get("community_benefits") or None,  # Allow null if missing
             data.get("adjustments_needed") or None  # Allow null if missing
         ), commit=True)
-        user_id = session.get("user_id")
-        log_query = "INSERT INTO records_logs (user_id, ordinance_id, action) VALUES (%s, %s, 'added')"
-        execute_query(log_query, (user_id, ordinance_id), commit=True)
+        log_action(user_id, f"Record added")
 
         return jsonify({"message": "Record and related data added successfully!"}), 201
     
@@ -162,25 +161,54 @@ def get_ordinances():
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 10))
 
-    # Calculate the OFFSET for pagination
-    offset = (page - 1) * per_page
+    # Search query (optional)
+    search = request.args.get("search", "").lower()
 
-    # Query to fetch ordinances with pagination
+    # Query to fetch ordinances with optional search
     query = """
         SELECT id, title, number, date_issued, date_effectivity, details, document_type, status, file_path
         FROM ordinances
         WHERE is_deleted = FALSE
-        LIMIT %s OFFSET %s
-
     """
-    ordinances = execute_query(query, (per_page, offset))
 
-    # Query to get the total number of ordinances
-    count_query = "SELECT COUNT(*) FROM ordinances"
-    total_count = execute_query(count_query)[0][0]  # Fetch the count value from the result
+    # Add search condition if search query is provided
+    if search:
+        query += """
+            AND (LOWER(title) LIKE %s OR
+                 LOWER(details) LIKE %s OR
+                 LOWER(status) LIKE %s OR
+                 LOWER(document_type) LIKE %s OR
+                 LOWER(number) LIKE %s)
+        """
+        search_pattern = f"%{search}%"
+        params = (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern)
+    else:
+        params = ()
+
+    # Execute the query for all matching records (without pagination)
+    ordinances = execute_query(query, params)
+
+    # Query to get the total number of ordinances (with search condition if applicable)
+    count_query = "SELECT COUNT(*) FROM ordinances WHERE is_deleted = FALSE"
+    if search:
+        count_query += """
+            AND (LOWER(title) LIKE %s OR
+                 LOWER(details) LIKE %s OR
+                 LOWER(status) LIKE %s OR
+                 LOWER(document_type) LIKE %s OR
+                 LOWER(number) LIKE %s)
+        """
+        params_for_count = (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern)
+        total_count = execute_query(count_query, params_for_count)[0][0]
+    else:
+        total_count = execute_query(count_query)[0][0]
 
     # Calculate the total number of pages
     total_pages = (total_count + per_page - 1) // per_page  # Ceiling division
+
+    # Apply pagination to the result (after fetching all matching records)
+    offset = (page - 1) * per_page
+    ordinances = ordinances[offset:offset + per_page]
 
     # Return the ordinances and pagination information as a JSON response
     return jsonify({
@@ -190,7 +218,6 @@ def get_ordinances():
         "current_page": page
     })
 
-# Serve Uploaded Files (Proper File Serving)
 @ordinances_bp.route("/uploads/<path:filename>")
 def serve_file(filename):
     try:
@@ -199,10 +226,10 @@ def serve_file(filename):
     except Exception:
         return jsonify({"error": "File not found"}), 404
 
+
 # Delete Ordinance and Related Data
 @ordinances_bp.route("/api/ordinances/<int:id>", methods=["DELETE"])
 @login_required
-@role_required('admin')
 def delete_ordinance(id):
     try:
         # Optional: Get file_path for possible file deletion
@@ -223,17 +250,12 @@ def delete_ordinance(id):
             execute_query(f"DELETE FROM {table} WHERE ordinance_id = %s", (id,), commit=True)
 
         # Log the deletion
-        user_id = session.get("user_id")
-        log_query = """
-            INSERT INTO records_logs (user_id, ordinance_id, action, deleted_at)
-            VALUES (%s, %s, 'deleted', NOW())
-            ON DUPLICATE KEY UPDATE action = 'deleted', deleted_at = NOW()
-        """
-        execute_query(log_query, (user_id, id), commit=True)
+      
 
         # Soft-delete the ordinance
         soft_delete_query = "UPDATE ordinances SET is_deleted = TRUE WHERE id = %s"
         execute_query(soft_delete_query, (id,), commit=True)
+        log_action("Ordinance Deleted", user_id=session.get("user_id"), username=session.get("username"))
 
         return jsonify({"message": "Ordinance deleted successfully."}), 200
 
@@ -244,14 +266,45 @@ def delete_ordinance(id):
 # Update Ordinance Status
 @ordinances_bp.route("/api/ordinances/<int:id>", methods=["PUT"])
 @login_required
-def update_status(id):
+def update_ordinance(id):
     data = request.json
-    if not data.get("status"):
-        return jsonify({"error": "Status is required"}), 400
-    execute_query("UPDATE ordinances SET status = %s WHERE id = %s", (data["status"], id), commit=True)
-    # After updating the ordinance status
     user_id = session.get("user_id")
-    log_query = "INSERT INTO records_logs (user_id, ordinance_id, action) VALUES (%s, %s, 'edited')"
-    execute_query(log_query, (user_id, id), commit=True)
+    # Required fields
+    required_fields = ["title", "number", "date_issued", "details", "date_effectivity", "status", "document_type"]
 
-    return jsonify({"message": "Status updated successfully!"})
+    # Check if all required fields are provided
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"{field} is required"}), 400
+
+    try:
+        # Check if the ordinance exists and is not deleted
+        ordinance = execute_query("SELECT * FROM ordinances WHERE id = %s AND is_deleted = 0", (id,))
+        
+        if not ordinance:
+            return jsonify({"error": "Record not found or has been deleted"}), 404
+
+        # Update the ordinance with the provided data
+        update_query = """
+        UPDATE ordinances 
+        SET title = %s, number = %s, date_issued = %s, details = %s, 
+            date_effectivity = %s, status = %s, document_type = %s
+        WHERE id = %s
+        """
+        params = (
+            data["title"], data["number"], data["date_issued"], data["details"], 
+            data["date_effectivity"], data["status"], data["document_type"], id
+        )
+
+        execute_query(update_query, params, commit=True)
+
+        # Log the action in the records_logs table with session information
+        log_action(user_id, f"Record Edited")
+
+
+        return jsonify({"message": "Record updated successfully!"})
+
+    except Exception as e:
+        # Log the error for debugging purposes (you can replace this with proper logging)
+        print(f"Error updating record: {str(e)}")
+        return jsonify({"error": "An error occurred while updating the record."}), 500

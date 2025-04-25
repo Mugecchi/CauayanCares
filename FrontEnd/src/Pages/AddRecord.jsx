@@ -33,7 +33,6 @@ const steps = [
 ];
 
 const AddRecord = () => {
-	const [snackbarOpen, setSnackbarOpen] = useState(false);
 	const [activeStep, setActiveStep] = useState(0);
 	const [formValues, setFormValues] = useState({});
 

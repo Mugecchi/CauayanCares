@@ -279,3 +279,4 @@ def forgot_password():
         return jsonify({"message": "Password reset link has been sent to your email."}), 200
     except Exception as e:
         return jsonify({"error": "Failed to send email", "details": str(e)}), 500
+

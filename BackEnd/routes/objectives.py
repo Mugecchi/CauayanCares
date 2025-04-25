@@ -1,6 +1,6 @@
-from flask import Blueprint, jsonify, request
-from utils import login_required
-from db import execute_query  # Ensure this is correctly imported
+from flask import Blueprint, jsonify, request, session
+from utils import login_required, log_action
+from db import execute_query
 
 objectives_bp = Blueprint("objectives", __name__)
 
@@ -29,9 +29,12 @@ def add_or_update_objective():
             data.get("programs_activities")
         ), commit=True)
 
+        log_action(session, "Objective or Implementation added or updated successfully.")
+
         return jsonify({"message": "Objective added/updated successfully!"})
 
     except Exception as e:
+        log_action(session, "Failed to add or update Objective or Implementation.")
         return jsonify({"error": "Failed to add/update Objective", "details": str(e)}), 500
 
 
@@ -44,8 +47,7 @@ def get_all_Objective():
                oi.id AS objective_id, oi.policy_objectives, oi.lead_agency, oi.supporting_agencies, oi.key_provisions, oi.programs_activities
         FROM ordinances o
         LEFT JOIN objectives_implementation oi ON o.id = oi.ordinance_id
-                    WHERE o.is_deleted = 0;
-
+        WHERE o.is_deleted = 0;
     """
     rows = execute_query(query)
 
@@ -78,7 +80,7 @@ def get_all_Objective():
     return jsonify(list(ordinances_dict.values()))
 
 
-# ✅ **Update Objective (PUT)**
+# Update Objective
 @objectives_bp.route("/api/objectives_implementation/<int:id>", methods=["PUT"])
 @login_required
 def update_objective(id):
@@ -102,13 +104,15 @@ def update_objective(id):
             id
         ), commit=True)
 
+        log_action(session, "Objective updated successfully.")
         return jsonify({"message": "Objective updated successfully!"})
 
     except Exception as e:
+        log_action(session, "Failed to update Objective.")
         return jsonify({"error": "Failed to update Objective", "details": str(e)}), 500
 
 
-# ✅ **Delete Objective (DELETE)**
+# Delete Objective
 @objectives_bp.route("/api/objectives_implementation/<int:id>", methods=["DELETE"])
 @login_required
 def delete_objective(id):
@@ -116,7 +120,9 @@ def delete_objective(id):
         query = "DELETE FROM objectives_implementation WHERE id = %s"
         execute_query(query, (id,), commit=True)
 
+        log_action(session, "Objective deleted successfully.")
         return jsonify({"message": "Objective deleted successfully!"})
 
     except Exception as e:
+        log_action(session, "Failed to delete Objective.")
         return jsonify({"error": "Failed to delete Objective", "details": str(e)}), 500

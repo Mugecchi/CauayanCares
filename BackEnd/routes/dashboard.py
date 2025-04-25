@@ -1,89 +1,127 @@
 from flask import Blueprint, jsonify
-from db import execute_query, exec_tuple
+from db import execute_query
 from utils import login_required
 from datetime import datetime
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
-@dashboard_bp.route("/api/dashboard", methods=["GET"])
+@dashboard_bp.route("/api/dashboard/bar", methods=["GET"])
 @login_required
 def get_dashboard_counts():
-    # Predefine statuses and document types
     statuses = ["Pending", "Approved", "Amended", "Under Review", "Implemented"]
     document_types = ["Executive Order", "Ordinance", "Memo", "Resolution"]
-    funding_sources = ["General Fund", "Special Fund", "Trust Fund"]
 
-    # Initialize the counts dictionary
+    # Initialize result dictionary
     counts = {
-        "total_documents": execute_query("SELECT COUNT(*) FROM ordinances WHERE is_deleted = false", fetch_one=True)[0],
-        "document_types": {doc.lower().replace(" ", "_"): 0 for doc in document_types},
-        "funding_source": {source.lower().replace(" ", "_"): 0 for source in funding_sources},
-        "date_issued": {}
+        "total_documents": 0,
+        "document_types": {}
     }
 
-    # Combined query for document types and their respective statuses
-    document_type_query = """
-        SELECT document_type, status, COUNT(*) 
-        FROM ordinances 
-        WHERE document_type IN (%s) AND status IN (%s) AND is_deleted = false
+    # Execute all queries in one go (total, and grouped counts)
+    total_query = "SELECT COUNT(*) FROM ordinances WHERE is_deleted = false"
+    grouped_query = """
+        SELECT document_type, status, COUNT(*) as count
+        FROM ordinances
+        WHERE document_type IN (%s, %s, %s, %s)
+        AND status IN (%s, %s, %s, %s, %s)
+        AND is_deleted = false
         GROUP BY document_type, status
     """
-    document_types_placeholders = ", ".join(["%s"] * len(document_types))
-    statuses_placeholders = ", ".join(["%s"] * len(statuses))
-    
-    document_type_data = execute_query(
-        document_type_query % (document_types_placeholders, statuses_placeholders),
-        (*document_types, *statuses)
-    )
 
-    # Process grouped data into the desired structure
-    for doc_type, status, count in document_type_data:
+    # Run queries
+    total_documents = execute_query(total_query, fetch_one=True)[0]
+    rows = execute_query(grouped_query, (*document_types, *statuses))
+
+    counts["total_documents"] = total_documents
+
+    # Populate document types and their statuses
+    for doc_type in document_types:
+        doc_key = doc_type.lower().replace(" ", "_")
+        counts["document_types"][doc_key] = 0
+        counts["document_types"][f"{doc_key}_statuses"] = {status.lower().replace(" ", "_"): 0 for status in statuses}
+
+    for doc_type, status, count in rows:
         doc_key = doc_type.lower().replace(" ", "_")
         status_key = status.lower().replace(" ", "_")
-
-        # Count total documents per type
         counts["document_types"][doc_key] += count
-
-        # Count the statuses for each document type
-        if doc_key + "_statuses" not in counts["document_types"]:
-            counts["document_types"][doc_key + "_statuses"] = {}
-
-        counts["document_types"][doc_key + "_statuses"][status_key] = count
-
-    # Optimized query for funding sources counts
-    funding_source_query = """
-        SELECT funding_source, COUNT(*) 
-        FROM impact_assessment 
-        WHERE funding_source IN (%s)
-        GROUP BY funding_source
-    """
-    funding_source_placeholders = ", ".join(["%s"] * len(funding_sources))
-
-    funding_source_data = execute_query(
-        funding_source_query % funding_source_placeholders,
-        tuple(funding_sources)
-    )
-
-    # Process funding source data
-    for source, count in funding_source_data:
-        source_key = source.lower().replace(" ", "_")
-        counts["funding_source"][source_key] = count
-
-    # Optimized query for counts of issued documents by year
-    date_issued_query = """
-        SELECT DATE_FORMAT(date_issued, '%Y') AS year, COUNT(*) 
-        FROM ordinances 
-        WHERE date_issued IS NOT NULL AND is_deleted = false
-        GROUP BY year 
-        ORDER BY year
-    """
-    date_issued_data = execute_query(date_issued_query)
-
-    # Process the results into a dictionary for histogram
-    for year, count in date_issued_data:
-        if year is not None:
-            counts["date_issued"][str(year)] = count
+        counts["document_types"][f"{doc_key}_statuses"][status_key] = count
 
     return jsonify(counts)
 
+@dashboard_bp.route("/api/dashboard/line", methods=["GET"])
+@login_required
+def get_historical_data():
+    # Query to group ordinances by month/year of date_issued and document type
+    query = """
+        SELECT DATE_FORMAT(date_issued, '%Y - %m') AS formatted_date, 
+               document_type, 
+               COUNT(*) 
+        FROM ordinances 
+        WHERE date_issued IS NOT NULL AND is_deleted = false
+        GROUP BY formatted_date, document_type;
+    """
+    data = execute_query(query)
 
+    # Initialize dictionary to store the data
+    counts = {}
+
+    # Process the results
+    for month_year, doc_type, count in data:
+        if month_year not in counts:
+            counts[month_year] = {}
+        counts[month_year][doc_type] = count
+
+    return jsonify(counts), 200
+
+
+@dashboard_bp.route("/api/dashboard/source", methods=["GET"])
+@login_required
+def get_funding_source():
+    # Define the list of expected funding sources
+    funding_sources = ['General Fund','Grants','Others']
+
+    # Dynamically create placeholders for the IN clause
+    placeholders = ", ".join(["%s"] * len(funding_sources))
+
+    # Construct and run the query
+    funding_source_query = f"""
+        SELECT funding_source, COUNT(*) 
+        FROM impact_assessment 
+        WHERE funding_source IN ({placeholders})
+        GROUP BY funding_source
+    """
+
+    rows = execute_query(funding_source_query, tuple(funding_sources))
+
+    # Format the results into a dictionary
+    counts = {source: 0 for source in funding_sources}
+    for source, count in rows:
+        counts[source] = count
+
+    return jsonify(counts), 200
+
+@dashboard_bp.route("/api/dashboard/target", methods=["GET"])
+@login_required
+def get_target_beneficiaries():
+    # Define the list of expected funding sources
+    target_beneficiaries = ['General Public','Women','Children','Solo Parents','PWDs','MSMEs','Others','Labor Trade','Industry','Economic Enterprises','Environmental Protection & Ecology','Family','Human Resource Management & Development','Finance','Infrastructure & General Services']
+
+    # Dynamically create placeholders for the IN clause
+    placeholders = ", ".join(["%s"] * len(target_beneficiaries))
+
+    # Construct and run the query
+    target_beneficiaries_query = f"""
+        SELECT target_beneficiaries, COUNT(*) 
+        FROM coverage_scope 
+        WHERE target_beneficiaries IN ({placeholders})
+        GROUP BY target_beneficiaries
+    """
+
+    rows = execute_query(target_beneficiaries_query, tuple(target_beneficiaries))
+
+    # Format the results into a dictionary
+    counts = {source: 0 for source in target_beneficiaries}
+    for source, count in rows:
+        counts[source] = count
+
+    return jsonify(counts), 200

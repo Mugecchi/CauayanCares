@@ -40,23 +40,61 @@ export default function CoverageTable() {
 	const [selectedCoverage, setSelectedCoverage] = useState(null);
 
 	useEffect(() => {
-		getCoverage();
-	}, []);
+		const cachedData = localStorage.getItem("CoverageRecords");
+		if (cachedData) {
+			const parsed = JSON.parse(cachedData);
+			const isExpired = Date.now() - parsed.cachedAt > 1000 * 60 * 5; // 5-minute expiration check
 
-	const getCoverage = async () => {
-		try {
-			const response = await fetchOrdinancesCoverage();
-			setOrdinances(response || []);
-		} catch (err) {
-			setError({
-				open: true,
-				message: "No Ordinance Found.",
-				severity: "error",
-			});
-		} finally {
-			setLoading(false);
+			// If cached data is not expired, load from localStorage
+			if (parsed.ordinances?.length > 0 && !isExpired) {
+				setOrdinances(parsed.ordinances);
+				setLoading(false);
+				return;
+			}
 		}
-	};
+
+		// Fetch new records if cache is expired or doesn't exist
+		const getCoverage = async () => {
+			try {
+				const response = await fetchOrdinancesCoverage();
+				if (response.length === 0) {
+					setError({
+						open: true,
+						message: "No Record Found.",
+						severity: "error",
+					});
+				} else {
+					setError({
+						open: true,
+						message: "Records fetched Successfully.",
+						severity: "success",
+					});
+					setOrdinances(response);
+				}
+			} catch (err) {
+				setError({
+					open: true,
+					message: "Error fetching Records.",
+					severity: "error",
+				});
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		getCoverage();
+	}, [page, rowsPerPage]);
+
+	// Save state to localStorage whenever there are changes
+	useEffect(() => {
+		localStorage.setItem(
+			"CoverageRecords",
+			JSON.stringify({
+				ordinances,
+				cachedAt: Date.now(),
+			})
+		);
+	}, [ordinances]); // Store ordinances whenever they change
 
 	const filteredOrdinances = useMemo(() => {
 		return ordinances.filter((ordinance) => {
@@ -81,13 +119,12 @@ export default function CoverageTable() {
 			return titleOrNumberMatch || scopeMatch;
 		});
 	}, [ordinances, searchQuery]);
-
 	const handleEdit = (ordinance, scope) => {
 		setSelectedCoverage({
 			id: scope?.id || "",
 			ordinance_id: ordinance.id,
 			inclusive_period: scope?.inclusive_period || "",
-			target_beneficiaries: scope?.target_beneficiaries || "General Public",
+			target_beneficiaries: scope?.target_beneficiaries || "",
 			geographical_coverage: scope?.geographical_coverage || "",
 		});
 		setOpenModal(true);
@@ -104,26 +141,34 @@ export default function CoverageTable() {
 		try {
 			if (selectedCoverage.id) {
 				await updateCoverageScope(selectedCoverage.id, selectedCoverage);
-				alert("Coverage scope updated successfully!");
+				alert("Record updated successfully!");
 			} else {
 				await addCoverageScope(selectedCoverage);
-				alert("Coverage scope added successfully!");
+				alert("Record added successfully!");
 			}
 
 			setOpenModal(false);
 			setLoading(true);
-			getCoverage(); // Refresh the data
+
+			const updatedData = await fetchOrdinancesCoverage();
+
+			// Update both localStorage and state correctly
+			const cacheData = {
+				ordinances: updatedData,
+				cachedAt: Date.now(),
+			};
+			localStorage.setItem("CoverageRecords", JSON.stringify(cacheData));
+			setOrdinances(updatedData);
+			setLoading(false);
 		} catch (error) {
 			setError({
 				open: true,
-				message: "Failed to save coverage scope. Please try again.",
+				message: "Failed to save Record. Please try again.",
 				severity: "error",
 			});
-
-			console.error("Error saving coverage scope:", error);
+			console.error("Error saving Record:", error);
 		}
 	};
-
 	const handleSearchChange = (event) => setSearchQuery(event.target.value);
 	const handlePageChange = (event, newPage) => setPage(newPage);
 	const handleRowsPerPageChange = (event) => {

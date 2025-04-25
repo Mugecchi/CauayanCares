@@ -17,11 +17,20 @@ import {
 	TablePagination,
 	TextField,
 	Box,
+	FormControl,
+	InputLabel,
+	Select,
+	MenuItem,
+	DialogActions,
+	Button,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import PrintTableSummary from "../Includes/PrintTableSummary";
 function EOTable() {
 	const [records, setRecords] = useState([]);
-	const [selectedStatus, setSelectedStatus] = useState("");
+	const [openEdit, setOpenEdit] = useState(false);
+	const [selectedRecord, setSelectedRecord] = useState(null);
+
 	const [selectedFile, setSelectedFile] = useState("");
 	const [filteredRecords, setFilteredRecords] = useState([]);
 	const [page, setPage] = useState(0);
@@ -29,27 +38,23 @@ function EOTable() {
 	const [openPreview, setOpenPreview] = useState(false);
 	const [totalPages, setTotalPages] = useState(1);
 	const [searchQuery, setSearchQuery] = useState("");
+	const [documentType, setDocumentType] = useState("");
+
 	const [error, setError] = useState({
 		open: false,
 		message: "",
 		severity: "info",
 	});
 	useEffect(() => {
-		const cached = localStorage.getItem("eoTableState");
-		if (cached && JSON.parse(cached).records?.length > 0) return;
-
 		const getRecords = async () => {
 			try {
-				const res = await fetchOrdinances(page + 1, rowsPerPage);
+				// Pass searchQuery along with pagination info to the backend
+				const res = await fetchOrdinances(page + 1, rowsPerPage, searchQuery);
 				if (res.ordinances.length === 0) {
 					setError({ message: "No Records found.", severity: "error" });
 					setRecords([]);
 					setFilteredRecords([]);
 				} else {
-					setError({
-						message: "Records fetched Successfully",
-						severity: "success",
-					});
 					setRecords(res.ordinances);
 					setFilteredRecords(res.ordinances);
 				}
@@ -63,47 +68,27 @@ function EOTable() {
 		};
 
 		getRecords();
-	}, [page, rowsPerPage]);
-
-	// Update filtered data when searchQuery or records change
-	useEffect(() => {
-		// Load state from localStorage on mount
-		const cachedData = localStorage.getItem("eoTableState");
-		if (cachedData) {
-			const parsed = JSON.parse(cachedData);
-			setRecords(parsed.records || []);
-			setFilteredRecords(parsed.filteredRecords || []);
-			setPage(parsed.page || 0);
-			setRowsPerPage(parsed.rowsPerPage || 10);
-			setSearchQuery(parsed.searchQuery || "");
-			setSelectedStatus(parsed.selectedStatus || "");
-			setTotalPages(parsed.totalPages || 1);
-		}
-	}, []);
+	}, [page, rowsPerPage, searchQuery]); // Add searchQuery as a dependency
 
 	useEffect(() => {
-		// Save state to localStorage on every change
-		localStorage.setItem(
-			"eoTableState",
-			JSON.stringify({
-				records,
-				filteredRecords,
-				page,
-				rowsPerPage,
-				searchQuery,
-				selectedStatus,
-				totalPages,
-			})
-		);
-	}, [
-		records,
-		filteredRecords,
-		page,
-		rowsPerPage,
-		searchQuery,
-		selectedStatus,
-		totalPages,
-	]);
+		const filtered = records.filter((record) => {
+			const matchesQuery =
+				record.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				record.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				record.document_type
+					.toLowerCase()
+					.includes(searchQuery.toLowerCase()) ||
+				record.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				record.number.toLowerCase().includes(searchQuery.toLowerCase());
+
+			const matchesType =
+				!documentType || record.document_type === documentType;
+
+			return matchesQuery && matchesType;
+		});
+
+		setFilteredRecords(filtered);
+	}, [searchQuery, documentType, records]);
 
 	const handleChangePage = (event, newPage) => {
 		setPage(newPage);
@@ -133,36 +118,59 @@ function EOTable() {
 		}
 	};
 
+	const handleDocumentTypeChange = (event) => {
+		setDocumentType(event.target.value);
+	};
+
 	const handleSearchChange = (event) => {
 		setSearchQuery(event.target.value);
 	};
+	const uniqueDocumentTypes = [
+		"All",
+		...new Set(records.map((record) => record.document_type)),
+	];
+
 	return (
 		<div>
-			<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-				<TextField
-					label="Search by Title or Status"
-					variant="outlined"
-					margin="normal"
-					value={searchQuery}
-					onChange={handleSearchChange}
-				/>
-				<TextField
-					select
-					label="Filter by Document Type"
-					value={selectedStatus}
-					onChange={(e) => setSelectedStatus(e.target.value)}
-					SelectProps={{ native: true }}
-					variant="outlined"
-					margin="normal"
-				>
-					<option value=""> </option>
-					<option value="Executive Order">Executive Order</option>
-					<option value="Ordinance">Ordinance</option>
-					<option value="Memo">Memo</option>
-					<option value="Resolution">Resolution</option>
-				</TextField>
-			</Box>
+			<Box
+				display="flex"
+				justifyContent="space-between"
+				alignItems="center"
+				gap={2}
+				flexWrap="wrap"
+			>
+				<Box>
+					<TextField
+						label="Search Record"
+						variant="outlined"
+						margin="normal"
+						value={searchQuery}
+						onChange={handleSearchChange}
+					/>
 
+					<FormControl
+						variant="outlined"
+						margin="normal"
+						sx={{ minWidth: 200 }}
+					>
+						<InputLabel>Document Type</InputLabel>
+						<Select
+							value={documentType}
+							onChange={handleDocumentTypeChange}
+							label="Document Type"
+						>
+							{uniqueDocumentTypes.map((type, idx) => (
+								<MenuItem key={idx} value={type === "All" ? "" : type}>
+									{type}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+				</Box>
+				<Box>
+					<PrintTableSummary ordinances={filteredRecords} />
+				</Box>
+			</Box>
 			<TableContainer>
 				<Table>
 					<TableHead>
@@ -211,6 +219,17 @@ function EOTable() {
 											color="error"
 										>
 											<img src="/trash.svg" alt="delete" />
+										</IconButton>
+									</Tooltip>
+									<Tooltip title="Edit Ordinance" arrow>
+										<IconButton
+											onClick={() => {
+												setSelectedRecord(record);
+												setOpenEdit(true);
+											}}
+											color="primary"
+										>
+											<img src="/edit.svg" alt="edit" />
 										</IconButton>
 									</Tooltip>
 								</TableCell>
@@ -274,6 +293,89 @@ function EOTable() {
 						<p>No file selected.</p>
 					)}
 				</DialogContent>
+			</Dialog>
+			<Dialog open={openEdit} onClose={() => setOpenEdit(false)} fullScreen>
+				<DialogTitle>Edit Ordinance</DialogTitle>
+				<DialogContent>
+					<TextField
+						label="Title"
+						fullWidth
+						margin="dense"
+						value={selectedRecord?.title || ""}
+						onChange={(e) =>
+							setSelectedRecord({ ...selectedRecord, title: e.target.value })
+						}
+					/>
+					<TextField
+						label="Status"
+						fullWidth
+						margin="dense"
+						value={selectedRecord?.status || ""}
+						onChange={(e) =>
+							setSelectedRecord({ ...selectedRecord, status: e.target.value })
+						}
+					/>
+					<TextField
+						label="Details"
+						fullWidth
+						margin="dense"
+						value={selectedRecord?.details || ""}
+						onChange={(e) =>
+							setSelectedRecord({ ...selectedRecord, details: e.target.value })
+						}
+					/>
+					<TextField
+						label="Series No."
+						fullWidth
+						margin="dense"
+						value={selectedRecord?.number || ""}
+						onChange={(e) =>
+							setSelectedRecord({ ...selectedRecord, number: e.target.value })
+						}
+					/>
+					<TextField
+						label="Document Type"
+						fullWidth
+						margin="dense"
+						value={selectedRecord?.document_type || ""}
+						onChange={(e) =>
+							setSelectedRecord({
+								...selectedRecord,
+								document_type: e.target.value,
+							})
+						}
+					/>
+					<TextField
+						label="Date Issued"
+						type="date"
+						fullWidth
+						margin="dense"
+						value={
+							selectedRecord?.date_issued
+								? new Date(selectedRecord.date_issued)
+										.toISOString()
+										.split("T")[0]
+								: ""
+						}
+						onChange={(e) =>
+							setSelectedRecord({
+								...selectedRecord,
+								date_issued: e.target.value,
+							})
+						}
+						InputLabelProps={{ shrink: true }}
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOpenEdit(false)}>Cancel</Button>
+					<Button
+						onClick={() => handleEditSave()}
+						variant="contained"
+						color="primary"
+					>
+						Save
+					</Button>
+				</DialogActions>
 			</Dialog>
 		</div>
 	);

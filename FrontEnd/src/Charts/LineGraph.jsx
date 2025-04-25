@@ -1,6 +1,6 @@
 import React from "react";
 import { Paper, useTheme, Skeleton } from "@mui/material";
-import { LineChart } from "@mui/x-charts/LineChart"; // Import LineChart
+import { LineChart } from "@mui/x-charts/LineChart";
 
 const LineGraph = ({ data = {}, colors = [], title, isLoading }) => {
 	const theme = useTheme();
@@ -12,16 +12,32 @@ const LineGraph = ({ data = {}, colors = [], title, isLoading }) => {
 		theme.palette.success.main,
 	];
 
-	const statusLabels = Object.keys(data); // These are just placeholders, replace with actual data if needed
+	// Extracting status labels (months/years)
+	const statusLabels = Object.keys(data);
+	// Get all document types (keys) across all months
+	const documentTypes = Array.from(
+		new Set(
+			statusLabels.reduce((types, month) => {
+				Object.keys(data[month]).forEach((type) => {
+					if (!types.includes(type)) types.push(type);
+				});
+				return types;
+			}, [])
+		)
+	);
 
-	// Example series data (replace with real data from your `data` or `statuses`)
-	const seriesData = [
-		{
-			label: title || "Example Label", // Replace with dynamic label if needed
-			data: Object.values(data), // Replace with dynamic data if needed
-			color: colors[0] || defaultColors[0], // Apply color dynamically or use default
-		},
-	];
+	// Prepare series data for each document type
+	const seriesData = documentTypes.map((type, index) => {
+		const typeData = statusLabels.map((month) => {
+			return data[month][type] || 0; // If no data, set to 0
+		});
+
+		return {
+			label: type, // Document type as the label
+			data: typeData,
+			color: colors[index] || defaultColors[index % defaultColors.length], // Assign color
+		};
+	});
 
 	if (isLoading) {
 		return (
@@ -54,8 +70,9 @@ const LineGraph = ({ data = {}, colors = [], title, isLoading }) => {
 			}}
 		>
 			<LineChart
-				xAxis={[{ scaleType: "band", data: statusLabels }]} // This will represent the x-axis values
-				series={seriesData} // Provide the series data
+				grid={{ vertical: true, horizontal: true }}
+				xAxis={[{ scaleType: "band", data: statusLabels }]} // X-axis represents months
+				series={seriesData} // Multiple lines based on document types
 			/>
 		</Paper>
 	);

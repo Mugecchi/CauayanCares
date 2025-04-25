@@ -148,7 +148,7 @@ const Step1 = ({ formValues, updateForm }) => {
 					type="date"
 					name="dateIssued"
 					InputLabelProps={{ shrink: true }}
-					value={formState.dateIssued || ""}
+					value={formState.dateIssued.split("T")[0] || ""}
 					onChange={handleFieldChange}
 				/>
 			</Grid>
@@ -159,15 +159,17 @@ const Step1 = ({ formValues, updateForm }) => {
 					type="date"
 					name="dateEffectivity"
 					InputLabelProps={{ shrink: true }}
-					value={formState.dateEffectivity || ""}
+					value={formState.dateEffectivity.split("T")[0] || ""}
 					onChange={handleFieldChange}
 				/>
 			</Grid>
 			<Grid item xs={12}>
 				<TextField
 					fullWidth
-					multiline
 					label="Details"
+					multiline
+					rows={5}
+					maxRows={5}
 					name="details"
 					value={formState.details || ""}
 					onChange={handleFieldChange}

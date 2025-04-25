@@ -203,7 +203,7 @@ export const WhiteBox = styled(Box)(({ theme, sx }) => ({
 	gap: 16, // Adds spacing between child elements
 	position: "relative",
 	width: "100%", // Make it fluid inside Grid2
-	minHeight: "calc(90vh - 25px)", // Ensures it stretches properly
+	minHeight: "calc(90vh - 30px)", // Ensures it stretches properly
 	background: "white",
 	borderRadius: 10,
 	boxShadow: 3, // Adds a subtle shadow for better UI depth
@@ -218,9 +218,7 @@ export const CustomAccordion = styled(Accordion)({
 // Sidebar Container
 export const ContentContainer = styled(Box)`
 	width: calc(100%); /* Ensures it takes the remaining space */
-	background: var(--background-color);
 	transition: margin-left 0.3s ease-in-out;
-	overflow-x: hidden;
 	@media (max-width: 768px) {
 		margin-left: 0; /* Full width on small screens */
 		width: 100%;

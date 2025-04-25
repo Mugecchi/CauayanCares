@@ -1,37 +1,79 @@
 import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Box, CircularProgress, Paper, Skeleton } from "@mui/material";
+import { Box } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { fetchDashboardCounts } from "../api";
+import { fetchDates, fetchSource, fetchStatus, fetchTarget } from "../api";
 import DonutChart from "../Charts/DonutChart";
 import StatusBarChart from "../Charts/StatusBarChart";
 import LineGraph from "../Charts/LineGraph";
+import FlatBarChart from "../Charts/FlatBarChart";
 
 const Dashboard = () => {
-	const [counts, setCounts] = useState();
-	const [isLoading, setIsLoading] = useState(true);
+	const [status, setStatus] = useState();
+	const [date, setDate] = useState();
+	const [source, setSource] = useState();
+	const [target, setTarget] = useState();
+
+	// Separate loading states
+	const [loadingStatus, setLoadingStatus] = useState(true);
+	const [loadingDate, setLoadingDate] = useState(true);
+	const [loadingSource, setLoadingSource] = useState(true);
+	const [loadingTarget, setLoadingTarget] = useState(false);
+
 	useEffect(() => {
-		const getData = async () => {
+		// Fetch each independently
+		const getStatus = async () => {
 			try {
-				const res = await fetchDashboardCounts();
-				setCounts(res);
-				setIsLoading(false);
+				const Status = await fetchStatus();
+				setStatus(Status);
 			} catch (error) {
-				setIsLoading(false);
-				setIsError(true);
+				console.error("Failed to fetch status", error);
+			} finally {
+				setLoadingStatus(false);
 			}
 		};
 
-		getData();
-	}, []); // Empty dependency array to run once on mount
+		const getDates = async () => {
+			try {
+				const Dates = await fetchDates();
+				setDate(Dates);
+			} catch (error) {
+				console.error("Failed to fetch dates", error);
+			} finally {
+				setLoadingDate(false);
+			}
+		};
 
-	const documentTypes = counts?.document_types || {};
-	const statuses = counts?.statuses || {};
+		const getSource = async () => {
+			try {
+				const Sources = await fetchSource();
+				setSource(Sources);
+			} catch (error) {
+				console.error("Failed to fetch source", error);
+			} finally {
+				setLoadingSource(false);
+			}
+		};
+		const getTarget = async () => {
+			try {
+				const Target = await fetchTarget();
+				setTarget(Target);
+			} catch (error) {
+				console.error("Failed to Fetch Target Beneficiaries");
+			} finally {
+				setLoadingTarget(false);
+			}
+		};
+		getTarget();
+		getStatus();
+		getDates();
+		getSource();
+	}, []);
+
+	const documentTypes = status?.document_types || {};
+	const statuses = status?.statuses || {};
 	const filteredDocumentTypes = Object.fromEntries(
 		Object.entries(documentTypes).filter(([key]) => !key.includes("_statuses"))
 	);
-	const fundingSource = counts?.funding_source || {};
-	const dates = counts?.date_issued || {};
 
 	const fundingColor = ["#F9F3DF", "#CDF2CA", "#FFDEFA", "#FFC898"];
 	const pastelPalette = [
@@ -50,34 +92,42 @@ const Dashboard = () => {
 					<StatusBarChart
 						data={documentTypes}
 						statuses={statuses}
-						isLoading={isLoading}
+						isLoading={loadingStatus}
 					/>
 				</Grid>
 
 				<Grid item xs={12}>
 					<LineGraph
-						data={dates}
+						data={date}
 						colors={["#FF7704"]}
 						title={"Historical Data"}
-						isLoading={isLoading}
+						isLoading={loadingDate}
 					/>
 				</Grid>
-
 				<Grid item xs={6}>
 					<DonutChart
 						title={"Document Types"}
 						data={filteredDocumentTypes}
 						colorPalette={pastelPalette}
-						isLoading={isLoading}
+						isLoading={loadingStatus}
 					/>
 				</Grid>
 
 				<Grid item xs={6}>
 					<DonutChart
 						title={"Funding Source"}
-						data={fundingSource}
+						data={source}
 						colorPalette={fundingColor}
-						isLoading={isLoading}
+						isLoading={loadingSource}
+					/>
+				</Grid>
+				<Grid item xs={12}>
+					<FlatBarChart
+						title="Target Beneficiaries"
+						data={target}
+						colors={["var(--eminence)"]} // MUI built-in palette
+						isLoading={loadingTarget}
+						layout="horizontal"
 					/>
 				</Grid>
 			</Grid>

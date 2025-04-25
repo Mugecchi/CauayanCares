@@ -1,8 +1,8 @@
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify, send_from_directory, session
 from werkzeug.utils import secure_filename
 import os
 import uuid
-from utils import login_required
+from utils import login_required, log_action
 from db import execute_query
 
 documentation_bp = Blueprint("documentation", __name__)
@@ -44,6 +44,13 @@ def add_documentation():
                 """
                 execute_query(query, (ordinance_id, file_path, tag), commit=True)
 
+                # Log the action as 'added' after the successful operation
+                user_id = session.get("user_id")
+                if user_id:
+                    log_action(ordinance_id=ordinance_id, action="added documentation")
+                else:
+                    print("User not authenticated")
+
         return jsonify({"message": "Documentation files uploaded successfully!"})
 
     except Exception as e:
@@ -62,7 +69,6 @@ def get_all_documentation():
         LEFT JOIN documentation_reports dr ON o.id = dr.ordinance_id
             WHERE o.is_deleted = 0;
         ORDER BY o.id DESC
-        
         """
         rows = execute_query(query)
 
@@ -114,6 +120,13 @@ def update_documentation(doc_id):
         """
         execute_query(query, (file_path, tag, doc_id), commit=True)
 
+        # Log the action as 'updated' after the successful operation
+        user_id = session.get("user_id")
+        if user_id:
+            log_action(ordinance_id=doc_id, action="updated documentation")
+        else:
+            print("User not authenticated")
+
         return jsonify({"message": "Documentation updated successfully!"})
 
     except Exception as e:
@@ -135,6 +148,13 @@ def delete_documentation(doc_id):
 
         delete_query = "DELETE FROM documentation_reports WHERE id = %s"
         execute_query(delete_query, (doc_id,), commit=True)
+
+        # Log the action as 'deleted' after the successful operation
+        user_id = session.get("user_id")
+        if user_id:
+            log_action(ordinance_id=doc_id, action="deleted documentation")
+        else:
+            print("User not authenticated")
 
         return jsonify({"message": "Documentation entry deleted successfully!"})
 

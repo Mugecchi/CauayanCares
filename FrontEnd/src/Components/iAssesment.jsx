@@ -36,23 +36,61 @@ export default function iAssesment() {
 	const [selectedCoverage, setSelectedCoverage] = useState(null);
 
 	useEffect(() => {
-		getCoverage();
-	}, []);
+		const cachedData = localStorage.getItem("AssessmentRecords");
+		if (cachedData) {
+			const parsed = JSON.parse(cachedData);
+			const isExpired = Date.now() - parsed.cachedAt > 1000 * 60 * 5; // 5-minute expiration check
 
-	const getCoverage = async () => {
-		try {
-			const response = await fetchAssesment();
-			setOrdinances(response || []);
-		} catch (err) {
-			setError({
-				open: true,
-				message: "No Record Found.",
-				severity: "error",
-			});
-		} finally {
-			setLoading(false);
+			// If cached data is not expired, load from localStorage
+			if (parsed.ordinances?.length > 0 && !isExpired) {
+				setOrdinances(parsed.ordinances);
+				setLoading(false);
+				return;
+			}
 		}
-	};
+
+		// Fetch new records if cache is expired or doesn't exist
+		const getCoverage = async () => {
+			try {
+				const response = await fetchAssesment();
+				if (response.length === 0) {
+					setError({
+						open: true,
+						message: "No Record Found.",
+						severity: "error",
+					});
+				} else {
+					setError({
+						open: true,
+						message: "Records fetched Successfully.",
+						severity: "success",
+					});
+					setOrdinances(response);
+				}
+			} catch (err) {
+				setError({
+					open: true,
+					message: "Error fetching Records.",
+					severity: "error",
+				});
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		getCoverage();
+	}, [page, rowsPerPage]);
+
+	// Save state to localStorage whenever there are changes
+	useEffect(() => {
+		localStorage.setItem(
+			"AssessmentRecords",
+			JSON.stringify({
+				ordinances,
+				cachedAt: Date.now(),
+			})
+		);
+	}, [ordinances]); // Store ordinances whenever they change
 
 	const filteredOrdinances = useMemo(() => {
 		return ordinances.filter((ordinance) => {
@@ -63,7 +101,7 @@ export default function iAssesment() {
 				ordinance.title?.toLowerCase().includes(searchLower) ||
 				ordinance.number?.toString().toLowerCase().includes(searchLower);
 
-			// Match any coverage scope fields
+			// Match any Record fields
 			const scopeMatch = ordinance.impact_assessment?.some((scope) =>
 				[].some(
 					(key) => scope[key] && scope[key].toLowerCase().includes(searchLower)
@@ -99,23 +137,32 @@ export default function iAssesment() {
 		try {
 			if (selectedCoverage.id) {
 				await updateAssesment(selectedCoverage.id, selectedCoverage);
-				alert("Monitoring Data updated successfully!");
+				alert("Record updated successfully!");
 			} else {
 				await addAssesment(selectedCoverage);
-				alert("Monitoring Data added successfully!");
+				alert("Record added successfully!");
 			}
 
 			setOpenModal(false);
 			setLoading(true);
-			getCoverage(); // Refresh the data
+
+			const updatedData = await fetchAssesment();
+
+			// Update both localStorage and state correctly
+			const cacheData = {
+				ordinances: updatedData,
+				cachedAt: Date.now(),
+			};
+			localStorage.setItem("AssessmentsRecords", JSON.stringify(cacheData));
+			setOrdinances(updatedData);
+			setLoading(false);
 		} catch (error) {
 			setError({
 				open: true,
-				message: "Failed to save Monitoring Data. Please try again.",
+				message: "Failed to save Record. Please try again.",
 				severity: "error",
 			});
-
-			console.error("Error saving Monitoring Data:", error);
+			console.error("Error saving Record:", error);
 		}
 	};
 
@@ -167,7 +214,7 @@ export default function iAssesment() {
 												{scope.gender_responsiveness_impact}
 											</TableCell>
 											<TableCell>
-												{scope.funding_source && `${scope.funding_source}%`}
+												{scope.funding_source && `${scope.funding_source}`}
 											</TableCell>
 											<TableCell>{scope.community_benefits}</TableCell>
 											<TableCell>{scope.adjustments_needed}</TableCell>
@@ -234,9 +281,9 @@ export default function iAssesment() {
 						fullWidth
 						margin="normal"
 					>
-						<MenuItem value="Monthly">General Fund</MenuItem>
-						<MenuItem value="Quarterly">Grants</MenuItem>
-						<MenuItem value="Yearly">Others</MenuItem>
+						<MenuItem value="General Fund">General Fund</MenuItem>
+						<MenuItem value="Grants">Grants</MenuItem>
+						<MenuItem value="Others">Others</MenuItem>
 					</TextField>
 
 					<TextField

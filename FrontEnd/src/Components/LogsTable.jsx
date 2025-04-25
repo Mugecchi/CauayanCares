@@ -12,6 +12,7 @@ import {
 	CircularProgress,
 } from "@mui/material";
 import { getLogs } from "../api"; // ✅ Ensure this returns a proper Promise resolving to { data: [...] }
+import { WhiteBox } from "../Includes/styledComponents";
 
 const LogsTable = () => {
 	const [logs, setLogs] = useState([]);
@@ -34,19 +35,25 @@ const LogsTable = () => {
 	}, []);
 
 	const renderActionChip = (action) => {
-		switch (action) {
-			case "added":
-				return <Chip label="Added" color="success" size="small" />;
-			case "edited":
-				return <Chip label="Edited" color="warning" size="small" />;
-			case "deleted":
-				return <Chip label="Deleted" color="error" size="small" />;
-			default:
-				return <Chip label="Unknown Action" color="default" size="small" />;
+		if (action.includes("added")) {
+			return <Chip label={`${action}`} color="success" size="small" />;
+		} else if (action.includes("edited")) {
+			return <Chip label={`${action}`} color="warning" size="small" />;
+		} else if (action.includes("deleted")) {
+			return <Chip label={`${action}`} color="error" size="small" />;
+		} else {
+			return (
+				<Chip
+					label={`Unknown Action: ${action}`}
+					color="default"
+					size="small"
+				/>
+			);
 		}
 	};
+
 	return (
-		<Paper sx={{ padding: 2 }}>
+		<WhiteBox sx={{ padding: 2 }}>
 			<Typography variant="h6" gutterBottom>
 				Ordinance Activity Logs
 			</Typography>
@@ -83,7 +90,7 @@ const LogsTable = () => {
 					</Table>
 				</TableContainer>
 			)}
-		</Paper>
+		</WhiteBox>
 	);
 };
 

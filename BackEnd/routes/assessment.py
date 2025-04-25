@@ -1,54 +1,70 @@
-from flask import Blueprint, jsonify, request
-from utils import login_required
+from flask import Blueprint, jsonify, request, session
+from utils import login_required, log_action  # Assuming log_action is implemented in utils
 from db import execute_query
 
 assessment_bp = Blueprint("assessment", __name__)
 
 # Add or Update Impact Assessment
-@assessment_bp.route("/api/assessment", methods=["POST", "PUT"])
+# POST - Create or Upsert
+@assessment_bp.route("/api/assessment", methods=["POST"])
 @login_required
-def add_or_update_assessment():
+def add_assessment():
     try:
         data = request.json
-        if request.method == "POST":
-            query = """
-                INSERT INTO impact_assessment (ordinance_id, funding_source, outcomes_results, gender_responsiveness_impact, community_benefits, adjustments_needed)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE 
-                    funding_source = VALUES(funding_source),
-                    outcomes_results = VALUES(outcomes_results),
-                    gender_responsiveness_impact = VALUES(gender_responsiveness_impact),
-                    community_benefits = VALUES(community_benefits),
-                    adjustments_needed = VALUES(adjustments_needed)
-            """
-            execute_query(query, (
-                data.get("ordinance_id"), data.get("funding_source"),
-                data.get("outcomes_results"), data.get("gender_responsiveness_impact"),
-                data.get("community_benefits"), data.get("adjustments_needed")
-            ), commit=True)
-            return jsonify({"message": "Impact Assessment added/updated successfully!"}), 201
+        user_id = session.get("user_id")  # Assuming user_id is stored in session
         
-        elif request.method == "PUT":
-            query = """
-                UPDATE impact_assessment 
-                SET funding_source = %s, 
-                    outcomes_results = %s, 
-                    gender_responsiveness_impact = %s, 
-                    community_benefits = %s, 
-                    adjustments_needed = %s
-                WHERE id = %s
-            """
-            execute_query(query, (
-                data.get("funding_source"),
-                data.get("outcomes_results"),
-                data.get("gender_responsiveness_impact"),
-                data.get("community_benefits"),
-                data.get("adjustments_needed"),
-                data.get("id")
-            ), commit=True)
-            return jsonify({"message": "Impact Assessment updated successfully!"})
-    
+        query = """
+            INSERT INTO impact_assessment (ordinance_id, funding_source, outcomes_results, gender_responsiveness_impact, community_benefits, adjustments_needed)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE 
+                funding_source = VALUES(funding_source),
+                outcomes_results = VALUES(outcomes_results),
+                gender_responsiveness_impact = VALUES(gender_responsiveness_impact),
+                community_benefits = VALUES(community_benefits),
+                adjustments_needed = VALUES(adjustments_needed)
+        """
+        execute_query(query, (
+            data.get("ordinance_id"), data.get("funding_source"),
+            data.get("outcomes_results"), data.get("gender_responsiveness_impact"),
+            data.get("community_benefits"), data.get("adjustments_needed")
+        ), commit=True)
+        
+        log_action(user_id, f"Impact Assessment added")
+        return jsonify({"message": "Impact Assessment added successfully!"}), 201
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# PUT - Update by ID
+@assessment_bp.route("/api/assessment/<int:id>", methods=["PUT"])
+@login_required
+def update_assessment(id):
+    try:
+        data = request.json
+        user_id = session.get("user_id")
+        
+        query = """
+            UPDATE impact_assessment 
+            SET funding_source = %s, 
+                outcomes_results = %s, 
+                gender_responsiveness_impact = %s, 
+                community_benefits = %s, 
+                adjustments_needed = %s
+            WHERE id = %s
+        """
+        execute_query(query, (
+            data.get("funding_source"),
+            data.get("outcomes_results"),
+            data.get("gender_responsiveness_impact"),
+            data.get("community_benefits"),
+            data.get("adjustments_needed"),
+            id
+        ), commit=True)
+
+        log_action(user_id, f"Impact Assessment edited successfully")
+        return jsonify({"message": "Impact Assessment edited successfully!"})
+    except Exception as e:
+        log_action(user_id, f"Failed to update Impact Assessment {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -104,8 +120,13 @@ def get_all_assessment():
 @login_required
 def delete_assessment(id):
     try:
+        user_id = session.get("user_id")
+        
         query = "DELETE FROM impact_assessment WHERE id = %s"
         execute_query(query, (id,), commit=True)
+        
+        log_action(user_id, f"Impact Assessment deleted successfully")
         return jsonify({"message": "Impact Assessment deleted successfully!"})
     except Exception as e:
+        log_action(user_id, f"Failed to delete Impact Assessment ID {id}: {str(e)}")
         return jsonify({"error": str(e)}), 500

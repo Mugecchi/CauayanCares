@@ -52,7 +52,10 @@ export const logout = async () => {
 // export const fetchOrdinanceById = (id) => apiCall("get", `/ordinances/${id}`);
 
 //Dashboard
-export const fetchDashboardCounts = () => apiCall("get", "/dashboard");
+export const fetchStatus = () => apiCall("get", "/dashboard/bar");
+export const fetchDates = () => apiCall("get", "/dashboard/line");
+export const fetchSource = () => apiCall("get", "/dashboard/source");
+export const fetchTarget = () => apiCall("get", "/dashboard/target");
 export const fetchUser = async () => {
 	return apiCall("get", "/user"); // Assuming "/protected" returns user data if logged in
 };
@@ -109,11 +112,12 @@ export const handlePreview = async (
 // Ordinances
 export const createOrdinance = (formData) =>
 	apiCall("post", "/ordinances", formData);
-export const fetchOrdinances = (page = 1, per_page = 10) => {
+export const fetchOrdinances = (page = 1, per_page = 10, searchQuery = "") => {
 	return apiCall("get", "/ordinances", null, false, {
 		params: {
 			page,
 			per_page,
+			search: searchQuery, // Pass 'search' here instead of 'searchQuery'
 		},
 	});
 };

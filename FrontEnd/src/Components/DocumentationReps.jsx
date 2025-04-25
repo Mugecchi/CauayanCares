@@ -179,8 +179,6 @@ function DocumentationReps() {
 					</TableBody>
 				</Table>
 			</TableContainer>
-
-			{/* File upload modal */}
 			<Dialog
 				open={openModal}
 				onClose={handleCloseModal}

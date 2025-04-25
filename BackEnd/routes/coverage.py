@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify, request
-from utils import login_required
+from flask import Blueprint, jsonify, request, session
+from utils import login_required, log_action
 from db import execute_query  # Ensure this is correctly imported
 
 coverage_bp = Blueprint("coverage", __name__)
@@ -13,7 +13,6 @@ def get_all_ordinances_with_scope():
         FROM ordinances o
         LEFT JOIN coverage_scope cs ON o.id = cs.ordinance_id
         WHERE o.is_deleted = 0;
-
     """
     rows = execute_query(query)
 
@@ -43,7 +42,6 @@ def get_all_ordinances_with_scope():
 
     return jsonify(list(ordinances_dict.values()))
 
-
 @coverage_bp.route("/api/coverage_scope", methods=["POST"])
 @login_required
 def add_or_update_coverage_scope():
@@ -63,6 +61,13 @@ def add_or_update_coverage_scope():
             data.get("target_beneficiaries"), 
             data.get("geographical_coverage")
         ), commit=True)
+
+        # Get user_id from session and log the action as 'edited'
+        user_id = session.get("user_id")
+        if user_id:
+            log_action(ordinance_id=data.get("ordinance_id"), action="edited")
+        else:
+            print("User not authenticated")
 
         return jsonify({"message": "Coverage scope added/updated successfully!"})
 
@@ -90,6 +95,13 @@ def update_coverage_scope(id):
             data.get("geographical_coverage"),
             id
         ), commit=True)
+
+        # Get user_id from session and log the action as 'edited'
+        user_id = session.get("user_id")
+        if user_id:
+            log_action(ordinance_id=id, action="edited")
+        else:
+            print("User not authenticated")
 
         return jsonify({"message": "Coverage scope updated successfully!"})
 

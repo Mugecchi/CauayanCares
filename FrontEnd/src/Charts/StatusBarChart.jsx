@@ -29,6 +29,7 @@ const StatusBarChart = ({ data = {}, colors = [], isLoading }) => {
 			label: dat.replace("_", " ").toUpperCase(),
 			color: colors[index] || defaultColors[index % defaultColors.length], // Use provided color or fallback
 		}));
+
 	if (isLoading) {
 		return (
 			<Paper
@@ -46,6 +47,7 @@ const StatusBarChart = ({ data = {}, colors = [], isLoading }) => {
 			</Paper>
 		);
 	}
+
 	return (
 		<Paper
 			sx={{
@@ -60,7 +62,12 @@ const StatusBarChart = ({ data = {}, colors = [], isLoading }) => {
 		>
 			<BarChart
 				borderRadius={5}
-				xAxis={[{ scaleType: "band", data: statusLabels }]}
+				xAxis={[
+					{
+						scaleType: "band", // Keeping this as 'band' for categorical x-axis
+						data: statusLabels, // Ensure these are categorical labels
+					},
+				]}
 				series={seriesData}
 			/>
 		</Paper>

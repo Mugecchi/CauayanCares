@@ -1,16 +1,15 @@
-import React, { lazy } from "react";
+import React, { lazy, Suspense } from "react";
 import {
 	BrowserRouter as Router,
 	Routes,
 	Route,
 	Navigate,
 } from "react-router-dom";
-import { motion } from "framer-motion";
 import Sidebar from "./Includes/Sidebar";
 import Header from "./Includes/Header";
 import { AuthProvider, useAuth } from "./Context"; // Import useAuth
-import { CircularProgress, Box } from "@mui/material";
 import { ContentContainer, ThemeProv } from "./Includes/styledComponents";
+import LoadingScreen from "./Includes/LoadingScreen";
 
 // Lazy load pages
 const Dashboard = lazy(() => import("./Pages/Dashboard"));
@@ -39,63 +38,8 @@ const App = () => {
 
 		return element;
 	};
-	if (loading) {
-		return (
-			<div style={{ display: "flex", height: "100vh" }}>
-				<div>{isLoggedIn && <Sidebar />}</div>
-				<div
-					style={{ width: "100%", display: "flex", flexDirection: "column" }}
-				>
-					{isLoggedIn && <Header user={user} />}
-					<Box
-						display="flex"
-						justifyContent="center"
-						alignItems="center"
-						flex={1}
-						flexDirection="column"
-						gap={3}
-					>
-						{/* 🔄 Spinning and Growing Logo */}
-						<motion.img
-							src="logo.png"
-							alt="Loading..."
-							style={{ width: 100, height: 100 }}
-							initial={{ scale: 0 }}
-							animate={{
-								rotateY: [0, 360],
-								scale: [0.8, 2, 3],
-							}}
-							transition={{
-								duration: 2,
-								repeat: Infinity,
-								repeatType: "loop",
-								ease: "linear",
-							}}
-						/>
+	if (loading) return <LoadingScreen />;
 
-						{/* 🌀 CircularProgress with Fade In */}
-						<motion.div
-							initial={{ opacity: 0, y: 10 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-						>
-							<CircularProgress size={60} />
-						</motion.div>
-
-						{/* ✨ Pulsing Text */}
-						<motion.p
-							style={{ fontSize: "1.2rem", fontWeight: 500 }}
-							initial={{ opacity: 0 }}
-							animate={{ opacity: [0.5, 1, 0.5] }}
-							transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-						>
-							Loading, please wait...
-						</motion.p>
-					</Box>
-				</div>
-			</div>
-		);
-	}
 	return (
 		<AuthProvider>
 			<Router>

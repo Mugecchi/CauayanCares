@@ -40,23 +40,61 @@ export default function ObjectivesTable() {
 	const [selectedCoverage, setSelectedCoverage] = useState(null);
 
 	useEffect(() => {
-		getCoverage();
-	}, []);
+		const cachedData = localStorage.getItem("ObjectivesRecords");
+		if (cachedData) {
+			const parsed = JSON.parse(cachedData);
+			const isExpired = Date.now() - parsed.cachedAt > 1000 * 60 * 5; // 5-minute expiration check
 
-	const getCoverage = async () => {
-		try {
-			const response = await fetchObjectivesImplementation();
-			setOrdinances(response || []);
-		} catch (err) {
-			setError({
-				open: true,
-				message: "No Record Found.",
-				severity: "error",
-			});
-		} finally {
-			setLoading(false);
+			// If cached data is not expired, load from localStorage
+			if (parsed.ordinances?.length > 0 && !isExpired) {
+				setOrdinances(parsed.ordinances);
+				setLoading(false);
+				return;
+			}
 		}
-	};
+
+		// Fetch new records if cache is expired or doesn't exist
+		const getCoverage = async () => {
+			try {
+				const response = await fetchObjectivesImplementation();
+				if (response.length === 0) {
+					setError({
+						open: true,
+						message: "No Record Found.",
+						severity: "error",
+					});
+				} else {
+					setError({
+						open: true,
+						message: "Records fetched Successfully.",
+						severity: "success",
+					});
+					setOrdinances(response);
+				}
+			} catch (err) {
+				setError({
+					open: true,
+					message: "Error fetching Records.",
+					severity: "error",
+				});
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		getCoverage();
+	}, [page, rowsPerPage]);
+
+	// Save state to localStorage whenever there are changes
+	useEffect(() => {
+		localStorage.setItem(
+			"ObjectivesRecords",
+			JSON.stringify({
+				ordinances,
+				cachedAt: Date.now(),
+			})
+		);
+	}, [ordinances]); // Store ordinances whenever they change
 
 	const filteredOrdinances = useMemo(() => {
 		return ordinances.filter((ordinance) => {
@@ -119,14 +157,23 @@ export default function ObjectivesTable() {
 
 			setOpenModal(false);
 			setLoading(true);
-			getCoverage(); // Refresh the data
+
+			const updatedData = await fetchObjectivesImplementation();
+
+			// Update both localStorage and state correctly
+			const cacheData = {
+				ordinances: updatedData,
+				cachedAt: Date.now(),
+			};
+			localStorage.setItem("ObjectivesRecords", JSON.stringify(cacheData));
+			setOrdinances(updatedData);
+			setLoading(false);
 		} catch (error) {
 			setError({
 				open: true,
 				message: "Failed to save coverage scope. Please try again.",
 				severity: "error",
 			});
-
 			console.error("Error saving coverage scope:", error);
 		}
 	};

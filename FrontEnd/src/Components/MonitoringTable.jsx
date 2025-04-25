@@ -36,23 +36,61 @@ export default function Monitoring() {
 	const [selectedCoverage, setSelectedCoverage] = useState(null);
 
 	useEffect(() => {
-		getCoverage();
-	}, []);
+		const cachedData = localStorage.getItem("MonitoringRecords");
+		if (cachedData) {
+			const parsed = JSON.parse(cachedData);
+			const isExpired = Date.now() - parsed.cachedAt > 1000 * 60 * 5; // 5-minute expiration check
 
-	const getCoverage = async () => {
-		try {
-			const response = await fetchMonitoring();
-			setOrdinances(response || []);
-		} catch (err) {
-			setError({
-				open: true,
-				message: "No Record Found.",
-				severity: "error",
-			});
-		} finally {
-			setLoading(false);
+			// If cached data is not expired, load from localStorage
+			if (parsed.ordinances?.length > 0 && !isExpired) {
+				setOrdinances(parsed.ordinances);
+				setLoading(false);
+				return;
+			}
 		}
-	};
+
+		// Fetch new records if cache is expired or doesn't exist
+		const getCoverage = async () => {
+			try {
+				const response = await fetchMonitoring();
+				if (response.length === 0) {
+					setError({
+						open: true,
+						message: "No Record Found.",
+						severity: "error",
+					});
+				} else {
+					setError({
+						open: true,
+						message: "Records fetched Successfully.",
+						severity: "success",
+					});
+					setOrdinances(response);
+				}
+			} catch (err) {
+				setError({
+					open: true,
+					message: "Error fetching Records.",
+					severity: "error",
+				});
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		getCoverage();
+	}, [page, rowsPerPage]);
+
+	// Save state to localStorage whenever there are changes
+	useEffect(() => {
+		localStorage.setItem(
+			"MonitoringRecords",
+			JSON.stringify({
+				ordinances,
+				cachedAt: Date.now(),
+			})
+		);
+	}, [ordinances]); // Store ordinances whenever they change
 
 	const filteredOrdinances = useMemo(() => {
 		return ordinances.filter((ordinance) => {
@@ -101,31 +139,38 @@ export default function Monitoring() {
 			[e.target.name]: e.target.value,
 		});
 	};
-
 	const handleSave = async () => {
 		try {
 			if (selectedCoverage.id) {
 				await updateMonitoring(selectedCoverage.id, selectedCoverage);
-				alert("Monitoring Data updated successfully!");
+				alert("Record updated successfully!");
 			} else {
 				await addMonitoring(selectedCoverage);
-				alert("Monitoring Data added successfully!");
+				alert("Record added successfully!");
 			}
 
 			setOpenModal(false);
 			setLoading(true);
-			getCoverage(); // Refresh the data
+
+			const updatedData = await fetchMonitoring();
+
+			// Update both localStorage and state correctly
+			const cacheData = {
+				ordinances: updatedData,
+				cachedAt: Date.now(),
+			};
+			localStorage.setItem("MonitoringRecords", JSON.stringify(cacheData));
+			setOrdinances(updatedData);
+			setLoading(false);
 		} catch (error) {
 			setError({
 				open: true,
-				message: "Failed to save Monitoring Data. Please try again.",
+				message: "Failed to save Record. Please try again.",
 				severity: "error",
 			});
-
-			console.error("Error saving Monitoring Data:", error);
+			console.error("Error saving Record:", error);
 		}
 	};
-
 	const handleSearchChange = (event) => setSearchQuery(event.target.value);
 	const handlePageChange = (event, newPage) => setPage(newPage);
 	const handleRowsPerPageChange = (event) => {

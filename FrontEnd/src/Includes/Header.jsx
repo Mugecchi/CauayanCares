@@ -22,7 +22,7 @@ const Header = React.memo(({ user }) => {
 				justifyContent: "space-between",
 				alignItems: "center",
 				maxWidth: "100vw",
-				padding: "20px 25px 10px 25px",
+				padding: "20px 25px 0 25px",
 				position: "sticky",
 				zIndex: 1000,
 				display: { xs: "none", md: "none", lg: "flex" },

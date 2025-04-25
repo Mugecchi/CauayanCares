@@ -90,10 +90,51 @@ const Step1 = ({ formValues, updateForm }) => {
 					fullWidth
 					label="Title"
 					required
+					multiline
+					rows={5} // Initial height
 					name="title"
 					value={formState.title || ""}
 					onChange={handleFieldChange}
+					InputProps={{
+						style: {
+							height: "auto", // Ensure the TextField can grow
+						},
+					}}
 				/>
+			</Grid>
+			<Grid item xs={6}>
+				<TextField
+					fullWidth
+					label="Details"
+					multiline
+					rows={5} // Initial height
+					name="details"
+					value={formState.details || ""}
+					onChange={handleFieldChange}
+					InputProps={{
+						style: {
+							height: "auto", // Ensure the TextField can grow
+						},
+					}}
+				/>
+			</Grid>
+			<Grid item xs={6}>
+				<TextField
+					select
+					fullWidth
+					label="Document Type"
+					name="documentType"
+					value={formState.documentType || "Executive Order"}
+					onChange={handleDocumentTypeChange}
+				>
+					{["Executive Order", "Ordinance", "Memo", "Resolution"].map(
+						(type) => (
+							<MenuItem key={type} value={type}>
+								{type}
+							</MenuItem>
+						)
+					)}
+				</TextField>
 			</Grid>
 			<Grid item xs={6}>
 				<TextField
@@ -126,24 +167,7 @@ const Step1 = ({ formValues, updateForm }) => {
 					))}
 				</TextField>
 			</Grid>
-			<Grid item xs={6}>
-				<TextField
-					select
-					fullWidth
-					label="Document Type"
-					name="documentType"
-					value={formState.documentType || "Executive Order"}
-					onChange={handleDocumentTypeChange}
-				>
-					{["Executive Order", "Ordinance", "Memo", "Resolution"].map(
-						(type) => (
-							<MenuItem key={type} value={type}>
-								{type}
-							</MenuItem>
-						)
-					)}
-				</TextField>
-			</Grid>
+
 			<Grid item xs={6}>
 				<TextField
 					fullWidth
@@ -166,16 +190,7 @@ const Step1 = ({ formValues, updateForm }) => {
 					onChange={handleFieldChange}
 				/>
 			</Grid>
-			<Grid item xs={12}>
-				<TextField
-					fullWidth
-					label="Details"
-					maxRows={5}
-					name="details"
-					value={formState.details || ""}
-					onChange={handleFieldChange}
-				/>
-			</Grid>
+
 			<Grid item xs={12}>
 				<Button fullWidth variant="outlined" component="label">
 					Upload PDF

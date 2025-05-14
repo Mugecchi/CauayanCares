@@ -163,13 +163,15 @@ def get_ordinances():
 
     # Search query (optional)
     search = request.args.get("search", "").lower()
+    document_type_filter = request.args.get("document_type", "").lower()
 
-    # Query to fetch ordinances with optional search
+    # Base query to fetch ordinances with optional search and document_type filters
     query = """
         SELECT id, title, number, date_issued, date_effectivity, details, document_type, status, file_path
         FROM ordinances
         WHERE is_deleted = FALSE
     """
+    params = []
 
     # Add search condition if search query is provided
     if search:
@@ -181,14 +183,17 @@ def get_ordinances():
                  LOWER(number) LIKE %s)
         """
         search_pattern = f"%{search}%"
-        params = (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern)
-    else:
-        params = ()
+        params.extend([search_pattern, search_pattern, search_pattern, search_pattern, search_pattern])
 
-    # Execute the query for all matching records (without pagination)
+    # Add document_type filter if provided
+    if document_type_filter:
+        query += " AND LOWER(document_type) = %s"
+        params.append(document_type_filter)
+
+    # Execute the query to fetch ordinances with the filters
     ordinances = execute_query(query, params)
 
-    # Query to get the total number of ordinances (with search condition if applicable)
+    # Query to get the total number of ordinances (with search and document_type conditions if applicable)
     count_query = "SELECT COUNT(*) FROM ordinances WHERE is_deleted = FALSE"
     if search:
         count_query += """
@@ -198,10 +203,16 @@ def get_ordinances():
                  LOWER(document_type) LIKE %s OR
                  LOWER(number) LIKE %s)
         """
-        params_for_count = (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern)
-        total_count = execute_query(count_query, params_for_count)[0][0]
+        params_for_count = [search_pattern, search_pattern, search_pattern, search_pattern, search_pattern]
     else:
-        total_count = execute_query(count_query)[0][0]
+        params_for_count = []
+
+    if document_type_filter:
+        count_query += " AND LOWER(document_type) = %s"
+        params_for_count.append(document_type_filter)
+
+    # Get total count with filters applied
+    total_count = execute_query(count_query, params_for_count)[0][0]
 
     # Calculate the total number of pages
     total_pages = (total_count + per_page - 1) // per_page  # Ceiling division
@@ -231,6 +242,7 @@ def serve_file(filename):
 @ordinances_bp.route("/api/ordinances/<int:id>", methods=["DELETE"])
 @login_required
 def delete_ordinance(id):
+    user_id=session.get("user_id")
     try:
         # Optional: Get file_path for possible file deletion
         file_record = execute_query("SELECT file_path FROM ordinances WHERE id = %s AND is_deleted = FALSE", (id,), fetch_one=True)
@@ -255,7 +267,7 @@ def delete_ordinance(id):
         # Soft-delete the ordinance
         soft_delete_query = "UPDATE ordinances SET is_deleted = TRUE WHERE id = %s"
         execute_query(soft_delete_query, (id,), commit=True)
-        log_action("Ordinance Deleted", user_id=session.get("user_id"), username=session.get("username"))
+        log_action(user_id, f"Record deleted successfully")
 
         return jsonify({"message": "Ordinance deleted successfully."}), 200
 

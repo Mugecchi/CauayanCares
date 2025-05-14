@@ -22,6 +22,7 @@ import ImageListItem from "@mui/material/ImageListItem";
 import ImageListItemBar from "@mui/material/ImageListItemBar";
 
 import { WhiteBox } from "../Includes/styledComponents";
+import { Typography } from "@mui/material";
 
 function DocumentationReps() {
 	const [records, setRecords] = useState([]);
@@ -138,10 +139,11 @@ function DocumentationReps() {
 		setSelectedFiles([]);
 	};
 
-	if (loading) return <CircularProgress />;
 	return (
 		<WhiteBox>
-			<h2>Documentation Records</h2>
+			<Typography variant="h4" color="#fff">
+				Documentation Records
+			</Typography>
 
 			{/* List of documentation records */}
 			<TableContainer>

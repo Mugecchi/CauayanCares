@@ -22,6 +22,7 @@ import {
 	addObjectivesImplementation,
 	updateObjectivesImplementation,
 } from "../api";
+import { Tooltip } from "@mui/material";
 
 export default function ObjectivesTable() {
 	const [ordinances, setOrdinances] = useState([]);
@@ -215,15 +216,63 @@ export default function ObjectivesTable() {
 									ordinance.objectives_implementation.map((scope) => (
 										<TableRow key={`${ordinance.id}-${scope.id}`}>
 											<TableCell>
-												{ordinance.title} {ordinance.number}
+												<Tooltip
+													title={`${ordinance.title} ${ordinance.number}`}
+													arrow
+													placement="top-start"
+												>
+													{ordinance.title} {ordinance.number}
+												</Tooltip>
 											</TableCell>
 											<TableCell>
-												{scope.policy_objectives || "No Objectives Data"}
+												<Tooltip
+													title={scope.policy_objectives}
+													arrow
+													placement="top-start"
+												>
+													<span>{scope.policy_objectives}</span>
+												</Tooltip>
 											</TableCell>
-											<TableCell>{scope.lead_agency}</TableCell>
-											<TableCell>{scope.supporting_agencies}</TableCell>
-											<TableCell>{scope.key_provisions}</TableCell>
-											<TableCell>{scope.programs_activities}</TableCell>
+											<TableCell>
+												<Tooltip
+													title={scope.lead_agency}
+													arrow
+													placement="top-start"
+												>
+													<span>{scope.lead_agency}</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip
+													title={scope.supporting_agencies}
+													arrow
+													placement="top-start"
+												>
+													<span>{scope.supporting_agencies}</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip
+													title={scope.key_provisions}
+													arrow
+													placement="top-start"
+												>
+													<span>{scope.key_provisions}</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip
+													title={
+														scope.programs_activities ||
+														"No Programs/Activities Data"
+													}
+													arrow
+													placement="top-start"
+												>
+													<span>{scope.programs_activities}</span>
+												</Tooltip>
+											</TableCell>
+
 											<TableCell>
 												<Button
 													variant="outlined"
@@ -237,7 +286,15 @@ export default function ObjectivesTable() {
 								) : (
 									<TableRow key={ordinance.id}>
 										<TableCell>
-											{ordinance.title} {ordinance.number}
+											<Tooltip
+												title={`${ordinance.title} ${ordinance.number}`}
+												arrow
+												placement="top-start"
+											>
+												<span>
+													{ordinance.title} {ordinance.number}
+												</span>
+											</Tooltip>
 										</TableCell>
 										<TableCell colSpan={5}>
 											No Objectives/Implementation
@@ -256,7 +313,12 @@ export default function ObjectivesTable() {
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "flex-end",
+				}}
+			>
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
 					component="div"

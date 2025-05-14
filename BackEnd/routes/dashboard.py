@@ -103,25 +103,27 @@ def get_funding_source():
 @dashboard_bp.route("/api/dashboard/target", methods=["GET"])
 @login_required
 def get_target_beneficiaries():
-    # Define the list of expected funding sources
-    target_beneficiaries = ['General Public','Women','Children','Solo Parents','PWDs','MSMEs','Others','Labor Trade','Industry','Economic Enterprises','Environmental Protection & Ecology','Family','Human Resource Management & Development','Finance','Infrastructure & General Services']
+    # List of target beneficiaries to track
+    target_beneficiaries = [
+        'General Public', 'Women', 'Children', 'Solo Parents', 'PWDs', 'MSMEs',
+        'Others', 'Labor Trade', 'Industry', 'Economic Enterprises',
+        'Environmental Protection & Ecology', 'Family',
+        'Human Resource Management & Development', 'Finance',
+        'Infrastructure & General Services'
+    ]
 
-    # Dynamically create placeholders for the IN clause
-    placeholders = ", ".join(["%s"] * len(target_beneficiaries))
+    # Query all target_beneficiaries entries
+    query = "SELECT target_beneficiaries FROM coverage_scope WHERE target_beneficiaries IS NOT NULL"
+    rows = execute_query(query)
 
-    # Construct and run the query
-    target_beneficiaries_query = f"""
-        SELECT target_beneficiaries, COUNT(*) 
-        FROM coverage_scope 
-        WHERE target_beneficiaries IN ({placeholders})
-        GROUP BY target_beneficiaries
-    """
+    # Initialize counts
+    counts = {target: 0 for target in target_beneficiaries}
 
-    rows = execute_query(target_beneficiaries_query, tuple(target_beneficiaries))
-
-    # Format the results into a dictionary
-    counts = {source: 0 for source in target_beneficiaries}
-    for source, count in rows:
-        counts[source] = count
+    # Count occurrences by splitting comma-separated values
+    for (beneficiary_str,) in rows:
+        beneficiaries = [b.strip() for b in beneficiary_str.split(',')]
+        for b in beneficiaries:
+            if b in counts:
+                counts[b] += 1
 
     return jsonify(counts), 200

@@ -18,6 +18,7 @@ import Snackbar from "@mui/material/Snackbar";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
 import { fetchAssesment, addAssesment, updateAssesment } from "../api";
+import { Tooltip } from "@mui/material";
 
 export default function iAssesment() {
 	const [ordinances, setOrdinances] = useState([]);
@@ -170,9 +171,7 @@ export default function iAssesment() {
 		setRowsPerPage(parseInt(event.target.value, 10));
 		setPage(0);
 	};
-
 	if (loading) return <CircularProgress />;
-
 	return (
 		<div>
 			<TextField
@@ -199,23 +198,50 @@ export default function iAssesment() {
 						{filteredOrdinances
 							.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 							.flatMap((ordinance) =>
-								ordinance.impact_assessment.length > 0 ? (
+								ordinance.impact_assessment.length > 3 ? (
 									ordinance.impact_assessment.map((scope) => (
 										<TableRow key={`${ordinance.id}-${scope.id}`}>
 											<TableCell>
-												{ordinance.title} {ordinance.number}
+												<Tooltip
+													title={`${ordinance.title} ${ordinance.number}`}
+													arrow
+												>
+													<span>
+														{ordinance.title} {ordinance.number}
+													</span>
+												</Tooltip>
 											</TableCell>
 											<TableCell>
-												{scope.outcomes_results || "No Assessment data added"}
+												<Tooltip title={scope.outcomes_results} arrow>
+													<span>{scope.outcomes_results}</span>
+												</Tooltip>
 											</TableCell>
 											<TableCell>
-												{scope.gender_responsiveness_impact}
+												<Tooltip
+													title={scope.gender_responsiveness_impact}
+													arrow
+												>
+													<span>{scope.gender_responsiveness_impact}</span>
+												</Tooltip>
 											</TableCell>
 											<TableCell>
-												{scope.funding_source && `${scope.funding_source}`}
+												<Tooltip title={scope.funding_source} arrow>
+													<span>
+														{scope.funding_source && `${scope.funding_source}`}
+													</span>
+												</Tooltip>
 											</TableCell>
-											<TableCell>{scope.community_benefits}</TableCell>
-											<TableCell>{scope.adjustments_needed}</TableCell>
+											<TableCell>
+												<Tooltip title={scope.community_benefits} arrow>
+													<span>{scope.community_benefits}</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip title={scope.adjustments_needed} arrow>
+													<span>{scope.adjustments_needed}</span>
+												</Tooltip>
+											</TableCell>
+
 											<TableCell>
 												<Button
 													variant="outlined"
@@ -229,7 +255,15 @@ export default function iAssesment() {
 								) : (
 									<TableRow key={ordinance.id}>
 										<TableCell>
-											{ordinance.title} {ordinance.number}
+											<Tooltip
+												title={`${ordinance.title} ${ordinance.number}`}
+												arrow
+												placement="top-start"
+											>
+												<span>
+													{ordinance.title} {ordinance.number}
+												</span>
+											</Tooltip>
 										</TableCell>
 										<TableCell colSpan={5}>No Assessment Data</TableCell>
 										<TableCell>
@@ -246,7 +280,12 @@ export default function iAssesment() {
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "flex-end",
+				}}
+			>
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
 					component="div"

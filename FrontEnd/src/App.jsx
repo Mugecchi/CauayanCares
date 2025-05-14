@@ -4,14 +4,17 @@ import {
 	Routes,
 	Route,
 	Navigate,
+	useLocation,
 } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+
 import Sidebar from "./Includes/Sidebar";
 import Header from "./Includes/Header";
-import { AuthProvider, useAuth } from "./Context"; // Import useAuth
+import { AuthProvider, useAuth } from "./Context";
 import { ContentContainer, ThemeProv } from "./Includes/styledComponents";
 import LoadingScreen from "./Includes/LoadingScreen";
 
-// Lazy load pages
+// Lazy-loaded pages
 const Dashboard = lazy(() => import("./Pages/Dashboard"));
 const Tables = lazy(() => import("./Pages/Tables"));
 const Login = lazy(() => import("./Pages/Login"));
@@ -20,33 +23,150 @@ const DocumentationReps = lazy(() => import("./Components/DocumentationReps"));
 const AddRecord = lazy(() => import("./Pages/AddRecord"));
 const LogsTable = lazy(() => import("./Components/LogsTable"));
 
-const App = () => {
-	// Consume Auth context values using the useAuth hook
-	const { isLoggedIn, user, loading, setIsLoggedIn } = useAuth();
+// Page wrapper for route animations
+const PageWrapper = ({ children }) => (
+	<motion.div
+		initial={{ opacity: 0, y: 10, scale: 0.98 }}
+		animate={{ opacity: 1, y: 0, scale: 1 }}
+		exit={{ opacity: 0, y: -200, scale: 0.98 }}
+		transition={{ duration: 0.4, ease: "easeInOut" }}
+		style={{
+			height: "100%",
+			width: "100%",
+			overflow: "hidden",
+		}}
+	>
+		{children}
+	</motion.div>
+);
 
-	// Protected route wrapper
+// Component to handle route rendering with animation
+const AnimatedRoutes = ({ isLoggedIn, user, setIsLoggedIn }) => {
+	const location = useLocation();
+
 	const ProtectedRoute = ({ element, role }) => {
-		if (!isLoggedIn) {
-			console.log("User is not logged in. Redirecting to login...");
-			return <Navigate to="/login" />;
-		}
-
-		if (role && user?.role !== role) {
-			console.log(`Unauthorized access attempt to ${role}-only page.`);
-			return <Navigate to="/dashboard" />;
-		}
-
+		if (!isLoggedIn) return <Navigate to="/login" />;
+		if (role && user?.role !== role) return <Navigate to="/dashboard" />;
 		return element;
 	};
+
+	return (
+		<AnimatePresence mode="wait">
+			<Routes location={location} key={location.pathname}>
+				<Route path="/" element={<Navigate to="/dashboard" />} />
+				<Route
+					path="/addrecords"
+					element={
+						<ProtectedRoute
+							element={
+								<PageWrapper>
+									<AddRecord />
+								</PageWrapper>
+							}
+						/>
+					}
+				/>
+				<Route
+					path="/dashboard"
+					element={
+						<ProtectedRoute
+							element={
+								<PageWrapper>
+									<Dashboard />
+								</PageWrapper>
+							}
+						/>
+					}
+				/>
+				<Route
+					path="/tables"
+					element={
+						<ProtectedRoute
+							element={
+								<PageWrapper>
+									<Tables />
+								</PageWrapper>
+							}
+						/>
+					}
+				/>
+				<Route
+					path="/documentation"
+					element={
+						<ProtectedRoute
+							element={
+								<PageWrapper>
+									<DocumentationReps />
+								</PageWrapper>
+							}
+						/>
+					}
+				/>
+				<Route
+					path="/logs"
+					element={
+						<ProtectedRoute
+							element={
+								<PageWrapper>
+									<LogsTable />
+								</PageWrapper>
+							}
+						/>
+					}
+				/>
+				<Route
+					path="/users"
+					element={
+						<ProtectedRoute
+							element={
+								<PageWrapper>
+									<Registration />
+								</PageWrapper>
+							}
+						/>
+					}
+				/>
+				<Route
+					path="/login"
+					element={
+						isLoggedIn ? (
+							<Navigate to="/" />
+						) : (
+							<PageWrapper>
+								<Login setIsLoggedIn={setIsLoggedIn} />
+							</PageWrapper>
+						)
+					}
+				/>
+			</Routes>
+		</AnimatePresence>
+	);
+};
+
+const App = () => {
+	const { isLoggedIn, user, loading, setIsLoggedIn } = useAuth();
+
 	if (loading) return <LoadingScreen />;
 
 	return (
 		<AuthProvider>
 			<Router>
-				<div style={{ display: "flex", height: "100vh" }}>
-					<div>{isLoggedIn && <Sidebar />}</div>
+				<div
+					style={{
+						display: "flex",
+						height: "100vh",
+						width: "100vw",
+						overflow: "hidden",
+					}}
+				>
+					{isLoggedIn && <Sidebar />}
 					<div
-						style={{ width: "100%", display: "flex", flexDirection: "column" }}
+						style={{
+							flex: 1,
+							display: "flex",
+							flexDirection: "column",
+							overflow: "hidden",
+						}}
 					>
 						{isLoggedIn && <Header user={user} />}
 						<div
@@ -56,61 +176,17 @@ const App = () => {
 								flex: 1,
 							}}
 						>
-							{isLoggedIn ? (
-								<ThemeProv>
-									<ContentContainer>
-										<Routes>
-											<Route path="/" element={<Navigate to="/dashboard" />} />
-											<Route
-												path="/addrecords"
-												element={<ProtectedRoute element={<AddRecord />} />}
-											/>
-											<Route
-												path="/dashboard"
-												element={<ProtectedRoute element={<Dashboard />} />}
-											/>
-											<Route
-												path="/tables"
-												element={<ProtectedRoute element={<Tables />} />}
-											/>
-											<Route
-												path="/documentation"
-												element={
-													<ProtectedRoute element={<DocumentationReps />} />
-												}
-											/>
-											<Route
-												path="/logs"
-												element={<ProtectedRoute element={<LogsTable />} />}
-											/>
-											<Route
-												path="/users"
-												element={<ProtectedRoute element={<Registration />} />}
-											/>
-											<Route
-												path="/login"
-												element={
-													isLoggedIn ? (
-														<Navigate to="/" />
-													) : (
-														<Login setIsLoggedIn={setIsLoggedIn} />
-													)
-												}
-											/>
-										</Routes>
-									</ContentContainer>
-								</ThemeProv>
-							) : (
-								<ThemeProv>
-									<Routes>
-										<Route
-											path="/login"
-											element={<Login setIsLoggedIn={setIsLoggedIn} />}
+							<ThemeProv>
+								<ContentContainer>
+									<Suspense fallback={<LoadingScreen />}>
+										<AnimatedRoutes
+											isLoggedIn={isLoggedIn}
+											user={user}
+											setIsLoggedIn={setIsLoggedIn}
 										/>
-										<Route path="*" element={<Navigate to="/login" />} />
-									</Routes>
-								</ThemeProv>
-							)}
+									</Suspense>
+								</ContentContainer>
+							</ThemeProv>
 						</div>
 					</div>
 				</div>

@@ -3,6 +3,13 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Skeleton from "@mui/material/Skeleton";
+import { Box } from "@mui/material";
+import {
+	ChartsLegend,
+	ChartsTooltip,
+	PiePlot,
+	ResponsiveChartContainer,
+} from "@mui/x-charts";
 
 function DonutChart({
 	title,
@@ -38,41 +45,92 @@ function DonutChart({
 					display: "flex",
 					justifyContent: "center",
 					alignItems: "center",
+					overflow: "hidden",
 					p: 2,
 				}}
 			>
-				<Skeleton variant="rectangular" width="100%" height="100%" />
+				<Skeleton
+					variant="rectangular"
+					width="200%"
+					height="200%"
+					sx={{
+						background: "linear-gradient(90deg, #d4bcef, #e2d5f7, #d4bcef)",
+						transform: "scale(1.1)", // Slight zoom effect if desired
+					}}
+				/>
 			</Paper>
 		);
 	}
 	return (
-		<Paper display="flex" width="100%" overflow="hidden">
-			<Typography variant="h6" align="center" gutterBottom>
-				{title || "Label"}
-			</Typography>{" "}
-			<PieChart
-				slotProps={{
-					legend: {
-						padding: -10,
-						position: { vertical: "middle", horizontal: "right" },
-					},
-				}} // Adjust legend position as needed
+		<Paper
+			display="flex"
+			width="100%"
+			overflow="hidden"
+			sx={{
+				backdropFilter: "blur(10px)", // 100px is extreme and often ineffective
+				WebkitBackdropFilter: "blur(10px)", // Safari support
+				backgroundColor: "rgba(255, 255, 255, 0.22)", // Add transparency
+				borderRadius: 2,
+				width: "100%",
+				display: "flex",
+				color: "white",
+				alignItems: "center",
+				p: 2,
+			}}
+			elevation={5}
+		>
+			{/* Chart Area */}
+			<ResponsiveChartContainer
 				series={[
 					{
-						data: chartData, // Now uses 'color'
-						innerRadius: 60,
-						outerRadius: 150,
+						type: "pie",
+						data: chartData,
+						innerRadius: 40,
+						outerRadius: 130,
 						paddingAngle: 5,
-						cornerRadius: 5,
-						startAngle: 0,
-						endAngle: 360,
-						cx: "50%",
-						cy: "50%",
+						cornerRadius: 20,
+						cx: 200,
+						label: "Sex",
+						highlightScope: { fade: "global", highlight: "item" },
+						highlighted: { additionalRadius: 10 },
+						faded: { innerRadius: 40, additionalRadius: -30, color: "gray" },
 					},
 				]}
-				width={500}
-				height={400}
-			/>
+				height={300}
+				sx={{
+					"& text": {
+						fill: "#fff !important",
+						color: "#fff", // Sets all text in the chart to white
+					},
+					"& .MuiPieArc-root": {
+						stroke: "transparent",
+					},
+				}}
+			>
+				<ChartsTooltip trigger="item" />
+				<PiePlot
+					sx={{
+						"& text": {
+							fill: "#fff !important",
+							color: "#fff", // Sets all text in the chart to white
+						},
+						"& .MuiPieArc-root": {
+							stroke: "transparent",
+						},
+					}}
+				/>
+
+				<ChartsLegend
+					slotProps={{
+						legend: {
+							padding: -10,
+							direction: "column",
+							position: { vertical: "middle", horizontal: "right" },
+						},
+					}}
+				/>
+			</ResponsiveChartContainer>
+			{/* Legend manually rendered */}
 		</Paper>
 	);
 }

@@ -9,7 +9,7 @@ coverage_bp = Blueprint("coverage", __name__)
 def get_all_ordinances_with_scope():
     query = """
         SELECT o.id, o.title, o.number, o.status, o.document_type,
-            cs.id AS coverage_id, cs.inclusive_period, cs.target_beneficiaries, cs.geographical_coverage
+            cs.id AS coverage_id, o.date_issued, cs.target_beneficiaries, cs.geographical_coverage
         FROM ordinances o
         LEFT JOIN coverage_scope cs ON o.id = cs.ordinance_id
         WHERE o.is_deleted = 0;

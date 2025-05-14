@@ -42,8 +42,6 @@ export const apiCall = async (
 export const logout = async () => {
 	try {
 		await api.post("/logout");
-		localStorage.clear();
-		sessionStorage.clear();
 	} catch (error) {
 		throw error.response?.data?.error || "Logout failed";
 	}
@@ -112,12 +110,18 @@ export const handlePreview = async (
 // Ordinances
 export const createOrdinance = (formData) =>
 	apiCall("post", "/ordinances", formData);
-export const fetchOrdinances = (page = 1, per_page = 10, searchQuery = "") => {
+export const fetchOrdinances = (
+	page = 1,
+	per_page = 10,
+	searchQuery = "",
+	documentType = ""
+) => {
 	return apiCall("get", "/ordinances", null, false, {
 		params: {
 			page,
 			per_page,
 			search: searchQuery, // Pass 'search' here instead of 'searchQuery'
+			document_type: documentType,
 		},
 	});
 };

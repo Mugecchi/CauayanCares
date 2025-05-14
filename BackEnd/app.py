@@ -17,11 +17,16 @@ from routes.dashboard import dashboard_bp
 from routes.logs import logs_bp
 
 app = Flask(__name__, static_folder="dist", static_url_path="/")
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, )
+# origins=["http://192.168.75.182:5173"]
 app.secret_key = "supersecretkey"  # Change this to a secure key
-app.config["SESSION_COOKIE_SECURE"] = True  # Secure cookie for HTTPS
-app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent JS access
-app.config["SESSION_COOKIE_SAMESITE"] = "None"  # Allow cross-origin cookies
+if os.getenv("RAILWAY_ENVIRONMENT"):
+    app.config["SESSION_COOKIE_SAMESITE"] = "None"
+    app.config["SESSION_COOKIE_SECURE"] = True
+else:
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_SECURE"] = False
+# Allow cross-origin cookies
 # Increase max request size (adjust if needed)
 app.config['MAX_CONTENT_LENGTH'] = 64 * 1024 * 1024  # 16MB limit
 UPLOAD_FOLDER = "uploads"

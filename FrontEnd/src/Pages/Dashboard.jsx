@@ -6,7 +6,7 @@ import DonutChart from "../Charts/DonutChart";
 import StatusBarChart from "../Charts/StatusBarChart";
 import LineGraph from "../Charts/LineGraph";
 import FlatBarChart from "../Charts/FlatBarChart";
-
+import { useTheme } from "@emotion/react";
 const Dashboard = () => {
 	const [status, setStatus] = useState();
 	const [date, setDate] = useState();
@@ -74,15 +74,15 @@ const Dashboard = () => {
 	const filteredDocumentTypes = Object.fromEntries(
 		Object.entries(documentTypes).filter(([key]) => !key.includes("_statuses"))
 	);
+	const theme = useTheme();
 
 	const fundingColor = ["#F9F3DF", "#CDF2CA", "#FFDEFA", "#FFC898"];
 	const pastelPalette = [
-		"#F9B7D4",
-		"#B3E0DC",
-		"#F6C7B6",
-		"#D1E6F4",
-		"#F0D7B6",
-		"#D7C0E0",
+		theme.palette.primary.main,
+		theme.palette.secondary.main,
+		theme.palette.error.main,
+		theme.palette.warning.main,
+		theme.palette.success.main,
 	];
 
 	return (
@@ -117,7 +117,7 @@ const Dashboard = () => {
 					<DonutChart
 						title={"Funding Source"}
 						data={source}
-						colorPalette={fundingColor}
+						colorPalette={pastelPalette}
 						isLoading={loadingSource}
 					/>
 				</Grid>

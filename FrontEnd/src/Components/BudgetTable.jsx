@@ -23,6 +23,7 @@ import {
 	addFinancialData,
 	updateFinancialData,
 } from "../api";
+import { Tooltip } from "@mui/material";
 
 export default function BudgetTable() {
 	const [ordinances, setOrdinances] = useState([]);
@@ -218,17 +219,50 @@ export default function BudgetTable() {
 									ordinance.budget_allocation.map((scope) => (
 										<TableRow key={`${ordinance.id}-${scope.id}`}>
 											<TableCell>
-												{ordinance.title} {ordinance.number}
+												<Tooltip
+													title={`${ordinance.title} ${ordinance.number}`}
+													arrow
+												>
+													{ordinance.title} {ordinance.number}
+												</Tooltip>
 											</TableCell>
 											<TableCell>
-												{formatCurrency(scope.allocated_budget)}
+												<Tooltip
+													title={`Allocated Budget: ${formatCurrency(
+														scope.allocated_budget
+													)}`}
+													arrow
+												>
+													<span>{formatCurrency(scope.allocated_budget)}</span>
+												</Tooltip>
 											</TableCell>
 											<TableCell>
-												{formatCurrency(scope.utilized_budget)}
+												<Tooltip
+													title={`Utilized Budget: ${formatCurrency(
+														scope.utilized_budget
+													)}`}
+													arrow
+												>
+													<span>{formatCurrency(scope.utilized_budget)}</span>
+												</Tooltip>
 											</TableCell>
-											<TableCell>{formatCurrency(scope.gad_budget)}</TableCell>
 											<TableCell>
-												{scope.financial_transparency_measures}
+												<Tooltip
+													title={`GAD Budget: ${formatCurrency(
+														scope.gad_budget
+													)}`}
+													arrow
+												>
+													<span>{formatCurrency(scope.gad_budget)}</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip
+													title={`Financial Transparency: ${scope.financial_transparency_measures}`}
+													arrow
+												>
+													<span>{scope.financial_transparency_measures}</span>
+												</Tooltip>
 											</TableCell>
 											<TableCell>
 												<Button
@@ -242,9 +276,14 @@ export default function BudgetTable() {
 									))
 								) : (
 									<TableRow key={ordinance.id}>
-										<TableCell>
-											{ordinance.title} {ordinance.number}
-										</TableCell>
+										<Tooltip
+											title={`${ordinance.title} ${ordinance.number}`}
+											arrow
+										>
+											<TableCell>
+												{ordinance.title} {ordinance.number}
+											</TableCell>
+										</Tooltip>
 										<TableCell colSpan={4}>No Budget Allocation Data</TableCell>
 										<TableCell>
 											<Button
@@ -260,7 +299,12 @@ export default function BudgetTable() {
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "flex-end",
+				}}
+			>
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
 					component="div"

@@ -11,6 +11,8 @@ import Tab from "@mui/material/Tab";
 import Accordion from "@mui/material/Accordion";
 import Drawer from "@mui/material/Drawer";
 import { createTheme, ThemeProvider } from "@mui/material";
+import { motion } from "framer-motion";
+
 /* ✅ Inject Global CSS Variables */
 export const GlobalStyles = createGlobalStyle`
 	:root {
@@ -27,13 +29,14 @@ export const GlobalStyles = createGlobalStyle`
 		--silver-chalice: #ACABAB;
 		--white: #FFFFFF;
 		--eminence: #69247C;
-    --background-color: #f2e6fe;
+    --background-color: radial-gradient(circle at 30% 30%, #5D378C 0%, transparent 100%),radial-gradient(circle at 70% 70%, #FF7704 0%, transparent 100%);
     
     color-scheme: light dark;
     color: var(--text-color);
-    background-color: var(--background-color);
+    background: var(--background-color);
     
     font-family: "SF Pro Display", sans-serif;
+
   }
 
   *, *::before, *::after {
@@ -48,13 +51,76 @@ export const GlobalStyles = createGlobalStyle`
     font-size: 16px;
     line-height: 1.6;
   }
-
+@keyframes skeleton {
+    0% {
+        background-position: -100% 0;
+    }
+    100% {
+        background-position: 100% 0;
+    }
+}
 `;
 
 /* ✅ MUI Theme */
 const theme = createTheme({
 	components: {
-		// ✅ Table Container (Ensures Responsiveness & Auto-Fit)
+		MuiTablePagination: {
+			styleOverrides: {
+				root: {
+					color: "#fff", // Text color
+				},
+			},
+		},
+
+		// ✅ Form Control (Input containers with Glassmorphism)
+		MuiFormControl: {
+			styleOverrides: {
+				root: {
+					color: "#fff", // Text color
+					backgroundColor: "rgba(255, 255, 255, 0.2)", // Semi-transparent background
+					backdropFilter: "blur(10px)", // Main blur effect
+					WebkitBackdropFilter: "blur(10px)", // Safari support
+					borderRadius: "8px", // Rounded corners
+					padding: "8px", // Padding for spacing
+				},
+			},
+		},
+
+		// ✅ TextField (Styled Input Fields with Glassmorphism)
+		MuiTextField: {
+			styleOverrides: {
+				root: {
+					textShadow: "0 1px 2px rgba(13, 12, 12, 0.94)", // Text shadow for better readability
+					color: "#fff", // Text color
+					backgroundColor: "rgba(255, 255, 255, 0.2)", // Semi-transparent background
+					backdropFilter: "blur(10px)", // Main blur effect
+					WebkitBackdropFilter: "blur(10px)", // Safari support
+					borderRadius: "8px", // Rounded corners
+				},
+			},
+		},
+
+		// ✅ Outlined Input (For input fields with outlines)
+		MuiOutlinedInput: {
+			styleOverrides: {
+				root: {
+					textShadow: "0 1px 2px rgba(13, 12, 12, 0.94)", // Text shadow for input text
+					color: "#fff", // Text color
+					backgroundColor: "transparent", // Transparent background
+					"&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+						borderColor: "rgba(255, 255, 255, 0.6)", // Brighter outline on focus
+					},
+					"& input": {
+						textShadow: "0 1px 2px rgba(13, 12, 12, 0.94)", // Text shadow for the input text
+					},
+				},
+				notchedOutline: {
+					borderColor: "rgba(255, 255, 255, 0.3)", // Default (unfocused)
+				},
+			},
+		},
+
+		// ✅ Table Container (Ensures Responsiveness & Glass Effect)
 		MuiTableContainer: {
 			styleOverrides: {
 				root: {
@@ -62,86 +128,98 @@ const theme = createTheme({
 					flexDirection: "column",
 					flexGrow: 1, // Ensures it fills the available space
 					overflow: "auto", // Enables scrolling when needed
-					maxHeight: "calc(70vh - 20px)", // Limits height to 70% of viewport height
+					maxHeight: "calc(70vh - 50px)", // Limits height to 70% of viewport height
 					width: "100%",
+					background: "rgba(93, 55, 134, 0.2)", // Light glass effect
+					backdropFilter: "blur(8px)", // Subtle blur effect
+					borderRadius: 10, // Rounded corners
 				},
 			},
 		},
 
-		// ✅ Table Itself (Ensures Full Width & Auto-Adjust)
+		// ✅ Table (Full Width and Glassmorphism)
 		MuiTable: {
 			styleOverrides: {
 				root: {
 					width: "100%", // Always stretch to fill container
 					tableLayout: "fixed", // Consistent column sizing
 					minWidth: "600px", // Prevents too small tables on narrow screens
+					background: "rgba(93, 55, 134, 0.1)", // Subtle glassmorphism effect
+					backdropFilter: "blur(6px)", // Mild blur effect
+					borderRadius: 10, // Rounded corners
 				},
 			},
 		},
 
-		// ✅ Table Row (Ensures Consistent Row Heights & Alternating Colors)
+		// ✅ Table Row (Consistent Row Heights & Alternating Colors)
 		MuiTableRow: {
 			styleOverrides: {
 				root: {
 					height: "4rem", // Adjust row height dynamically
-
-					// Apply alternating colors **ONLY to body rows**
+					backgroundColor: "rgba(93, 55, 134, 0.1)", // Light glass effect for rows
+					backdropFilter: "blur(5px)", // Subtle blur effect for rows
 					"&:not(:has(th)):nth-of-type(odd)": {
-						backgroundColor: "rgba(255, 123, 47, 0.02)", // Light blue for odd rows
+						backgroundColor: "rgba(255, 94, 0, 0.05)", // Light orange for odd rows
+						border: "1px solid rgba(255, 255, 255, 0.2)",
 					},
 					"&:not(:has(th)):nth-of-type(even)": {
 						backgroundColor: "rgba(105, 36, 124, 0.05)", // Light gray for even rows
+						border: "1px solid rgba(255, 255, 255, 0.2)",
 					},
-
 					"&:last-child td, &:last-child th": {
-						borderBottom: "none", // Remove bottom border for the last row
+						border: "none", // Remove bottom border for the last row
 					},
 				},
 			},
 		},
 
-		// ✅ Table Cells (Handles Padding & Font Styling)
+		// ✅ Table Cells (Padding, Font Styling & Glass Effect)
 		MuiTableCell: {
 			styleOverrides: {
 				root: {
-					color: "#41444B",
+					border: "none", // Remove bottom border for the last row
+					color: "#fff", // Text color
 					padding: "8px",
 					fontSize: "14px",
 					overflow: "hidden", // Hide overflowing text
 					textOverflow: "ellipsis", // Show "..." for overflow
+					background: "rgba(93, 55, 134, 0.1)", // Glass effect for cell background
+					backdropFilter: "blur(5px)", // Slight blur effect
 				},
 				"&:hover": {
 					whiteSpace: "normal", // Allow wrapping
 					overflow: "visible",
 					textOverflow: "unset",
 					maxWidth: "none", // Expand to full width
-					backgroundColor: "rgba(0,0,0,0.05)", // Light hover effect
+					backgroundColor: "rgba(0, 0, 0, 0.1)", // Light hover effect
 					zIndex: 10, // Ensure it overlays other cells
 					position: "relative",
 				},
 				head: {
-					fontWeight: "bold", // Make header text bold
+					fontWeight: "bold", // Bold header text
 				},
 				body: {
-					height: "85px",
 					textAlign: "left",
+					overflow: "hidden",
+					textOverflow: "ellipsis",
+					whiteSpace: "nowrap",
+					maxWidth: "200px",
 				},
 			},
 		},
 
-		// ✅ Table Pagination (Ensures Proper Placement & Styling)
-
-		// ✅ Input Fields (Ensures Consistent Height & Font Styling)
+		// ✅ Input Base (Consistent Height & Font Styling)
 		MuiInputBase: {
 			styleOverrides: {
 				root: {
+					textShadow: "0 1px 2px rgba(13, 12, 12, 0.94)", // Text shadow
 					height: "44px",
 					fontSize: "16px",
 				},
 			},
 		},
 
-		// ✅ Input Labels (Ensures Readability & Focus Effect)
+		// ✅ Input Labels (Readability & Focus Effect)
 		MuiInputLabel: {
 			styleOverrides: {
 				root: {
@@ -149,14 +227,20 @@ const theme = createTheme({
 					fontSize: "16px",
 					fontWeight: "bold",
 					"&.Mui-focused": {
-						color: "var(--orange) !important",
+						color: "var(--orange) !important", // Focus color
 					},
 				},
 			},
 		},
-
-		// ✅ Buttons (Ensures Consistent Sizing & Styling)
 		MuiButton: {
+			defaultProps: {
+				component: motion.button, // Use framer-motion's button as the default button
+				initial: { opacity: 0, scale: 0.8 },
+				animate: { opacity: 1, scale: 1 },
+				whileHover: { scale: 1.1 }, // Hover animation
+				whileTap: { scale: 0.95 }, // Tap animation
+				transition: { duration: 0.5 },
+			},
 			styleOverrides: {
 				root: {
 					height: "3rem",
@@ -178,6 +262,58 @@ const theme = createTheme({
 				},
 			},
 		},
+		MuiDialog: {
+			styleOverrides: {
+				paper: {
+					width: "100%",
+					maxWidth: "45vw",
+					backgroundColor: "rgba(255, 255, 255, 0.15)",
+					backdropFilter: "blur(10px)",
+					boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+					borderRadius: 20,
+					border: "1px solid rgba(255, 255, 255, 0.18)",
+				},
+			},
+		},
+		MuiDialogContent: {
+			styleOverrides: {
+				root: {
+					backgroundColor: "rgba(255, 255, 255, 0.05)",
+					backdropFilter: "blur(8px)",
+					padding: "16px 24px",
+				},
+			},
+		},
+		MuiDialogActions: {
+			styleOverrides: {
+				root: {
+					backgroundColor: "rgba(255, 255, 255, 0.05)",
+					backdropFilter: "blur(8px)",
+					padding: "8px 24px",
+					borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+				},
+			},
+		},
+		MuiDialogTitle: {
+			styleOverrides: {
+				root: {
+					color: "white",
+					backgroundColor: "rgba(255, 255, 255, 0.05)",
+					backdropFilter: "blur(8px)",
+					padding: "8px 24px",
+					borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+				},
+			},
+		},
+
+		MuiBackdrop: {
+			styleOverrides: {
+				root: {
+					backgroundColor: "rgba(0, 0, 0, 0.4)",
+					backdropFilter: "blur(10px)",
+				},
+			},
+		},
 	},
 });
 
@@ -192,16 +328,20 @@ export const ThemeProv = ({ children }) => (
 /* ✅ Styled Components */
 export const WhiteBox = styled(Box)(({ theme, sx }) => ({
 	display: "flex",
+	overflow: "hidden",
 	flexDirection: "column",
 	justifyContent: "flex-start", // Align content at the top
 	alignItems: "center", // Center children horizontally
-	padding: 16,
+	padding: `16px 16px 0 16px`,
 	gap: 16, // Adds spacing between child elements
 	position: "relative",
 	width: "100%", // Make it fluid inside Grid2
 	minHeight: "calc(90vh - 30px)", // Ensures it stretches properly
 	background: "white",
 	borderRadius: 10,
+	backdropFilter: "blur(10px)", // 100px is extreme and often ineffective
+	WebkitBackdropFilter: "blur(10px)", // Safari support
+	backgroundColor: "rgba(255, 255, 255, 0.28)", // Add transparency
 	boxShadow: 3, // Adds a subtle shadow for better UI depth
 
 	...(sx || {}), // Allow external sx props to override styles
@@ -213,31 +353,33 @@ export const CustomAccordion = styled(Accordion)({
 
 // Sidebar Container
 export const ContentContainer = styled(Box)`
-	width: calc(100%); /* Ensures it takes the remaining space */
+	width: 100%; /* Ensures it takes the remaining space */
 	transition: margin-left 0.3s ease-in-out;
 	@media (max-width: 768px) {
 		margin-left: 0; /* Full width on small screens */
 		width: 100%;
 	}
 `;
-
 export const SidebarContainer = styled(Drawer)(({ theme }) => ({
 	"& .MuiDrawer-paper": {
 		width: 250,
 		height: "100%",
-		background: "#5d3786",
+		background:
+			"linear-gradient(to bottom, rgba(93, 55, 134, 0.3), rgba(93, 55, 134, 0.7))", // gradient with slight transparency
+		backdropFilter: "blur(10px)", // blur effect for glassmorphism
 		color: "white",
 		display: "flex",
 		flexDirection: "column",
 		justifyContent: "space-between",
 		padding: 25,
 		zIndex: 1000,
-		boxShadow: "2px 0 5px rgba(0, 0, 0, 0.2)",
+		boxShadow: "2px 0 10px rgba(0, 0, 0, 0.3)", // darker shadow for better separation
+		borderRadius: "0 20px 20px  0  ", // optional rounded corners
 	},
 }));
 
 // Sidebar Title
-export const SidebarTitle = styled.h6`
+export const SidebarTitle = styled("h6")`
 	color: #ff7706 !important; /* Ensures it stays orange */
 	padding: 25px;
 	font-weight: bold;
@@ -249,6 +391,7 @@ export const SidebarTitle = styled.h6`
 // Sidebar Dropdown
 export const SidebarDropdown = styled(Box)`
 	display: ${({ isDropdownOpen }) => (isDropdownOpen ? "block" : "none")};
+	backdrop-filter: blur(5px); /* Adding blur to dropdown for glass effect */
 `;
 
 // Sidebar List
@@ -256,10 +399,12 @@ export const SidebarList = styled(List)`
 	padding: 0;
 `;
 
+// Sidebar Item
 export const SidebarItem = styled(ListItem)`
 	margin-bottom: 10px;
 `;
 
+// Sidebar Item Icon
 export const SidebarItemIcon = styled(ListItemIcon)`
 	color: white !important;
 	min-width: 26px !important;
@@ -270,10 +415,12 @@ export const SidebarItemIcon = styled(ListItemIcon)`
 	}
 `;
 
+// Sidebar Button
 export const SidebarButton = styled(ListItemButton)`
 	height: auto;
 `;
 
+// Sidebar Item Text
 export const SidebarItemText = styled(ListItemText)`
 	span {
 		color: white !important;
@@ -308,8 +455,10 @@ export const Input = styled.input`
 	font-size: 1rem;
 `;
 export const CustomTabs = styled(Tabs)`
-	background-color: var(--white);
 	border-radius: 10px 10px 0 0;
+	backdropfilter: blur(10px);
+	webkitbackdropfilter: blur(10px);
+	backgroundcolor: rgba(255, 255, 255, 0.22);
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -328,7 +477,7 @@ export const CustomHead = styled(Box)({
 });
 
 export const CustomTab = styled(Tab)`
-	color: var(--eminence) !important;
+	color: var(--white) !important;
 	text-transform: none;
 	font-weight: bold;
 	&.Mui-selected {

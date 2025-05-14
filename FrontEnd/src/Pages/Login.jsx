@@ -9,6 +9,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+import WaveBackground from "../Includes/WaveBackground";
 
 const Login = ({ setIsLoggedIn }) => {
 	const navigate = useNavigate();
@@ -68,9 +69,9 @@ const Login = ({ setIsLoggedIn }) => {
 				display: "flex",
 				alignItems: "center",
 				justifyContent: "center",
-				backgroundColor: "#5D378C",
 				p: 2,
 				position: "relative",
+				overflow: "hidden",
 			}}
 		>
 			{/* Welcome Section */}
@@ -85,16 +86,13 @@ const Login = ({ setIsLoggedIn }) => {
 				}}
 			>
 				<Typography variant="h2" color="#FF7704" fontWeight={600}>
-					Welcome
+					Welcome to Cauayan Cares
 				</Typography>
 				<Typography variant="h4" fontWeight={600}>
-					Cauayan Cares - Archiving System
-				</Typography>
-				<Typography variant="h6">
-					Preserving Records, Empowering Communities
+					Archiving System: Preserving Records, Empowering Communities
 				</Typography>
 			</Box>
-
+			<WaveBackground />
 			{/* Image Section */}
 			<Box
 				sx={{
@@ -115,8 +113,11 @@ const Login = ({ setIsLoggedIn }) => {
 			{/* Login Form */}
 			<Box
 				sx={{
-					background: "#FBEAFF",
+					backdropFilter: "blur(10px)", // 100px is extreme and often ineffective
+					WebkitBackdropFilter: "blur(10px)", // Safari support
+					backgroundColor: "rgba(255, 255, 255, 0.28)", // Add transparency
 					p: 4,
+					zIndex: 3,
 					borderRadius: "10px",
 					width: { xs: "90%", sm: "60%", md: "30%" },
 					minWidth: "300px",
@@ -128,7 +129,7 @@ const Login = ({ setIsLoggedIn }) => {
 				<Typography variant="h5" fontWeight="bold" color="#FF7706" gutterBottom>
 					Login
 				</Typography>
-				<Typography color="textSecondary" mb={2}>
+				<Typography color="textSecondary" mb={2} sx={{ color: "white" }}>
 					Please enter your login credentials
 				</Typography>
 

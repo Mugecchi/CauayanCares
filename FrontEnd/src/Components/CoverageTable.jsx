@@ -24,6 +24,7 @@ import {
 	addCoverageScope,
 	updateCoverageScope,
 } from "../api";
+import { Tooltip } from "@mui/material";
 
 export default function CoverageTable() {
 	const [ordinances, setOrdinances] = useState([]);
@@ -83,7 +84,7 @@ export default function CoverageTable() {
 		};
 
 		getCoverage();
-	}, [page, rowsPerPage]);
+	}, []);
 
 	// Save state to localStorage whenever there are changes
 	useEffect(() => {
@@ -176,7 +177,19 @@ export default function CoverageTable() {
 		setPage(0);
 	};
 
-	if (loading) return <CircularProgress />;
+	if (loading) {
+		return (
+			<Box
+				display="flex"
+				justifyContent="center"
+				alignItems="center"
+				minHeight="60vh"
+			>
+				<CircularProgress />
+			</Box>
+		);
+	}
+
 	const barangays = [
 		"City-Wide",
 		"Alicaocao",
@@ -274,14 +287,39 @@ export default function CoverageTable() {
 								ordinance.coverage_scopes.length > 0 ? (
 									ordinance.coverage_scopes.map((scope) => (
 										<TableRow key={`${ordinance.id}-${scope.id}`}>
-											<TableCell>
-												{ordinance.title} {ordinance.number}
-											</TableCell>
-											<TableCell>
-												{scope.inclusive_period || "No coverage scope added"}
-											</TableCell>
-											<TableCell>{scope.target_beneficiaries}</TableCell>
-											<TableCell>{scope.geographical_coverage}</TableCell>
+											<Tooltip
+												title={`${ordinance.title}  ${ordinance.number}`}
+												arrow
+												placement="top-start"
+											>
+												<TableCell>
+													{ordinance.title} {ordinance.number}
+													{console.log(ordinance)}
+												</TableCell>
+											</Tooltip>
+											<Tooltip
+												title={scope.inclusive_period}
+												arrow
+												placement="top-start"
+											>
+												<TableCell>
+													{scope.inclusive_period || "No coverage scope added"}
+												</TableCell>
+											</Tooltip>
+											<Tooltip
+												arrow
+												title={scope.target_beneficiaries}
+												placement="top-start"
+											>
+												<TableCell>{scope.target_beneficiaries}</TableCell>
+											</Tooltip>
+											<Tooltip
+												arrow
+												placement="top-start"
+												title={scope.geographical_coverage}
+											>
+												<TableCell>{scope.geographical_coverage}</TableCell>
+											</Tooltip>
 											<TableCell>
 												<Button
 													variant="outlined"
@@ -294,9 +332,15 @@ export default function CoverageTable() {
 									))
 								) : (
 									<TableRow key={ordinance.id}>
-										<TableCell>
-											{ordinance.title} {ordinance.number}
-										</TableCell>
+										<Tooltip
+											title={`${ordinance.title}  ${ordinance.number}`}
+											arrow
+											placement="top-start"
+										>
+											<TableCell>
+												{ordinance.title} {ordinance.number}
+											</TableCell>
+										</Tooltip>
 										<TableCell colSpan={3}>No record</TableCell>
 										<TableCell>
 											<Button
@@ -312,7 +356,12 @@ export default function CoverageTable() {
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "flex-end",
+				}}
+			>
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
 					component="div"

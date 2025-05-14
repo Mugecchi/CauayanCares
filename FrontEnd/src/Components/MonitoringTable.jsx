@@ -19,6 +19,7 @@ import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
 
 import { fetchMonitoring, addMonitoring, updateMonitoring } from "../api";
+import { Tooltip } from "@mui/material";
 
 export default function Monitoring() {
 	const [ordinances, setOrdinances] = useState([]);
@@ -211,17 +212,94 @@ export default function Monitoring() {
 									ordinance.monitoring_compliance.map((scope) => (
 										<TableRow key={`${ordinance.id}-${scope.id}`}>
 											<TableCell>
-												{ordinance.title} {ordinance.number}
+												<Tooltip
+													title={`${ordinance.title} ${ordinance.number}`}
+													arrow
+												>
+													<span>
+														{ordinance.title} {ordinance.number}
+													</span>
+												</Tooltip>
 											</TableCell>
 											<TableCell>
-												{scope.indicators_of_success ||
-													"No Monitoring data added"}
+												<Tooltip
+													title={
+														scope.indicators_of_success ||
+														"No Monitoring data added"
+													}
+													arrow
+												>
+													<span>
+														{scope.indicators_of_success ||
+															"No Monitoring data added"}
+													</span>
+												</Tooltip>
 											</TableCell>
-											<TableCell>{scope.monitoring_frequency}</TableCell>
-											<TableCell>{`${scope.compliance_rate}%`}</TableCell>
-											<TableCell>{scope.challenges}</TableCell>
-											<TableCell>{scope.violations_reports}</TableCell>
-											<TableCell>{scope.feedback_mechanisms}</TableCell>
+											<TableCell>
+												<Tooltip
+													title={
+														scope.monitoring_frequency ||
+														"No Frequency data added"
+													}
+													arrow
+												>
+													<span>
+														{scope.monitoring_frequency ||
+															"No Frequency data added"}
+													</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip
+													title={
+														scope.compliance_rate
+															? `${scope.compliance_rate}% Compliance`
+															: "No Compliance data"
+													}
+													arrow
+												>
+													<span>{`${scope.compliance_rate}%`}</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip
+													title={scope.challenges || "No Challenges data added"}
+													arrow
+												>
+													<span>
+														{scope.challenges || "No Challenges data added"}
+													</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip
+													title={
+														scope.violations_reports ||
+														"No Violations data added"
+													}
+													arrow
+												>
+													<span>
+														{scope.violations_reports ||
+															"No Violations data added"}
+													</span>
+												</Tooltip>
+											</TableCell>
+											<TableCell>
+												<Tooltip
+													title={
+														scope.feedback_mechanisms ||
+														"No Feedback data added"
+													}
+													arrow
+												>
+													<span>
+														{scope.feedback_mechanisms ||
+															"No Feedback data added"}
+													</span>
+												</Tooltip>
+											</TableCell>
+
 											<TableCell>
 												<Button
 													variant="outlined"
@@ -235,7 +313,13 @@ export default function Monitoring() {
 								) : (
 									<TableRow key={ordinance.id}>
 										<TableCell>
-											{ordinance.title} {ordinance.number}
+											<Tooltip
+												title={`${ordinance.title} ${ordinance.number}`}
+												arrow
+												placement="top-start"
+											>
+												{ordinance.title} {ordinance.number}
+											</Tooltip>
 										</TableCell>
 										<TableCell colSpan={6}>No Monitoring Data</TableCell>
 										<TableCell>
@@ -252,7 +336,12 @@ export default function Monitoring() {
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "flex-end",
+				}}
+			>
 				<TablePagination
 					rowsPerPageOptions={[10, 20, 100]}
 					component="div"

@@ -32,12 +32,14 @@ const LogsTable = () => {
 	}, []);
 
 	const renderActionChip = (action) => {
-		if (action.includes("added")) {
-			return <Chip label={`${action}`} color="success" size="small" />;
-		} else if (action.includes("edited")) {
-			return <Chip label={`${action}`} color="warning" size="small" />;
-		} else if (action.includes("deleted")) {
-			return <Chip label={`${action}`} color="error" size="small" />;
+		const lowerAction = action.toLowerCase();
+
+		if (lowerAction.includes("added")) {
+			return <Chip label={action} color="success" size="small" />;
+		} else if (lowerAction.includes("edited")) {
+			return <Chip label={action} color="warning" size="small" />;
+		} else if (lowerAction.includes("deleted")) {
+			return <Chip label={action} color="error" size="small" />;
 		} else {
 			return (
 				<Chip
@@ -51,7 +53,18 @@ const LogsTable = () => {
 
 	return (
 		<WhiteBox sx={{ padding: 2 }}>
-			<Typography variant="h6" gutterBottom>
+			<Typography
+				variant="h6"
+				gutterBottom
+				fontWeight={600}
+				sx={{
+					color: "#ff7706",
+					textShadow: "1px 1px 2px  #fff",
+					background: "1px 1px 2px  rgba(255, 255, 255, 0.36)",
+					backdropFilter: "blur(10px)",
+					borderRadius: "1000px",
+				}}
+			>
 				Ordinance Activity Logs
 			</Typography>
 

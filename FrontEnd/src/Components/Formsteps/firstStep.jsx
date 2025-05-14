@@ -9,7 +9,7 @@ const Step1 = ({ formValues, updateForm }) => {
 		title: formValues.title || "",
 		documentType: formValues.documentType || "Executive Order",
 		number: formValues.number || "",
-		status: formValues.status || "Pending",
+		status: formValues.status || "Approved",
 		dateIssued: formValues.dateIssued || "",
 		dateEffectivity: formValues.dateEffectivity || "",
 		details: formValues.details || "",
@@ -22,7 +22,7 @@ const Step1 = ({ formValues, updateForm }) => {
 			title: formValues.title || "",
 			documentType: formValues.documentType || "Executive Order",
 			number: formValues.number || "",
-			status: formValues.status || "Pending",
+			status: formValues.status || "Approved",
 			dateIssued: formValues.dateIssued || "",
 			dateEffectivity: formValues.dateEffectivity || "",
 			details: formValues.details || "",
@@ -151,12 +151,12 @@ const Step1 = ({ formValues, updateForm }) => {
 					fullWidth
 					label="Status"
 					name="status"
-					value={formState.status || "Pending"}
+					value={formState.status || "Approved"}
 					onChange={handleFieldChange}
 				>
 					{[
-						"Pending",
 						"Approved",
+						"Pending",
 						"Implemented",
 						"Under Review",
 						"Amended",

@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { deleteOrdinance, fetchOrdinances, handlePreview } from "../api";
+import {
+	apiCall,
+	deleteOrdinance,
+	fetchOrdinances,
+	handlePreview,
+	updateOrdinance,
+} from "../api";
 
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
@@ -37,7 +43,7 @@ function EOTable() {
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [openPreview, setOpenPreview] = useState(false);
-	const [totalPages, setTotalPages] = useState(1);
+	const [totalPages, setTotalPages] = useState();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [documentType, setDocumentType] = useState("");
 
@@ -46,49 +52,104 @@ function EOTable() {
 		message: "",
 		severity: "info",
 	});
-	useEffect(() => {
-		const getRecords = async () => {
-			try {
-				// Pass searchQuery along with pagination info to the backend
-				const res = await fetchOrdinances(page + 1, rowsPerPage, searchQuery);
-				if (res.ordinances.length === 0) {
-					setError({ message: "No Records found.", severity: "error" });
-					setRecords([]);
-					setFilteredRecords([]);
-				} else {
-					setRecords(res.ordinances);
-					setFilteredRecords(res.ordinances);
-				}
-				setTotalPages(res.total_pages);
-			} catch (error) {
-				setError({
-					message: "An error occurred while fetching ordinances.",
-					severity: "error",
-				});
+	const [editableFields, setEditableFields] = useState({
+		title: true,
+		status: true,
+		details: true,
+		document_type: true,
+		date_issued: true,
+		number: true, // example: 'number' is not editable
+		file_path: false, // example: 'file_path' is not editable
+		date_effectivity: true, // example: 'date_effectivity' is not editable
+	});
+	const handleSave = async () => {
+		// Filter out non-editable fields before sending the payload
+		const payload = {};
+		for (let key in selectedRecord) {
+			if (editableFields[key]) {
+				payload[key] = selectedRecord[key];
 			}
-		};
+		}
 
-		getRecords();
-	}, [page, rowsPerPage, searchQuery]); // Add searchQuery as a dependency
+		try {
+			// Send only editable fields
+			await updateOrdinance(selectedRecord.id, payload);
+			console.log("Ordinance updated successfully.");
+
+			// Optionally show success toast or update UI
+			setError({
+				open: true,
+				message: "Record Updated Successfully",
+				severity: "success",
+			});
+			setOpenEdit(false);
+
+			// Refetch the records after successfully saving
+			await getRecords();
+		} catch (error) {
+			console.error("Failed to update ordinance:", error);
+			// Optionally show error message to user
+		}
+	};
+	const getRecords = async () => {
+		try {
+			// Pass searchQuery along with pagination info to the backend
+			const res = await fetchOrdinances(
+				page + 1,
+				rowsPerPage,
+				searchQuery,
+				documentType
+			);
+			if (res.ordinances.length === 0) {
+				setError({ message: "No Records found.", severity: "error" });
+				setRecords([]);
+				setFilteredRecords([]);
+			} else {
+				setRecords(res.ordinances);
+				setFilteredRecords(res.ordinances);
+				setTotalPages(res.total_count);
+			}
+			setTotalPages(res.total_count);
+		} catch (error) {
+			setError({
+				message: "An error occurred while fetching ordinances.",
+				severity: "error",
+			});
+		}
+	};
 
 	useEffect(() => {
-		const filtered = records.filter((record) => {
-			const matchesQuery =
-				record.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				record.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				record.document_type
-					.toLowerCase()
-					.includes(searchQuery.toLowerCase()) ||
-				record.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				record.number.toLowerCase().includes(searchQuery.toLowerCase());
+		getRecords();
+	}, [page, rowsPerPage, searchQuery, documentType]); // Add searchQuery as a dependency
 
-			const matchesType =
-				!documentType || record.document_type === documentType;
+	useEffect(() => {
+		if (records && records.length > 0) {
+			const filtered = records.filter((record) => {
+				const matchesQuery =
+					(record.title &&
+						record.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+					(record.details &&
+						record.details.toLowerCase().includes(searchQuery.toLowerCase())) ||
+					(record.document_type &&
+						record.document_type
+							.toLowerCase()
+							.includes(searchQuery.toLowerCase())) ||
+					(record.status &&
+						record.status.toLowerCase().includes(searchQuery.toLowerCase())) ||
+					(record.number &&
+						record.number.toLowerCase().includes(searchQuery.toLowerCase()));
 
-			return matchesQuery && matchesType;
-		});
+				const matchesType =
+					!documentType || record.document_type === documentType;
 
-		setFilteredRecords(filtered);
+				return matchesQuery && matchesType;
+			});
+
+			setFilteredRecords(filtered);
+		} else {
+			// Handle case when records is empty or null
+			setFilteredRecords([]);
+		}
 	}, [searchQuery, documentType, records]);
 
 	const handleChangePage = (event, newPage) => {
@@ -128,8 +189,14 @@ function EOTable() {
 	};
 	const uniqueDocumentTypes = [
 		"All",
-		...new Set(records.map((record) => record.document_type)),
+		"Ordinance",
+		"Executive Order",
+		"Memo",
+		"Resolution",
 	];
+	const fetchAllOrdinances = async () => {
+		return await fetchOrdinances(null, null, searchQuery, documentType);
+	};
 
 	return (
 		<div>
@@ -169,7 +236,12 @@ function EOTable() {
 					</FormControl>
 				</Box>
 				<Box>
-					<PrintTableSummary ordinances={filteredRecords} />
+					<PrintTableSummary
+						onClick={() => {
+							setRowsPerPage(totalPages);
+						}}
+						ordinances={filteredRecords}
+					/>
 				</Box>
 			</Box>
 			<TableContainer>
@@ -178,7 +250,6 @@ function EOTable() {
 						<TableRow>
 							<TableCell>Title</TableCell>
 							<TableCell>Status</TableCell>
-							<TableCell>Details</TableCell>
 							<TableCell>Series No.</TableCell>
 							<TableCell>Document Type</TableCell>
 							<TableCell>Date Issued</TableCell>
@@ -188,66 +259,84 @@ function EOTable() {
 					<TableBody>
 						{filteredRecords.map((record) => (
 							<TableRow key={record.id}>
-								<TableCell>{record.title}</TableCell>
-								<TableCell>{record.status}</TableCell>
-								<TableCell>{record.details}</TableCell>
-								<TableCell>{record.number}</TableCell>
-								<TableCell>{record.document_type}</TableCell>
-								<TableCell>
-									{new Date(record.date_issued).toLocaleDateString()}
-								</TableCell>
+								<Tooltip title={record.title} arrow placement="top-start">
+									<TableCell>{record.title}</TableCell>
+								</Tooltip>
+								<Tooltip title={record.status} arrow placement="top-start">
+									<TableCell>{record.status}</TableCell>
+								</Tooltip>
 
+								<Tooltip title={record.number} arrow placement="top-start">
+									<TableCell>{record.number}</TableCell>
+								</Tooltip>
+
+								<Tooltip
+									title={record.document_type}
+									arrow
+									placement="top-start"
+								>
+									<TableCell>{record.document_type}</TableCell>
+								</Tooltip>
+
+								<Tooltip
+									title={new Date(record.date_issued).toLocaleDateString()}
+									arrow
+									placement="top-start"
+								>
+									<TableCell>
+										{new Date(record.date_issued).toLocaleDateString()}
+									</TableCell>
+								</Tooltip>
 								<TableCell>
 									{record.file_path && (
-										<Tooltip title="Preview File" arrow>
-											<IconButton
-												onClick={() =>
-													handlePreview(
-														record.file_path,
-														setSelectedFile,
-														setOpenPreview
-													)
-												}
-											>
-												<img src="/Printer.svg" alt="preview" />
-											</IconButton>
-										</Tooltip>
+										<IconButton
+											onClick={() =>
+												handlePreview(
+													record.file_path,
+													setSelectedFile,
+													setOpenPreview
+												)
+											}
+										>
+											<img src="/Printer.svg" alt="preview" />
+										</IconButton>
 									)}
 
-									<Tooltip title="Delete Ordinance" arrow>
-										<IconButton
-											onClick={() => handleDelete(record.id)}
-											color="error"
-										>
-											<img src="/trash.svg" alt="delete" />
-										</IconButton>
-									</Tooltip>
-									<Tooltip title="Edit Ordinance" arrow>
-										<IconButton
-											onClick={() => {
-												setSelectedRecord(record);
-												setOpenEdit(true);
-											}}
-											color="primary"
-										>
-											<img src="/edit.svg" alt="edit" />
-										</IconButton>
-									</Tooltip>
+									<IconButton
+										onClick={() => handleDelete(record.id)}
+										color="error"
+									>
+										<img src="/trash.svg" alt="delete" />
+									</IconButton>
+									<IconButton
+										onClick={() => {
+											setSelectedRecord(record);
+											setOpenEdit(true);
+										}}
+										color="primary"
+									>
+										<img src="/edit.svg" alt="edit" />
+									</IconButton>
 								</TableCell>
 							</TableRow>
 						))}
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box sx={{ position: "absolute", bottom: 0, right: 0 }}>
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "flex-end",
+				}}
+			>
 				<TablePagination
 					component="div"
-					count={totalPages * rowsPerPage}
+					count={totalPages}
 					page={page}
 					onPageChange={handleChangePage}
 					rowsPerPage={rowsPerPage}
 					onRowsPerPageChange={handleChangeRowsPerPage}
-					rowsPerPageOptions={[10, 25, 50]}
+					rowsPerPageOptions={[10, 25, 50, 100]}
 				/>
 			</Box>
 			<Snackbar
@@ -265,12 +354,7 @@ function EOTable() {
 					{error.message}
 				</Alert>
 			</Snackbar>
-			<Dialog
-				open={openPreview}
-				onClose={() => setOpenPreview(false)}
-				maxWidth="lg"
-				fullWidth
-			>
+			<Dialog open={openPreview} onClose={() => setOpenPreview(false)}>
 				<DialogTitle>
 					Preview Records
 					<IconButton
@@ -280,6 +364,7 @@ function EOTable() {
 						<Close />
 					</IconButton>
 				</DialogTitle>
+
 				<DialogContent dividers>
 					{selectedFile ? (
 						<iframe
@@ -294,7 +379,8 @@ function EOTable() {
 					)}
 				</DialogContent>
 			</Dialog>
-			<Dialog open={openEdit} onClose={() => setOpenEdit(false)} fullScreen>
+
+			<Dialog open={openEdit} onClose={() => setOpenEdit(false)}>
 				<DialogTitle>Edit Ordinance</DialogTitle>
 				<DialogContent>
 					<TextField
@@ -306,15 +392,24 @@ function EOTable() {
 							setSelectedRecord({ ...selectedRecord, title: e.target.value })
 						}
 					/>
-					<TextField
-						label="Status"
-						fullWidth
-						margin="dense"
-						value={selectedRecord?.status || ""}
-						onChange={(e) =>
-							setSelectedRecord({ ...selectedRecord, status: e.target.value })
-						}
-					/>
+					<FormControl fullWidth>
+						<InputLabel>Status</InputLabel>
+						<Select
+							label="Status"
+							margin="dense"
+							value={selectedRecord?.status || ""}
+							onChange={(e) =>
+								setSelectedRecord({ ...selectedRecord, status: e.target.value })
+							}
+						>
+							<MenuItem value="Approved">Approved</MenuItem>
+							<MenuItem value="Pending">Pending</MenuItem>
+							<MenuItem value="Amended">Amended</MenuItem>
+							<MenuItem value="Under Review">Under Review</MenuItem>
+							<MenuItem value="Implemented">Implemented</MenuItem>
+						</Select>
+					</FormControl>
+
 					<TextField
 						label="Details"
 						fullWidth
@@ -360,7 +455,7 @@ function EOTable() {
 						onChange={(e) =>
 							setSelectedRecord({
 								...selectedRecord,
-								date_issued: e.target.value,
+								date_issued: e.target.value, // Ensure the date remains without time
 							})
 						}
 						InputLabelProps={{ shrink: true }}
@@ -369,7 +464,7 @@ function EOTable() {
 				<DialogActions>
 					<Button onClick={() => setOpenEdit(false)}>Cancel</Button>
 					<Button
-						onClick={() => handleEditSave()}
+						onClick={() => handleSave()}
 						variant="contained"
 						color="primary"
 					>
@@ -380,5 +475,4 @@ function EOTable() {
 		</div>
 	);
 }
-
 export default EOTable;

@@ -28,7 +28,7 @@ const steps = [
 	"Objectives Implementation",
 	"Monitoring Compliance",
 	"Impact Asessment",
-	"File Upload",
+	"Form Preview",
 ];
 
 const AddRecord = () => {
@@ -124,13 +124,13 @@ const AddRecord = () => {
 	});
 
 	const stepInstructions = [
-		"Provide the title, ordinance number, and basic description.",
-		"Define the ordinance's coverage scope and target beneficiaries.",
+		"Provide the record title, number, and a basic description.",
+		"Define the record's coverage scope and target beneficiaries.",
 		"Input budget allocations, utilization, GAD budget, and funding sources.",
 		"Specify policy objectives, implementing agencies, and key provisions.",
 		"Set the monitoring frequency and describe compliance and indicators.",
 		"Summarize impact assessment, community feedback, and challenges.",
-		"Upload related ordinance files (PDF, images, documents).",
+		"Review the form for accuracy",
 	];
 
 	return (
@@ -177,6 +177,7 @@ const AddRecord = () => {
 										}}
 									>
 										<Typography
+											color="white"
 											variant={activeStep === index ? "h6" : "body2"}
 											fontWeight="bold"
 										>
@@ -188,7 +189,7 @@ const AddRecord = () => {
 											borderLeft: "3px solid var(--eminence)", // Left border color
 										}}
 									>
-										<Typography variant="body2">
+										<Typography color="#fff" variant="body2">
 											{stepInstructions[index]}
 										</Typography>
 									</StepContent>
@@ -217,13 +218,12 @@ const AddRecord = () => {
 									pt: 2,
 								}}
 							>
-								<Button
-									disabled={activeStep === 0}
-									onClick={handleBack}
-									sx={{ mt: 1, mr: 1 }}
-								>
-									Back
-								</Button>
+								{activeStep !== 0 && (
+									<Button onClick={handleBack} sx={{ mt: 1, mr: 1 }}>
+										Back
+									</Button>
+								)}
+
 								{activeStep === steps.length - 1 ? (
 									<Button
 										variant="contained"

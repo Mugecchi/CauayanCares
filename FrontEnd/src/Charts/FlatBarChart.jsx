@@ -46,10 +46,21 @@ const FlatBarChart = ({
 					display: "flex",
 					justifyContent: "center",
 					alignItems: "center",
-					p: 2,
+					p: 0,
+					m: 0,
+					position: "relative", // Added position for background control
+					overflow: "hidden", // Prevents overflow from background effects
 				}}
 			>
-				<Skeleton variant="rectangular" width="100%" height="100%" />
+				<Skeleton
+					sx={{
+						background: "linear-gradient(90deg, #d4bcef, #e2d5f7, #d4bcef)",
+						transform: "scale(1.1)", // Slight zoom effect if desired
+					}}
+					variant="rectangular"
+					width="100%"
+					height="100%"
+				/>
 			</Paper>
 		);
 	}
@@ -57,18 +68,36 @@ const FlatBarChart = ({
 	return (
 		<Paper
 			sx={{
-				flexDirection: "column",
+				backdropFilter: "blur(10px)", // 100px is extreme and often ineffective
+				WebkitBackdropFilter: "blur(10px)", // Safari support
+				backgroundColor: "rgba(255, 255, 255, 0.22)", // Add transparency
 				borderRadius: 2,
 				width: "100%",
-				height: "500px",
+				height: "400px",
 				display: "flex",
+				flexDirection: "column",
 				justifyContent: "center",
 				alignItems: "center",
 				p: 2,
 			}}
+			elevation={5}
 		>
 			<BarChart
 				layout={layout}
+				sx={{
+					"& text": {
+						fill: "#fff !important",
+						color: "#fff", // Sets all text in the chart to white
+					},
+					"& .MuiChartsAxis-root": {
+						"& text": {
+							fill: "#fff", // Ensures axis text is white
+						},
+						"& path, & line": {
+							stroke: "#fff", // Ensures axis lines and ticks are white
+						},
+					},
+				}}
 				xAxis={
 					layout === "vertical"
 						? [
@@ -107,6 +136,7 @@ const FlatBarChart = ({
 				series={seriesData}
 			/>
 			<Stack
+				sx={{ color: "white" }}
 				direction="row"
 				justifyContent="flex-start"
 				alignItems="center"

@@ -10,10 +10,10 @@ const Step8 = ({ formValues }) => {
 			<Grid container spacing={2}>
 				{Object.entries(formValues).map(([key, value]) => (
 					<Grid item xs={12} key={key}>
-						<Typography variant="subtitle2" color="textSecondary">
+						<Typography variant="subtitle2" color="#fff">
 							{key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}:
 						</Typography>
-						<Typography variant="body1">
+						<Typography variant="body1" color="#fff">
 							{key === "file_path" && value instanceof File
 								? value.name || "No file name available"
 								: typeof value === "object" && value !== null

@@ -91,6 +91,12 @@ const Step2 = ({ formValues, updateForm }) => {
 		"Villaflor",
 	];
 
+	const handleTargetChange = (event) => {
+		const selected = event.target.value;
+		updateForm({
+			target_beneficiaries: selected.join(","),
+		});
+	};
 	return (
 		<Grid container spacing={2}>
 			<Grid item xs={12}>
@@ -109,12 +115,18 @@ const Step2 = ({ formValues, updateForm }) => {
 					<InputLabel id="target-beneficiaries-label">
 						Target Beneficiaries
 					</InputLabel>
+					{formValues.geographical_coverage
+						? formValues.geographical_coverage.split(",").filter(Boolean)
+						: []}
 					<Select
+						multiple
 						labelId="target-beneficiaries-label"
-						value={formValues.target_beneficiaries || ""}
-						onChange={(e) =>
-							updateForm({ target_beneficiaries: e.target.value })
+						value={
+							formValues.target_beneficiaries
+								? formValues.target_beneficiaries.split(",").filter(Boolean)
+								: []
 						}
+						onChange={handleTargetChange}
 						input={<OutlinedInput label="Target Beneficiaries" />}
 					>
 						<MenuItem value="General Public">General Public</MenuItem>

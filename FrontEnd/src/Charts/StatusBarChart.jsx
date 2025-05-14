@@ -43,10 +43,21 @@ const StatusBarChart = ({ data = {}, colors = [], isLoading }) => {
 					display: "flex",
 					justifyContent: "center",
 					alignItems: "center",
-					p: 2,
+					p: 0,
+					m: 0,
+					overflow: "hidden",
 				}}
 			>
-				<Skeleton variant="rectangular" width="100%" height="100%" />
+				<Skeleton
+					variant="rectangular"
+					animation="wave"
+					width="200%"
+					height="200%"
+					sx={{
+						background: "linear-gradient(90deg, #d4bcef, #e2d5f7, #d4bcef)",
+						transform: "scale(1.1)", // Slight zoom effect if desired
+					}}
+				/>
 			</Paper>
 		);
 	}
@@ -54,6 +65,9 @@ const StatusBarChart = ({ data = {}, colors = [], isLoading }) => {
 	return (
 		<Paper
 			sx={{
+				backdropFilter: "blur(10px)", // 100px is extreme and often ineffective
+				WebkitBackdropFilter: "blur(10px)", // Safari support
+				backgroundColor: "rgba(255, 255, 255, 0.22)", // Add transparency
 				borderRadius: 2,
 				width: "100%",
 				height: "400px",
@@ -62,15 +76,53 @@ const StatusBarChart = ({ data = {}, colors = [], isLoading }) => {
 				alignItems: "center",
 				p: 2,
 			}}
+			elevation={5}
 		>
 			<BarChart
+				sx={{
+					"& text": {
+						fill: "#fff !important",
+						color: "#fff", // Sets all text in the chart to white
+					},
+					"& .MuiChartsLegend-root": {
+						color: "#fff", // Applies to legend text
+						fill: "#fff",
+					},
+					"& .MuiChartsLegend-row": {
+						color: "#fff", // Applies to legend text
+						fill: "#fff",
+					},
+					"& .MuiChartsAxis-tickLabel": {
+						color: "#fff", // Applies to legend text
+
+						fill: "#fff", // X/Y axis tick labels
+					},
+					"& .MuiChartsAxis-label": {
+						color: "#fff", // Applies to legend text
+
+						fill: "#fff", // Axis main labels
+					},
+					"& .MuiChartsAxis-root": {
+						"& text": {
+							fill: "#fff", // Ensures axis text is white
+						},
+						"& path, & line": {
+							stroke: "#fff", // Ensures axis lines and ticks are white
+						},
+					},
+				}}
 				borderRadius={5}
 				xAxis={[
 					{
-						scaleType: "band", // Keeping this as 'band' for categorical x-axis
-						data: statusLabels, // Ensure these are categorical labels
+						scaleType: "band",
+						data: statusLabels,
 					},
 				]}
+				slotProps={{
+					legend: {
+						color: "white",
+					},
+				}}
 				series={seriesData}
 			/>
 		</Paper>

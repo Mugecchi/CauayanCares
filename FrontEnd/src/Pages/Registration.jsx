@@ -19,7 +19,6 @@ import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import Avatar from "@mui/material/Avatar";
 import { Close, Add, PhotoCamera } from "@mui/icons-material";
-
 import { fetchUser, getAvatarUrl } from "../api";
 import { fetchUsers, createUser, updateUser, deleteUser } from "../api";
 import { WhiteBox } from "../Includes/styledComponents";
@@ -244,7 +243,7 @@ const Registration = () => {
 				)}
 			</Box>
 			<TableContainer>
-				<Table stickyHeader size="medium">
+				<Table>
 					<TableHead>
 						<TableRow>
 							<TableCell>Profile</TableCell>

@@ -1,4 +1,3 @@
-// Components/LoadingScreen.jsx
 import React from "react";
 import Box from "@mui/material/Box";
 import { motion } from "framer-motion";
@@ -20,9 +19,6 @@ const LoadingScreen = () => {
 					flex={1}
 					flexDirection="column"
 					gap={3}
-					sx={{
-						transformStyle: "preserve-3d", // Ensure children maintain 3D
-					}}
 				>
 					<motion.img
 						src="logo.png"

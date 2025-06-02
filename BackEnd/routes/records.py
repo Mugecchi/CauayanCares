@@ -159,8 +159,7 @@ def add_ordinance():
 def get_ordinances():
     # Pagination parameters (default values: page 1, per_page 10)
     page = int(request.args.get("page", 1))
-    per_page = int(request.args.get("per_page", 10))
-
+    per_page = max(int(request.args.get("per_page", 10)), 1)
     # Search query (optional)
     search = request.args.get("search", "").lower()
     document_type_filter = request.args.get("document_type", "").lower()
@@ -176,20 +175,35 @@ def get_ordinances():
     # Add search condition if search query is provided
     if search:
         query += """
-            AND (LOWER(title) LIKE %s OR
-                 LOWER(details) LIKE %s OR
-                 LOWER(status) LIKE %s OR
-                 LOWER(document_type) LIKE %s OR
-                 LOWER(number) LIKE %s)
+          AND (
+    LOWER(title) LIKE %s OR
+    LOWER(details) LIKE %s OR
+    LOWER(status) LIKE %s OR
+    LOWER(document_type) LIKE %s OR
+    LOWER(number) LIKE %s OR
+    DATE_FORMAT(date_issued, '%Y-%m-%d') LIKE %s OR
+    DATE_FORMAT(date_issued, '%m/%d/%Y') LIKE %s OR
+    DATE_FORMAT(date_issued, '%M %d, %Y') LIKE %s OR
+    DATE_FORMAT(date_issued, '%b %d, %Y') LIKE %s OR
+    DATE_FORMAT(date_issued, '%Y') LIKE %s
+)
+
         """
         search_pattern = f"%{search}%"
-        params.extend([search_pattern, search_pattern, search_pattern, search_pattern, search_pattern])
+        params.extend([search_pattern] * 5)
+        params.extend([search_pattern] * 5)
+
+
 
     # Add document_type filter if provided
     if document_type_filter:
         query += " AND LOWER(document_type) = %s"
         params.append(document_type_filter)
 
+
+    query+="""
+        Order by ID desc
+"""
     # Execute the query to fetch ordinances with the filters
     ordinances = execute_query(query, params)
 
@@ -202,6 +216,7 @@ def get_ordinances():
                  LOWER(status) LIKE %s OR
                  LOWER(document_type) LIKE %s OR
                  LOWER(number) LIKE %s)
+                 
         """
         params_for_count = [search_pattern, search_pattern, search_pattern, search_pattern, search_pattern]
     else:

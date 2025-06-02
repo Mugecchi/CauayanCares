@@ -29,23 +29,21 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-
 import Close from "@mui/icons-material/Close";
-
 import PrintTableSummary from "../Includes/PrintTableSummary";
 function EOTable() {
 	const [records, setRecords] = useState([]);
 	const [openEdit, setOpenEdit] = useState(false);
 	const [selectedRecord, setSelectedRecord] = useState(null);
-
 	const [selectedFile, setSelectedFile] = useState("");
 	const [filteredRecords, setFilteredRecords] = useState([]);
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [openPreview, setOpenPreview] = useState(false);
-	const [totalPages, setTotalPages] = useState();
+	const [totalPages, setTotalPages] = useState(10);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [documentType, setDocumentType] = useState("");
+	const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
 	const [error, setError] = useState({
 		open: false,
@@ -62,6 +60,20 @@ function EOTable() {
 		file_path: false, // example: 'file_path' is not editable
 		date_effectivity: true, // example: 'date_effectivity' is not editable
 	});
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			setDebouncedSearchQuery(searchQuery);
+
+			if (searchQuery.trim() === "") {
+				setRowsPerPage(10); // Reset to default if search is empty
+			} else {
+				setRowsPerPage(totalPages);
+			}
+		}, 400); // Adjust delay as needed
+
+		return () => clearTimeout(handler); // cleanup on change
+	}, [searchQuery, totalPages]);
+
 	const handleSave = async () => {
 		// Filter out non-editable fields before sending the payload
 		const payload = {};
@@ -97,7 +109,7 @@ function EOTable() {
 			const res = await fetchOrdinances(
 				page + 1,
 				rowsPerPage,
-				searchQuery,
+				debouncedSearchQuery,
 				documentType
 			);
 			if (res.ordinances.length === 0) {
@@ -120,24 +132,33 @@ function EOTable() {
 
 	useEffect(() => {
 		getRecords();
-	}, [page, rowsPerPage, searchQuery, documentType]); // Add searchQuery as a dependency
+	}, [page, rowsPerPage, debouncedSearchQuery, documentType]); // Add debouncedSearchQuery as a dependency
 
 	useEffect(() => {
+		// Helper to normalize date string: convert to Date then to "YYYY-M-D" without leading zeros
+		const normalizeDate = (dateStr) => {
+			if (!dateStr) return "";
+			const date = new Date(dateStr);
+			if (isNaN(date)) return dateStr; // fallback if invalid
+			return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+		};
+
 		if (records && records.length > 0) {
+			const normalizedSearch = debouncedSearchQuery.trim().toLowerCase();
+
 			const filtered = records.filter((record) => {
+				const normalizedDate = normalizeDate(record.date_issued).toLowerCase();
+
 				const matchesQuery =
 					(record.title &&
-						record.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-					(record.details &&
-						record.details.toLowerCase().includes(searchQuery.toLowerCase())) ||
+						record.title.toLowerCase().includes(normalizedSearch)) ||
 					(record.document_type &&
-						record.document_type
-							.toLowerCase()
-							.includes(searchQuery.toLowerCase())) ||
+						record.document_type.toLowerCase().includes(normalizedSearch)) ||
 					(record.status &&
-						record.status.toLowerCase().includes(searchQuery.toLowerCase())) ||
+						record.status.toLowerCase().includes(normalizedSearch)) ||
 					(record.number &&
-						record.number.toLowerCase().includes(searchQuery.toLowerCase()));
+						record.number.toLowerCase().includes(normalizedSearch)) ||
+					(normalizedDate && normalizedDate.includes(normalizedSearch));
 
 				const matchesType =
 					!documentType || record.document_type === documentType;
@@ -147,10 +168,9 @@ function EOTable() {
 
 			setFilteredRecords(filtered);
 		} else {
-			// Handle case when records is empty or null
 			setFilteredRecords([]);
 		}
-	}, [searchQuery, documentType, records]);
+	}, [debouncedSearchQuery, documentType, records]);
 
 	const handleChangePage = (event, newPage) => {
 		setPage(newPage);
@@ -194,9 +214,6 @@ function EOTable() {
 		"Memo",
 		"Resolution",
 	];
-	const fetchAllOrdinances = async () => {
-		return await fetchOrdinances(null, null, searchQuery, documentType);
-	};
 
 	return (
 		<div>
@@ -212,6 +229,7 @@ function EOTable() {
 						label="Search Record"
 						variant="outlined"
 						margin="normal"
+						sx={{ marginRight: 1 }}
 						value={searchQuery}
 						onChange={handleSearchChange}
 					/>
@@ -329,15 +347,17 @@ function EOTable() {
 					justifyContent: "flex-end",
 				}}
 			>
-				<TablePagination
-					component="div"
-					count={totalPages}
-					page={page}
-					onPageChange={handleChangePage}
-					rowsPerPage={rowsPerPage}
-					onRowsPerPageChange={handleChangeRowsPerPage}
-					rowsPerPageOptions={[10, 25, 50, 100]}
-				/>
+				{typeof totalPages === "number" && totalPages > 0 && (
+					<TablePagination
+						component="div"
+						count={totalPages}
+						page={page}
+						onPageChange={handleChangePage}
+						rowsPerPage={rowsPerPage}
+						onRowsPerPageChange={handleChangeRowsPerPage}
+						rowsPerPageOptions={[10, 25, 50, 100, totalPages]}
+					/>
+				)}
 			</Box>
 			<Snackbar
 				open={!!error.message}

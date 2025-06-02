@@ -39,22 +39,7 @@ export default function CoverageTable() {
 	});
 	const [openModal, setOpenModal] = useState(false);
 	const [selectedCoverage, setSelectedCoverage] = useState(null);
-
 	useEffect(() => {
-		const cachedData = localStorage.getItem("CoverageRecords");
-		if (cachedData) {
-			const parsed = JSON.parse(cachedData);
-			const isExpired = Date.now() - parsed.cachedAt > 1000 * 60 * 5; // 5-minute expiration check
-
-			// If cached data is not expired, load from localStorage
-			if (parsed.ordinances?.length > 0 && !isExpired) {
-				setOrdinances(parsed.ordinances);
-				setLoading(false);
-				return;
-			}
-		}
-
-		// Fetch new records if cache is expired or doesn't exist
 		const getCoverage = async () => {
 			try {
 				const response = await fetchOrdinancesCoverage();
@@ -86,17 +71,6 @@ export default function CoverageTable() {
 		getCoverage();
 	}, []);
 
-	// Save state to localStorage whenever there are changes
-	useEffect(() => {
-		localStorage.setItem(
-			"CoverageRecords",
-			JSON.stringify({
-				ordinances,
-				cachedAt: Date.now(),
-			})
-		);
-	}, [ordinances]); // Store ordinances whenever they change
-
 	const filteredOrdinances = useMemo(() => {
 		return ordinances.filter((ordinance) => {
 			const searchLower = searchQuery.toLowerCase();
@@ -120,6 +94,7 @@ export default function CoverageTable() {
 			return titleOrNumberMatch || scopeMatch;
 		});
 	}, [ordinances, searchQuery]);
+
 	const handleEdit = (ordinance, scope) => {
 		setSelectedCoverage({
 			id: scope?.id || "",
@@ -152,13 +127,6 @@ export default function CoverageTable() {
 			setLoading(true);
 
 			const updatedData = await fetchOrdinancesCoverage();
-
-			// Update both localStorage and state correctly
-			const cacheData = {
-				ordinances: updatedData,
-				cachedAt: Date.now(),
-			};
-			localStorage.setItem("CoverageRecords", JSON.stringify(cacheData));
 			setOrdinances(updatedData);
 			setLoading(false);
 		} catch (error) {
@@ -170,6 +138,7 @@ export default function CoverageTable() {
 			console.error("Error saving Record:", error);
 		}
 	};
+
 	const handleSearchChange = (event) => setSearchQuery(event.target.value);
 	const handlePageChange = (event, newPage) => setPage(newPage);
 	const handleRowsPerPageChange = (event) => {
@@ -259,7 +228,7 @@ export default function CoverageTable() {
 		"Villa Luna",
 		"Villaflor",
 	];
-
+	console.log(filteredOrdinances);
 	return (
 		<div>
 			<TextField

@@ -13,6 +13,7 @@ def get_all_ordinances_with_scope():
         FROM ordinances o
         LEFT JOIN coverage_scope cs ON o.id = cs.ordinance_id
         WHERE o.is_deleted = 0;
+        order by o.id desc
     """
     rows = execute_query(query)
 

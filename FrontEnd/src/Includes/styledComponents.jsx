@@ -29,24 +29,22 @@ export const GlobalStyles = createGlobalStyle`
 		--silver-chalice: #ACABAB;
 		--white: #FFFFFF;
 		--eminence: #69247C;
-    --background-color: radial-gradient(circle at 30% 30%, #5D378C 0%, transparent 100%),radial-gradient(circle at 70% 70%, #FF7704 0%, transparent 100%);
-    
-    color-scheme: light dark;
-    color: var(--text-color);
-    background: var(--background-color);
-    
-    font-family: "SF Pro Display", sans-serif;
-
+		--background-color: radial-gradient(circle at 30% 30%, #5D378C 0%, transparent 100%),radial-gradient(circle at 70% 70%, #FF7704 0%, transparent 100%);
+		--border: 240 3.7% 15.9%;
+		color-scheme: dark;
+		color: var(--text-color);
+		background: var(--background-color);
+		font-family: "SF Pro Display", sans-serif;
   }
 
   *, *::before, *::after {
     box-sizing: border-box;
-
+	border-color: hsl(var(--border));
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
     margin: 0;
     padding: 0;
   }
-
- 
   body {
     font-size: 16px;
     line-height: 1.6;
@@ -352,14 +350,14 @@ export const CustomAccordion = styled(Accordion)({
 });
 
 // Sidebar Container
-export const ContentContainer = styled(Box)`
-	width: 100%; /* Ensures it takes the remaining space */
-	transition: margin-left 0.3s ease-in-out;
-	@media (max-width: 768px) {
-		margin-left: 0; /* Full width on small screens */
-		width: 100%;
-	}
-`;
+export const ContentContainer = styled(Box)(({ theme }) => ({
+	width: "100%",
+	transition: "margin-left 0.3s ease-in-out",
+	md: {
+		marginLeft: 0,
+		width: "100%",
+	},
+}));
 export const SidebarContainer = styled(Drawer)(({ theme }) => ({
 	"& .MuiDrawer-paper": {
 		width: 250,

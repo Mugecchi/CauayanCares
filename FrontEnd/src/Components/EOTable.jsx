@@ -202,6 +202,7 @@ function EOTable() {
 
 	const handleDocumentTypeChange = (event) => {
 		setDocumentType(event.target.value);
+		setPage(0); // Reset to first page when changing document type
 	};
 
 	const handleSearchChange = (event) => {
@@ -297,12 +298,18 @@ function EOTable() {
 								</Tooltip>
 
 								<Tooltip
-									title={new Date(record.date_issued).toLocaleDateString()}
+									title={
+										record?.date_issued
+											? new Date(record.date_issued).toLocaleDateString()
+											: "N/A"
+									}
 									arrow
 									placement="top-start"
 								>
 									<TableCell>
-										{new Date(record.date_issued).toLocaleDateString()}
+										{record?.date_issued
+											? new Date(record.date_issued).toLocaleDateString()
+											: "N/A"}
 									</TableCell>
 								</Tooltip>
 								<TableCell>

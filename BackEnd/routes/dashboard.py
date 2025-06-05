@@ -53,12 +53,24 @@ def get_dashboard_counts():
 def get_historical_data():
     # Query to group ordinances by month/year of date_issued and document type
     query = """
-        SELECT DATE_FORMAT(date_issued, '%Y - %m') AS formatted_date, 
-               document_type, 
-               COUNT(*) 
-        FROM ordinances 
-        WHERE date_issued IS NOT NULL AND is_deleted = false
-        GROUP BY formatted_date, document_type;
+SELECT 
+  DATE_FORMAT(
+    CASE 
+      WHEN date_issued LIKE '%/%' AND LENGTH(date_issued) = 10 AND SUBSTRING_INDEX(date_issued, '/', 1) > 12 THEN STR_TO_DATE(date_issued, '%Y/%m/%d')
+      WHEN date_issued LIKE '%-%' AND LENGTH(date_issued) = 10 AND SUBSTRING_INDEX(date_issued, '-', 1) > 12 THEN STR_TO_DATE(date_issued, '%Y-%m-%d')
+      WHEN date_issued LIKE '%/%' AND LENGTH(date_issued) = 10 THEN STR_TO_DATE(date_issued, '%m/%d/%Y')
+      WHEN date_issued LIKE '%-%' AND LENGTH(date_issued) = 10 THEN STR_TO_DATE(date_issued, '%m-%d-%Y')
+      ELSE NULL
+    END, 
+    '%Y - %m'
+  ) AS formatted_date,
+  document_type,
+  COUNT(*) 
+FROM ordinances 
+WHERE date_issued IS NOT NULL 
+  AND is_deleted = false
+GROUP BY formatted_date, document_type;
+
     """
     data = execute_query(query)
 
@@ -67,8 +79,12 @@ def get_historical_data():
 
     # Process the results
     for month_year, doc_type, count in data:
+        if not month_year or not doc_type:
+            continue  # Skip if either is None or empty string
+
         if month_year not in counts:
             counts[month_year] = {}
+
         counts[month_year][doc_type] = count
 
     return jsonify(counts), 200

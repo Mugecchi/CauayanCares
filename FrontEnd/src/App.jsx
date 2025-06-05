@@ -13,11 +13,10 @@ import Header from "./Includes/Header";
 import { AuthProvider, useAuth } from "./Context";
 import { ContentContainer, ThemeProv } from "./Includes/styledComponents";
 import LoadingScreen from "./Includes/LoadingScreen";
-
+import Login from "./Pages/Login";
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./Pages/Dashboard"));
 const Tables = lazy(() => import("./Pages/Tables"));
-const Login = lazy(() => import("./Pages/Login"));
 const Registration = lazy(() => import("./Pages/Registration"));
 const DocumentationReps = lazy(() => import("./Components/DocumentationReps"));
 const AddRecord = lazy(() => import("./Pages/AddRecord"));

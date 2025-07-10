@@ -31,6 +31,7 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import Close from "@mui/icons-material/Close";
 import PrintTableSummary from "../Includes/PrintTableSummary";
+import { useAuth } from "../Context";
 function EOTable() {
 	const [records, setRecords] = useState([]);
 	const [openEdit, setOpenEdit] = useState(false);
@@ -38,12 +39,13 @@ function EOTable() {
 	const [selectedFile, setSelectedFile] = useState("");
 	const [filteredRecords, setFilteredRecords] = useState([]);
 	const [page, setPage] = useState(0);
-	const [rowsPerPage, setRowsPerPage] = useState(10);
+	const [rowsPerPage, setRowsPerPage] = useState(20);
 	const [openPreview, setOpenPreview] = useState(false);
 	const [totalPages, setTotalPages] = useState(10);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [documentType, setDocumentType] = useState("");
 	const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+	const { isLoggedIn } = useAuth();
 
 	const [error, setError] = useState({
 		open: false,
@@ -65,7 +67,7 @@ function EOTable() {
 			setDebouncedSearchQuery(searchQuery);
 
 			if (searchQuery.trim() === "") {
-				setRowsPerPage(10); // Reset to default if search is empty
+				setRowsPerPage(20); // Reset to default if search is empty
 			} else {
 				setRowsPerPage(totalPages);
 			}
@@ -255,12 +257,14 @@ function EOTable() {
 					</FormControl>
 				</Box>
 				<Box>
-					<PrintTableSummary
-						onClick={() => {
-							setRowsPerPage(totalPages);
-						}}
-						ordinances={filteredRecords}
-					/>
+					{isLoggedIn && (
+						<PrintTableSummary
+							onClick={() => {
+								setRowsPerPage(totalPages);
+							}}
+							ordinances={filteredRecords}
+						/>
+					)}
 				</Box>
 			</Box>
 			<TableContainer>
@@ -312,48 +316,52 @@ function EOTable() {
 											: "N/A"}
 									</TableCell>
 								</Tooltip>
+
 								<TableCell>
+									{/* Preview Button */}
 									{record.file_path && (
-										<IconButton
-											onClick={() =>
-												handlePreview(
-													record.file_path,
-													setSelectedFile,
-													setOpenPreview
-												)
-											}
-										>
-											<img src="/Printer.svg" alt="preview" />
-										</IconButton>
+										<Tooltip title="Preview" arrow placement="top-start">
+											<IconButton
+												onClick={() =>
+													handlePreview(
+														record.file_path,
+														setSelectedFile,
+														setOpenPreview
+													)
+												}
+											>
+												<img src="/Printer.svg" alt="preview" />
+											</IconButton>
+										</Tooltip>
 									)}
 
-									<IconButton
-										onClick={() => handleDelete(record.id)}
-										color="error"
-									>
-										<img src="/trash.svg" alt="delete" />
-									</IconButton>
-									<IconButton
-										onClick={() => {
-											setSelectedRecord(record);
-											setOpenEdit(true);
-										}}
-										color="primary"
-									>
-										<img src="/edit.svg" alt="edit" />
-									</IconButton>
+									{/* Conditional Edit & Delete Buttons */}
+									{isLoggedIn && (
+										<>
+											<IconButton
+												onClick={() => handleDelete(record.id)}
+												color="error"
+											>
+												<img src="/trash.svg" alt="delete" />
+											</IconButton>
+											<IconButton
+												onClick={() => {
+													setSelectedRecord(record);
+													setOpenEdit(true);
+												}}
+												color="primary"
+											>
+												<img src="/edit.svg" alt="edit" />
+											</IconButton>
+										</>
+									)}
 								</TableCell>
 							</TableRow>
 						))}
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<Box
-				sx={{
-					display: "flex",
-					justifyContent: "flex-end",
-				}}
-			>
+			<Box sx={{}}>
 				{typeof totalPages === "number" && totalPages > 0 && (
 					<TablePagination
 						component="div"
@@ -362,7 +370,7 @@ function EOTable() {
 						onPageChange={handleChangePage}
 						rowsPerPage={rowsPerPage}
 						onRowsPerPageChange={handleChangeRowsPerPage}
-						rowsPerPageOptions={[10, 25, 50, 100, totalPages]}
+						rowsPerPageOptions={[20, 50, 100, 200, totalPages]}
 					/>
 				)}
 			</Box>

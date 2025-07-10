@@ -26,7 +26,14 @@ function Tables() {
 				<CustomTab label="Records Monitoring Table" />
 				<CustomTab label="Impact Assessment Table" />
 			</CustomTabs>
-			<div style={{ marginTop: "30px" }}>
+			<div
+				style={{
+					marginTop: "30px",
+					height: "100%",
+					bgColor: "black",
+					width: "100%",
+				}}
+			>
 				{selectedTab === 0 && <EOTable formType="A" />}
 				{selectedTab === 1 && <CoverageTable formType="B" />}
 				{selectedTab === 2 && <ObjectivesTable formType="C" />}

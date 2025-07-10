@@ -7,6 +7,7 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import Chip from "@mui/material/Chip";
+import { Typography } from "@mui/material";
 
 const Step2 = ({ formValues, updateForm }) => {
 	const handleChange = (e) => {
@@ -113,7 +114,13 @@ const Step2 = ({ formValues, updateForm }) => {
 			<Grid item xs={12}>
 				<FormControl fullWidth>
 					<InputLabel id="target-beneficiaries-label">
-						Target Beneficiaries
+						Target Beneficiaries{" "}
+						{formValues.target_beneficiaries?.split(",").filter(Boolean)
+							.length === 0 && (
+							<span style={{ fontSize: "12px", color: "rgba(0,0,0,0.5)" }}>
+								Can select multiple
+							</span>
+						)}
 					</InputLabel>
 					{formValues.geographical_coverage
 						? formValues.geographical_coverage.split(",").filter(Boolean)

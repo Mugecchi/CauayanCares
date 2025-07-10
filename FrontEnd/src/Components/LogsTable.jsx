@@ -59,10 +59,6 @@ const LogsTable = () => {
 				fontWeight={600}
 				sx={{
 					color: "#ff7706",
-					textShadow: "1px 1px 2px  #fff",
-					background: "1px 1px 2px  rgba(255, 255, 255, 0.36)",
-					backdropFilter: "blur(10px)",
-					borderRadius: "1000px",
 				}}
 			>
 				Ordinance Activity Logs

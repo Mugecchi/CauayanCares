@@ -36,7 +36,6 @@ const LoadingScreen = () => {
 							ease: "linear",
 						}}
 					/>
-
 					<motion.p
 						style={{ fontSize: "1.2rem", fontWeight: 500 }}
 						initial={{ opacity: 0 }}

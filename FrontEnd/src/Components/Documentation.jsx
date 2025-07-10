@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchDocumentation, addDocumentation, IMG_BASE_URL } from "../api";
+import { fetchDocumentation, addDocumentation } from "../api";
 
 import CircularProgress from "@mui/material/CircularProgress";
 import Button from "@mui/material/Button";
@@ -20,7 +20,6 @@ import Table from "@mui/material/Table";
 import ImageList from "@mui/material/ImageList";
 import ImageListItem from "@mui/material/ImageListItem";
 import ImageListItemBar from "@mui/material/ImageListItemBar";
-import TablePagination from "@mui/material/TablePagination";
 
 import { WhiteBox } from "../Includes/styledComponents";
 import { Typography } from "@mui/material";
@@ -36,36 +35,19 @@ function DocumentationReps() {
 		message: "",
 		severity: "info",
 	});
-
-	const [page, setPage] = useState(0);
-	const [rowsPerPage, setRowsPerPage] = useState(10);
-	const [searchQuery, setSearchQuery] = useState("");
-	const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
-
-	useEffect(() => {
-		const handler = setTimeout(() => {
-			setDebouncedSearchQuery(searchQuery);
-		}, 400);
-
-		return () => clearTimeout(handler);
-	}, [searchQuery]);
+	const IMG_BASE_URL =
+		import.meta.env.MODE === "development"
+			? "http://localhost:5000" // Local development
+			: `${window.location.origin}`; // Production (Railway)
 
 	useEffect(() => {
 		getRecords();
-	}, [debouncedSearchQuery]);
+	}, []);
 
 	const getRecords = async () => {
 		try {
 			const response = await fetchDocumentation();
-			let filtered = response || [];
-
-			if (debouncedSearchQuery.trim() !== "") {
-				filtered = filtered.filter((doc) =>
-					doc.title?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
-				);
-			}
-
-			setRecords(filtered);
+			setRecords(response || []);
 		} catch (err) {
 			setError({
 				open: true,
@@ -159,77 +141,47 @@ function DocumentationReps() {
 
 	return (
 		<WhiteBox>
-			<TextField
-				label="Search Title"
-				variant="outlined"
-				fullWidth
-				sx={{ mb: 2 }}
-				value={searchQuery}
-				onChange={(e) => setSearchQuery(e.target.value)}
-			/>
+			<Typography variant="h4" color="#fff">
+				Documentation Records
+			</Typography>
 
-			{loading ? (
-				<Box
-					display="flex"
-					justifyContent="center"
-					alignItems="center"
-					minHeight="50vh"
-				>
-					<CircularProgress />
-				</Box>
-			) : (
-				<>
-					<TableContainer>
-						<Table>
-							<TableHead>
-								<TableRow>
-									<TableCell>Title</TableCell>
-									<TableCell>Tags</TableCell>
-									<TableCell>Action/s</TableCell>
+			{/* List of documentation records */}
+			<TableContainer>
+				<Table>
+					<TableHead>
+						<TableRow>
+							<TableCell>Title</TableCell>
+							<TableCell>Tags</TableCell>
+							<TableCell>Action/s</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{records
+							.filter((documentation) => documentation.title !== null)
+							.map((documentation) => (
+								<TableRow key={documentation.ordinance_id} sx={{ mb: 2 }}>
+									<TableCell>{documentation.title}</TableCell>
+									<TableCell>
+										{documentation.documentation_reports?.map((e, i, r) => (
+											<span key={i}>
+												{`${e.tag}${i === r.length - 1 ? " " : ","} `}
+											</span>
+										))}
+									</TableCell>
+
+									<TableCell>
+										<Button
+											variant="outlined"
+											onClick={() => handleViewFiles(documentation)}
+										>
+											View / Add Files
+										</Button>
+									</TableCell>
 								</TableRow>
-							</TableHead>
-							<TableBody>
-								{records
-									.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-									.filter((documentation) => documentation.title !== null)
-									.map((documentation) => (
-										<TableRow key={documentation.ordinance_id} sx={{ mb: 2 }}>
-											<TableCell>{documentation.title}</TableCell>
-											<TableCell>
-												{documentation.documentation_reports?.map((e, i, r) => (
-													<span key={i}>
-														{`${e.tag}${i === r.length - 1 ? " " : ","} `}
-													</span>
-												))}
-											</TableCell>
-											<TableCell>
-												<Button
-													variant="outlined"
-													onClick={() => handleViewFiles(documentation)}
-												>
-													View / Add Files
-												</Button>
-											</TableCell>
-										</TableRow>
-									))}
-							</TableBody>
-						</Table>
-					</TableContainer>
-
-					<TablePagination
-						component="div"
-						count={records.length}
-						page={page}
-						onPageChange={(e, newPage) => setPage(newPage)}
-						rowsPerPage={rowsPerPage}
-						onRowsPerPageChange={(e) => {
-							setRowsPerPage(parseInt(e.target.value, 10));
-							setPage(0);
-						}}
-					/>
-				</>
-			)}
-
+							))}
+					</TableBody>
+				</Table>
+			</TableContainer>
 			<Dialog
 				open={openModal}
 				onClose={handleCloseModal}
@@ -264,6 +216,7 @@ function DocumentationReps() {
 							</Box>
 						))}
 
+					{/* File Gallery (Grid to display file previews) */}
 					{selectedDocumentation?.documentation_reports?.length > 0 && (
 						<div>
 							<h4>Uploaded Files</h4>
@@ -275,9 +228,10 @@ function DocumentationReps() {
 								{selectedDocumentation.documentation_reports.map(
 									(report, index) => (
 										<ImageListItem key={index}>
+											{/* Check if it's an image file and set the src accordingly */}
 											{report.filepath.match(/\.(jpg|jpeg|png)$/) ? (
 												<img
-													src={`${IMG_BASE_URL}/${report.filepath}`}
+													src={`${IMG_BASE_URL}/${report.filepath}`} // Corrected image path
 													alt={`File ${index}`}
 													style={{
 														width: "100%",
@@ -288,18 +242,19 @@ function DocumentationReps() {
 												/>
 											) : (
 												<iframe
-													src={`${IMG_BASE_URL}/${report.filepath}`}
+													src={`${IMG_BASE_URL}/${report.filepath}`} // Corrected file preview path
 													title={`File ${index}`}
 													style={{
 														width: "100%",
 														height: "100%",
 														maxHeight: "calc(50% -10px)",
+
 														borderRadius: "8px",
 													}}
 												/>
 											)}
 											<ImageListItemBar
-												title={report.related_documents?.join(", ")}
+												title={report.related_documents?.join(", ")} // Display tags or file info
 												position="below"
 											/>
 										</ImageListItem>
@@ -318,6 +273,7 @@ function DocumentationReps() {
 				</DialogActions>
 			</Dialog>
 
+			{/* Error Snackbar */}
 			<Snackbar
 				open={error.open}
 				autoHideDuration={4000}

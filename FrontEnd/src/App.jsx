@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from "./Context";
 import { ContentContainer, ThemeProv } from "./Includes/styledComponents";
 import LoadingScreen from "./Includes/LoadingScreen";
 import Login from "./Pages/Login";
+import LandingPage from "./Pages/LandingPage";
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./Pages/Dashboard"));
 const Tables = lazy(() => import("./Pages/Tables"));
@@ -28,7 +29,7 @@ const PageWrapper = ({ children }) => (
 		initial={{ opacity: 0, y: 10, scale: 0.98 }}
 		animate={{ opacity: 1, y: 0, scale: 1 }}
 		exit={{ opacity: 0, y: -200, scale: 0.98 }}
-		transition={{ duration: 0.4, ease: "easeInOut" }}
+		transition={{ duration: 0.4, type: "spring" }}
 		style={{
 			height: "100%",
 			width: "100%",
@@ -44,7 +45,7 @@ const AnimatedRoutes = ({ isLoggedIn, user, setIsLoggedIn }) => {
 	const location = useLocation();
 
 	const ProtectedRoute = ({ element, role }) => {
-		if (!isLoggedIn) return <Navigate to="/login" />;
+		if (!isLoggedIn) return <Navigate to="/landingpage" />;
 		if (role && user?.role !== role) return <Navigate to="/dashboard" />;
 		return element;
 	};
@@ -137,6 +138,18 @@ const AnimatedRoutes = ({ isLoggedIn, user, setIsLoggedIn }) => {
 						)
 					}
 				/>
+				<Route
+					path="/landingpage"
+					element={
+						isLoggedIn ? (
+							<Navigate to="/" />
+						) : (
+							<PageWrapper>
+								<LandingPage />
+							</PageWrapper>
+						)
+					}
+				/>
 			</Routes>
 		</AnimatePresence>
 	);
@@ -148,7 +161,7 @@ const App = () => {
 	if (loading) return <LoadingScreen />;
 
 	return (
-		<AuthProvider>
+		<>
 			<Router>
 				<div
 					style={{
@@ -190,7 +203,7 @@ const App = () => {
 					</div>
 				</div>
 			</Router>
-		</AuthProvider>
+		</>
 	);
 };
 

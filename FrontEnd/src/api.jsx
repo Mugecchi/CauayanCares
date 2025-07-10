@@ -1,14 +1,14 @@
 import axios from "axios";
 const API_BASE_URL =
 	import.meta.env.MODE === "development"
-		? "http://192.168.75.182:5000/api" // Local development
+		? "http://localhost:5000/api" // Local development
 		: `${window.location.origin}/api`; // Automatically use the Railway domain in production
 
 export default API_BASE_URL;
 
-const IMG_BASE_URL =
+export const IMG_BASE_URL =
 	import.meta.env.MODE === "development"
-		? "http://192.168.75.182:5000" // Local development
+		? "http://localhost:5000" // Local development
 		: `${window.location.origin}`;
 const api = axios.create({
 	baseURL: API_BASE_URL,

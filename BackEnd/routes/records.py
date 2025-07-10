@@ -3,7 +3,6 @@ from db import execute_query
 from utils import login_required,log_action
 import os
 import time
-
 ordinances_bp = Blueprint("ordinances", __name__)
 
 # Helper function to validate file types
@@ -155,7 +154,6 @@ def add_ordinance():
         return jsonify({"error": f"Failed to add record. {str(e)}"}), 500
     
 @ordinances_bp.route("/api/ordinances", methods=["GET"])
-@login_required
 def get_ordinances():
     # Pagination parameters (default values: page 1, per_page 10)
     page = int(request.args.get("page", 1))
@@ -251,6 +249,7 @@ def serve_file(filename):
         return send_from_directory(upload_folder, filename, as_attachment=False)
     except Exception:
         return jsonify({"error": "File not found"}), 404
+
 
 
 # Delete Ordinance and Related Data

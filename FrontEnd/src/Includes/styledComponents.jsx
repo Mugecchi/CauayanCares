@@ -35,6 +35,7 @@ export const GlobalStyles = createGlobalStyle`
 		color: var(--text-color);
 		background: var(--background-color);
 		font-family: "SF Pro Display", sans-serif;
+		background-repeat: no-repeat;
   }
 
   *, *::before, *::after {
@@ -125,11 +126,10 @@ const theme = createTheme({
 					display: "flex",
 					flexDirection: "column",
 					flexGrow: 1, // Ensures it fills the available space
-					overflow: "auto", // Enables scrolling when needed
+					overflowY: "scroll", // Enables scrolling when needed
 					maxHeight: "calc(70vh - 50px)", // Limits height to 70% of viewport height
 					width: "100%",
 					background: "rgba(93, 55, 134, 0.2)", // Light glass effect
-					backdropFilter: "blur(8px)", // Subtle blur effect
 					borderRadius: 10, // Rounded corners
 				},
 			},
@@ -140,11 +140,11 @@ const theme = createTheme({
 			styleOverrides: {
 				root: {
 					width: "100%", // Always stretch to fill container
-					tableLayout: "fixed", // Consistent column sizing
 					minWidth: "600px", // Prevents too small tables on narrow screens
 					background: "rgba(93, 55, 134, 0.1)", // Subtle glassmorphism effect
 					backdropFilter: "blur(6px)", // Mild blur effect
 					borderRadius: 10, // Rounded corners
+					tableLayout: "auto",
 				},
 			},
 		},
@@ -153,7 +153,6 @@ const theme = createTheme({
 		MuiTableRow: {
 			styleOverrides: {
 				root: {
-					height: "4rem", // Adjust row height dynamically
 					backgroundColor: "rgba(93, 55, 134, 0.1)", // Light glass effect for rows
 					backdropFilter: "blur(5px)", // Subtle blur effect for rows
 					"&:not(:has(th)):nth-of-type(odd)": {
@@ -179,29 +178,22 @@ const theme = createTheme({
 					color: "#fff", // Text color
 					padding: "8px",
 					fontSize: "14px",
-					overflow: "hidden", // Hide overflowing text
-					textOverflow: "ellipsis", // Show "..." for overflow
 					background: "rgba(93, 55, 134, 0.1)", // Glass effect for cell background
 					backdropFilter: "blur(5px)", // Slight blur effect
+					position: "relative", // For hover effect
+					"&:hover": {
+						background: "rgba(0, 0, 0, 0.1)", // Light hover effect
+						zIndex: 10, // Ensure it overlays other cells
+						position: "relative",
+					},
 				},
-				"&:hover": {
-					whiteSpace: "normal", // Allow wrapping
-					overflow: "visible",
-					textOverflow: "unset",
-					maxWidth: "none", // Expand to full width
-					backgroundColor: "rgba(0, 0, 0, 0.1)", // Light hover effect
-					zIndex: 10, // Ensure it overlays other cells
-					position: "relative",
-				},
+
 				head: {
 					fontWeight: "bold", // Bold header text
 				},
 				body: {
 					textAlign: "left",
-					overflow: "hidden",
-					textOverflow: "ellipsis",
-					whiteSpace: "nowrap",
-					maxWidth: "200px",
+					maxWidth: "200px", // Limit width for body cells
 				},
 			},
 		},
@@ -329,7 +321,7 @@ export const WhiteBox = styled(Box)(({ theme, sx }) => ({
 	overflow: "hidden",
 	flexDirection: "column",
 	justifyContent: "flex-start", // Align content at the top
-	alignItems: "center", // Center children horizontally
+	alignItems: "stretch", // Center children horizontally
 	padding: `16px 16px 0 16px`,
 	gap: 16, // Adds spacing between child elements
 	position: "relative",
@@ -344,7 +336,6 @@ export const WhiteBox = styled(Box)(({ theme, sx }) => ({
 
 	...(sx || {}), // Allow external sx props to override styles
 }));
-
 export const CustomAccordion = styled(Accordion)({
 	borderRadius: "10px",
 });
@@ -362,6 +353,7 @@ export const SidebarContainer = styled(Drawer)(({ theme }) => ({
 	"& .MuiDrawer-paper": {
 		width: 250,
 		height: "100%",
+
 		background:
 			"linear-gradient(to bottom, rgba(93, 55, 134, 0.3), rgba(93, 55, 134, 0.7))", // gradient with slight transparency
 		backdropFilter: "blur(10px)", // blur effect for glassmorphism

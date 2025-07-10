@@ -17,8 +17,9 @@ from routes.dashboard import dashboard_bp
 from routes.logs import logs_bp
 
 app = Flask(__name__, static_folder="dist", static_url_path="/")
-CORS(app, supports_credentials=True,origins=["http://192.168.75.182:5173"] )
-# origins=["http://192.168.75.182:5173"]
+CORS(app, supports_credentials=True )
+# CORS(app, supports_credentials=True,origins=["http://192.168.75.182:5173"] )
+
 app.secret_key = "supersecretkey"  # Change this to a secure key
 if os.getenv("RAILWAY_ENVIRONMENT"):
     app.config["SESSION_COOKIE_SAMESITE"] = "None"

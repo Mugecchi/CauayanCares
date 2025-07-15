@@ -52,25 +52,26 @@ const LogsTable = () => {
 	};
 
 	return (
-		<WhiteBox sx={{ padding: 2 }}>
-			<Typography
-				variant="h6"
-				gutterBottom
-				fontWeight={600}
-				sx={{
-					color: "#ff7706",
-				}}
-			>
-				Ordinance Activity Logs
-			</Typography>
-
+		<WhiteBox sx={{ padding: 10 }}>
+			<div style={{ display: "flex", justifyContent: "center" }}>
+				<Typography
+					variant="h5"
+					gutterBottom
+					fontWeight={600}
+					sx={{
+						color: "#f0f0f0",
+					}}
+				>
+					Ordinance Activity Logs
+				</Typography>
+			</div>
 			{loading ? (
 				<CircularProgress />
 			) : logs.length === 0 ? (
 				<Typography variant="body2">No logs found.</Typography>
 			) : (
-				<TableContainer>
-					<Table>
+				<TableContainer sx={{ minHeight: "75vh" }}>
+					<Table sx={{ minHeight: "100vh" }}>
 						<TableHead>
 							<TableRow>
 								<TableCell>User</TableCell>
@@ -79,7 +80,7 @@ const LogsTable = () => {
 								<TableCell>Timestamp</TableCell>
 							</TableRow>
 						</TableHead>
-						<TableBody>
+						<TableBody sx={{ minHeight: "100vh" }}>
 							{logs.map((log, index) => (
 								<TableRow key={index}>
 									<TableCell>{log.username || "Unknown User"}</TableCell>

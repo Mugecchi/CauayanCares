@@ -34,7 +34,7 @@ export const GlobalStyles = createGlobalStyle`
 		color-scheme: dark;
 		color: var(--text-color);
 		background: var(--background-color);
-		font-family: "SF Pro Display", sans-serif;
+		font-family: Poppins;
 		background-repeat: no-repeat;
   }
 
@@ -62,6 +62,9 @@ export const GlobalStyles = createGlobalStyle`
 
 /* ✅ MUI Theme */
 const theme = createTheme({
+	typography: {
+		fontFamily: "Poppins",
+	},
 	components: {
 		MuiTablePagination: {
 			styleOverrides: {
